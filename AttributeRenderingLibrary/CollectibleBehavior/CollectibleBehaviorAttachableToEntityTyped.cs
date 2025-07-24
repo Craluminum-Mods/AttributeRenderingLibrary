@@ -59,6 +59,7 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
             ctex = variants.ReplacePlaceholders(ctex);
             ctex.Bake(api.Assets);
             intoDict[textureCode] = ctex;
+            shape.Textures[textureCode] = ctex.Baked.BakedName;
         }
     }
 
