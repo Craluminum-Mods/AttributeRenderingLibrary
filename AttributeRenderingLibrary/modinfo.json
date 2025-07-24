@@ -4,7 +4,7 @@
   "name": "Attribute Rendering Library",
   "authors": [ "Craluminum2413" ],
   "description": "To be added",
-  "version": "1.0.0-dev.3",
+  "version": "1.0.0-dev.4",
   "dependencies": {
     "game": ""
   }
