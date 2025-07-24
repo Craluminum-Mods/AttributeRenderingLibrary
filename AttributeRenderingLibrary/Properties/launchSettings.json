@@ -1,0 +1,28 @@
+{
+  "profiles": {
+    "Client": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "\"$(VINTAGE_STORY)/Vintagestory.dll\" --openWorld \"normal test world\" --playStyle \"preset-surviveandbuild\" --tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\"",
+      "workingDirectory": "$(VINTAGE_STORY)"
+    },
+    "Server": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "\"$(VINTAGE_STORY)/VintagestoryServer.dll\" --openWorld \"normal test world\" --playStyle \"preset-surviveandbuild\" --tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\"",
+      "workingDirectory": "$(VINTAGE_STORY)"
+    },
+    "Client-Flat": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "\"$(VINTAGE_STORY)/Vintagestory.dll\" --openWorld \"test world\" --tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\"",
+      "workingDirectory": "$(VINTAGE_STORY)"
+    },
+    "Server-Flat": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "\"$(VINTAGE_STORY)/VintagestoryServer.dll\" --openWorld \"test world\" --tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\"",
+      "workingDirectory": "$(VINTAGE_STORY)"
+    }
+  }
+}
