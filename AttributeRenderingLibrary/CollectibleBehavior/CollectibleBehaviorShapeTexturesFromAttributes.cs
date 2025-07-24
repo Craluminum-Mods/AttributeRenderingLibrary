@@ -14,8 +14,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
 
-    protected Dictionary<string, CompositeShape> shapeByType = new();
-    protected Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
+    public Dictionary<string, CompositeShape> shapeByType = new();
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
     private ICoreClientAPI clientApi;
 
     public CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : base(collObj) { }

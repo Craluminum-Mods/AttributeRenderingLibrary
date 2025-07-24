@@ -1,0 +1,121 @@
+﻿using System.Collections.Generic;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Datastructures;
+using Vintagestory.API.Util;
+using Vintagestory.GameContent;
+
+namespace AttributeRenderingLibrary;
+
+public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, IAttachableToEntity
+{
+    public Dictionary<string, OrderedDictionary<string, CompositeShape>> attachedShapeBySlotCodeByType = new();
+    public Dictionary<string, string> categoryCodeByType = new();
+    public Dictionary<string, string[]> disableElementsByType = new();
+    public Dictionary<string, string[]> keepElementsByType = new();
+    private ICoreAPI api;
+
+    public CollectibleBehaviorAttachableToEntityTyped(CollectibleObject collObj) : base(collObj) { }
+
+    public override void Initialize(JsonObject properties)
+    {
+        base.Initialize(properties);
+
+        attachedShapeBySlotCodeByType = properties["attachedShapeBySlotCode"].AsObject(defaultValue: new Dictionary<string, OrderedDictionary<string, CompositeShape>>());
+        categoryCodeByType = properties["categoryCode"].AsObject(defaultValue: new Dictionary<string, string>());
+        disableElementsByType = properties["disableElements"].AsObject(defaultValue: new Dictionary<string, string[]>());
+        keepElementsByType = properties["keepElements"].AsObject(defaultValue: new Dictionary<string, string[]>());
+    }
+
+    public override void OnLoaded(ICoreAPI api)
+    {
+        this.api = api;
+    }
+
+    void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
+    {
+        Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
+
+        if (stack.Collectible is ItemShapeTexturesFromAttributes item)
+        {
+            texturesByType = item.texturesByType;
+        }
+        else if (stack.Collectible.GetBehavior<CollectibleBehaviorShapeTexturesFromAttributes>() is CollectibleBehaviorShapeTexturesFromAttributes behavior)
+        {
+            texturesByType = behavior.texturesByType;
+        }
+        else return;
+
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
+        _textures ??= new Dictionary<string, CompositeTexture>();
+
+        foreach ((string textureCode, CompositeTexture texture) in _textures)
+        {
+            CompositeTexture ctex = texture.Clone();
+            ctex = variants.ReplacePlaceholders(ctex);
+            ctex.Bake(api.Assets);
+            intoDict[textureCode] = ctex;
+        }
+    }
+
+    CompositeShape IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode)
+    {
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(attachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode);
+        if (attachedShapeBySlotCode != null)
+        {
+            foreach (KeyValuePair<string, CompositeShape> val in attachedShapeBySlotCode)
+            {
+                if (WildcardUtil.Match(val.Key, slotCode))
+                {
+                    CompositeShape rcshape = val.Value.Clone();
+                    rcshape.Base.Path = variants.ReplacePlaceholders(rcshape.Base.Path);
+                    return rcshape;
+                }
+            }
+        }
+        if (stack.Class != EnumItemClass.Item)
+        {
+            return stack.Block.Shape;
+        }
+        return stack.Item.Shape;
+    }
+
+    string IAttachableToEntity.GetCategoryCode(ItemStack stack)
+    {
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(categoryCodeByType, out string categoryCode);
+        return categoryCode;
+    }
+
+    string[] IAttachableToEntity.GetDisableElements(ItemStack stack)
+    {
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(disableElementsByType, out string[] disableElements);
+        return disableElements;
+    }
+
+    string[] IAttachableToEntity.GetKeepElements(ItemStack stack)
+    {
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(keepElementsByType, out string[] keepElements);
+        return keepElements;
+    }
+
+    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack)
+    {
+        string texturePrefixCode = stack.Collectible.GetCollectibleInterface<IContainedMeshSource>().GetMeshCacheKey(stack);
+        return texturePrefixCode;
+    }
+
+    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack)
+    {
+        if (toEntity is EntityPlayer)
+        {
+            return false;
+        }
+        return true;
+    }
+}
