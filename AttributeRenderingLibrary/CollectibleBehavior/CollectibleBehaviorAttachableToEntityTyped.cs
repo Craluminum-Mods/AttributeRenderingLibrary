@@ -48,11 +48,10 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
         {
             texturesByType = behavior.texturesByType;
         }
-        else return;
 
         Variants variants = Variants.FromStack(stack);
         variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
-        _textures ??= new Dictionary<string, CompositeTexture>();
+        _textures ??= (collObj as Item)?.Textures;
 
         foreach ((string textureCode, CompositeTexture texture) in _textures)
         {
