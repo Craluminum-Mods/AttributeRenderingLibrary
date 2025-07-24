@@ -86,11 +86,7 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
             }
         }
 
-        if (stack.Class != EnumItemClass.Item)
-        {
-            return stack.Block.Shape;
-        }
-        return stack.Item.Shape;
+        return attrAtta?.GetAttachedShape(stack, slotCode);
     }
 
     string IAttachableToEntity.GetCategoryCode(ItemStack stack)
