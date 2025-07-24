@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -14,6 +15,7 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
     public Dictionary<string, string> categoryCodeByType = new();
     public Dictionary<string, string[]> disableElementsByType = new();
     public Dictionary<string, string[]> keepElementsByType = new();
+    private IAttachableToEntity attrAtta;
     private ICoreAPI api;
 
     public CollectibleBehaviorAttachableToEntityTyped(CollectibleObject collObj) : base(collObj) { }
@@ -31,6 +33,7 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
     public override void OnLoaded(ICoreAPI api)
     {
         this.api = api;
+        attrAtta = IAttachableToEntity.FromAttributes(collObj);
     }
 
     void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
@@ -62,8 +65,14 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
     CompositeShape IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode)
     {
+        if (attachedShapeBySlotCodeByType == null || !attachedShapeBySlotCodeByType.Any())
+        {
+            return attrAtta?.GetAttachedShape(stack, slotCode);
+        }
+
         Variants variants = Variants.FromStack(stack);
         variants.FindByVariant(attachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode);
+
         if (attachedShapeBySlotCode != null)
         {
             foreach (KeyValuePair<string, CompositeShape> val in attachedShapeBySlotCode)
@@ -76,6 +85,7 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
                 }
             }
         }
+
         if (stack.Class != EnumItemClass.Item)
         {
             return stack.Block.Shape;
@@ -85,6 +95,11 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
     string IAttachableToEntity.GetCategoryCode(ItemStack stack)
     {
+        if (categoryCodeByType == null || !categoryCodeByType.Any())
+        {
+            return attrAtta?.GetCategoryCode(stack);
+        }
+
         Variants variants = Variants.FromStack(stack);
         variants.FindByVariant(categoryCodeByType, out string categoryCode);
         return categoryCode;
@@ -92,6 +107,11 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
     string[] IAttachableToEntity.GetDisableElements(ItemStack stack)
     {
+        if (disableElementsByType == null || !disableElementsByType.Any())
+        {
+            return attrAtta?.GetDisableElements(stack);
+        }
+
         Variants variants = Variants.FromStack(stack);
         variants.FindByVariant(disableElementsByType, out string[] disableElements);
         return disableElements;
@@ -99,6 +119,11 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
     string[] IAttachableToEntity.GetKeepElements(ItemStack stack)
     {
+        if (keepElementsByType == null || !keepElementsByType.Any())
+        {
+            return attrAtta?.GetKeepElements(stack);
+        }
+
         Variants variants = Variants.FromStack(stack);
         variants.FindByVariant(keepElementsByType, out string[] keepElements);
         return keepElements;
