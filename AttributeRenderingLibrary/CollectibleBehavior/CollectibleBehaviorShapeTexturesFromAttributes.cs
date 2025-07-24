@@ -52,6 +52,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
         Variants variants = Variants.FromStack(itemstack);
         variants.FindByVariant(shapeByType, out CompositeShape _shape);
+        _shape ??= (collObj as Item)?.Shape;
+
         if (_shape == null) return mesh;
 
         CompositeShape rcshape = _shape.Clone();
@@ -62,7 +64,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         if (shape == null) return mesh;
 
         variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
-        _textures ??= new Dictionary<string, CompositeTexture>();
+        _textures ??= (collObj as Item)?.Textures;
 
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
 

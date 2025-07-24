@@ -49,6 +49,8 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource
 
         Variants variants = Variants.FromStack(itemstack);
         variants.FindByVariant(shapeByType, out CompositeShape _shape);
+        _shape ??= Shape;
+
         if (_shape == null) return mesh;
 
         CompositeShape rcshape = _shape.Clone();
@@ -59,7 +61,7 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource
         if (shape == null) return mesh;
 
         variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
-        _textures ??= new Dictionary<string, CompositeTexture>();
+        _textures ??= Textures;
 
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(capi, targetAtlas, shape, rcshape.Base.ToString());
 
@@ -70,6 +72,7 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource
             ctex.Bake(capi.Assets);
             stexSource.textures[val.Key] = ctex;
         }
+
         capi.Tesselator.TesselateShape("ShapeTexturesFromAttributes item", shape, out mesh, stexSource);
         return mesh;
     }
