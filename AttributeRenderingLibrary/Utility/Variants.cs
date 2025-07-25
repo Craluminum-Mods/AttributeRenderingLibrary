@@ -99,6 +99,18 @@ public class Variants
         return input;
     }
 
+    public CompositeShape ReplacePlaceholders(CompositeShape cshape)
+    {
+        cshape.Base.Path = ReplacePlaceholders(cshape.Base.Path);
+
+        for (int i = 0; i < cshape.Overlays.Length; i++)
+        {
+            cshape.Overlays[i].Base.Path = ReplacePlaceholders(cshape.Overlays[i].Base.Path);
+        }
+
+        return cshape;
+    }
+
     public CompositeTexture ReplacePlaceholders(CompositeTexture ctex)
     {
         foreach ((string key, string value) in Elements)

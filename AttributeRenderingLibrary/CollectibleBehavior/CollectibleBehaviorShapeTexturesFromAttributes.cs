@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -56,12 +57,22 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
         if (_shape == null) return mesh;
 
-        CompositeShape rcshape = _shape.Clone();
-        rcshape.Base.Path = variants.ReplacePlaceholders(rcshape.Base.Path);
+        CompositeShape rcshape = variants.ReplacePlaceholders(_shape);
         rcshape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
 
         Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
         if (shape == null) return mesh;
+
+        if (rcshape.Overlays != null && rcshape.Overlays.Any())
+        {
+            foreach (CompositeShape _overlayShape in rcshape.Overlays)
+            {
+                Shape __overlayShape = clientApi.Assets.TryGet(_overlayShape.Base)?.ToObject<Shape>();
+                if (__overlayShape == null) continue;
+
+                shape.StepParentShape(__overlayShape, _overlayShape.Base.ToString(), rcshape.Base.ToString(), clientApi.Logger, (_, _) => { });
+            }
+        }
 
         variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
         _textures ??= (collObj as Item)?.Textures;
@@ -75,27 +86,28 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             ctex.Bake(clientApi.Assets);
             stexSource.textures[textureCode] = ctex;
         }
-        clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes behavior", shape, out mesh, stexSource);
+
+        clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes behavior", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
         return mesh;
     }
 
-    public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
+    public override void OnBeforeRender(ICoreClientAPI clientApi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(capi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
+        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
 
         string key = GetMeshCacheKey(itemstack);
 
         if (!meshRefs.TryGetValue(key, out MultiTextureMeshRef meshref))
         {
-            MeshData mesh = GenMesh(itemstack, capi.ItemTextureAtlas, null);
-            meshref = capi.Render.UploadMultiTextureMesh(mesh);
+            MeshData mesh = GenMesh(itemstack, clientApi.ItemTextureAtlas, null);
+            meshref = clientApi.Render.UploadMultiTextureMesh(mesh);
             meshRefs[key] = meshref;
         }
 
         renderinfo.ModelRef = meshref;
         renderinfo.NormalShaded = true;
 
-        base.OnBeforeRender(capi, itemstack, target, ref renderinfo);
+        base.OnBeforeRender(clientApi, itemstack, target, ref renderinfo);
     }
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)

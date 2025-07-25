@@ -75,12 +75,11 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
         if (attachedShapeBySlotCode != null)
         {
-            foreach (KeyValuePair<string, CompositeShape> val in attachedShapeBySlotCode)
+            foreach ((string _slotCode, CompositeShape cshape) in attachedShapeBySlotCode)
             {
-                if (WildcardUtil.Match(val.Key, slotCode))
+                if (WildcardUtil.Match(_slotCode, slotCode))
                 {
-                    CompositeShape rcshape = val.Value.Clone();
-                    rcshape.Base.Path = variants.ReplacePlaceholders(rcshape.Base.Path);
+                    CompositeShape rcshape = variants.ReplacePlaceholders(cshape);
                     return rcshape;
                 }
             }
