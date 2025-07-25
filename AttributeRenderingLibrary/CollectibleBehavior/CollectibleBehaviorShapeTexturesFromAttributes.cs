@@ -63,7 +63,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
         if (shape == null) return mesh;
 
-        if (rcshape.Overlays != null && rcshape.Overlays.Any())
+        if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
         {
             foreach (CompositeShape _overlayShape in rcshape.Overlays)
             {

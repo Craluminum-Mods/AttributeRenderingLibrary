@@ -103,9 +103,12 @@ public class Variants
     {
         cshape.Base.Path = ReplacePlaceholders(cshape.Base.Path);
 
-        for (int i = 0; i < cshape.Overlays.Length; i++)
+        if (cshape.Overlays != null && cshape.Overlays.Length > 0)
         {
-            cshape.Overlays[i].Base.Path = ReplacePlaceholders(cshape.Overlays[i].Base.Path);
+            for (int i = 0; i < cshape.Overlays.Length; i++)
+            {
+                cshape.Overlays[i].Base.Path = ReplacePlaceholders(cshape.Overlays[i].Base.Path);
+            }
         }
 
         return cshape;
