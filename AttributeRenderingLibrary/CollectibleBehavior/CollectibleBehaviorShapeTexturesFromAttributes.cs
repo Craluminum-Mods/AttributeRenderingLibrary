@@ -74,18 +74,14 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             }
         }
 
-        // Sets up default textures from the Shape, as lowest priority
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
 
-        // Overwrite any Shape textures with those defined on the Item itself
         foreach ((string textureCode, CompositeTexture texture) in itemstack.Item.Textures)
         {
             stexSource.textures[textureCode] = texture;
         }
 
-        // Finally, overwrite with any textures defined in the Attributes as highest priority
-        variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
-        if (_textures != null)
+        if (variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures))
         {
             foreach ((string textureCode, CompositeTexture texture) in _textures)
             {
