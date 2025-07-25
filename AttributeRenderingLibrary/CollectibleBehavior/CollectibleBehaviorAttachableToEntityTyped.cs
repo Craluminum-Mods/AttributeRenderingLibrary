@@ -84,7 +84,7 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
             {
                 if (WildcardUtil.Match(_slotCode, slotCode))
                 {
-                    CompositeShape rcshape = variants.ReplacePlaceholders(cshape);
+                    CompositeShape rcshape = variants.ReplacePlaceholders(cshape.Clone());
                     return rcshape;
                 }
             }
