@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -67,7 +66,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         {
             foreach (CompositeShape _overlayShape in rcshape.Overlays)
             {
+                _overlayShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
                 Shape __overlayShape = clientApi.Assets.TryGet(_overlayShape.Base)?.ToObject<Shape>();
+
                 if (__overlayShape == null) continue;
 
                 shape.StepParentShape(__overlayShape, _overlayShape.Base.ToString(), rcshape.Base.ToString(), clientApi.Logger, (_, _) => { });
