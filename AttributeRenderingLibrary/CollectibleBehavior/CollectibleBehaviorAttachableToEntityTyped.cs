@@ -137,10 +137,6 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
     bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack)
     {
-        if (toEntity is EntityPlayer)
-        {
-            return false;
-        }
         return true;
     }
 }
