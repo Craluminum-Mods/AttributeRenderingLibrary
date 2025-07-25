@@ -62,20 +62,41 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
         if (shape == null) return mesh;
 
+        UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
+        Dictionary<string, AssetLocation> prefixedTextureCodes = new Dictionary<string, AssetLocation>();
+        string overlayPrefix = "";
+
         if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
         {
+            overlayPrefix = GetMeshCacheKey(itemstack);
+            shape.SubclassForStepParenting(overlayPrefix);
+            prefixedTextureCodes = shape.Textures;
+            shape.Textures = new Dictionary<string, AssetLocation>();
+            foreach (var entry in prefixedTextureCodes)
+            {
+                shape.Textures[overlayPrefix + entry.Key] = entry.Value;
+            }
+
             foreach (CompositeShape _overlayShape in rcshape.Overlays)
             {
+                variants.ReplacePlaceholders(_overlayShape.Base);
                 _overlayShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
                 Shape __overlayShape = clientApi.Assets.TryGet(_overlayShape.Base)?.ToObject<Shape>();
 
                 if (__overlayShape == null) continue;
 
-                shape.StepParentShape(__overlayShape, _overlayShape.Base.ToString(), rcshape.Base.ToString(), clientApi.Logger, (_, _) => { });
+                __overlayShape.WalkElements("*", (e) => {
+                    if (!string.IsNullOrEmpty(e.StepParentName))
+                    {
+                        e.StepParentName = overlayPrefix + e.StepParentName;
+                    }
+                });
+                shape.StepParentShape(__overlayShape, _overlayShape.Base.ToString(), rcshape.Base.ToString(), clientApi.Logger, (textureCode, textureLocation) =>
+                {
+                    stexSource.textures[textureCode] = new CompositeTexture(textureLocation);
+                });
             }
         }
-
-        UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
 
         foreach ((string textureCode, CompositeTexture texture) in itemstack.Item.Textures)
         {
@@ -89,7 +110,14 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
                 CompositeTexture ctex = texture.Clone();
                 ctex = variants.ReplacePlaceholders(ctex);
                 ctex.Bake(clientApi.Assets);
-                stexSource.textures[textureCode] = ctex;
+                if (prefixedTextureCodes.ContainsKey(textureCode))
+                {
+                    stexSource.textures[overlayPrefix + textureCode] = ctex;
+                }
+                else
+                {
+                    stexSource.textures[textureCode] = ctex;
+                }
             }
         }
 
