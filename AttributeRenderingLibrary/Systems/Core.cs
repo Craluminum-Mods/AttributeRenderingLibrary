@@ -18,6 +18,7 @@ public class Core : ModSystem
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.ShapeTexturesFromAttributes", typeof(CollectibleBehaviorShapeTexturesFromAttributes));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.ContainedTransform", typeof(CollectibleBehaviorContainedTransform));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.AttachableToEntityTyped", typeof(CollectibleBehaviorAttachableToEntityTyped));
+        api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.HeldBagTyped", typeof(CollectibleBehaviorHeldBagTyped));
         Mod.Logger.Event("started '{0}' mod", Mod.Info.Name);
     }
 
