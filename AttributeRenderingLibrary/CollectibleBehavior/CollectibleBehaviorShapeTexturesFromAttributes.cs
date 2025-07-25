@@ -112,6 +112,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         {
             return;
         }
+
+        sb.Clear();
+        sb.Append(name);
     }
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
