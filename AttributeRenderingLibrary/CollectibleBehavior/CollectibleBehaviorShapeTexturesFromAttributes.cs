@@ -9,13 +9,13 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavior, IContainedMeshSource
+public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavior, IContainedMeshSource, IShapeTexturesFromAttributes
 {
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
 
-    public Dictionary<string, CompositeShape> shapeByType = new();
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
+    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
     private ICoreClientAPI clientApi;
 
     public CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : base(collObj) { }
@@ -63,39 +63,13 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         if (shape == null) return mesh;
 
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
-        Dictionary<string, AssetLocation> prefixedTextureCodes = new Dictionary<string, AssetLocation>();
+        Dictionary<string, AssetLocation> prefixedTextureCodes = null;
         string overlayPrefix = "";
 
         if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
         {
             overlayPrefix = GetMeshCacheKey(itemstack);
-            shape.SubclassForStepParenting(overlayPrefix);
-            prefixedTextureCodes = shape.Textures;
-            shape.Textures = new Dictionary<string, AssetLocation>();
-            foreach (var entry in prefixedTextureCodes)
-            {
-                shape.Textures[overlayPrefix + entry.Key] = entry.Value;
-            }
-
-            foreach (CompositeShape _overlayShape in rcshape.Overlays)
-            {
-                variants.ReplacePlaceholders(_overlayShape.Base);
-                _overlayShape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-                Shape __overlayShape = clientApi.Assets.TryGet(_overlayShape.Base)?.ToObject<Shape>();
-
-                if (__overlayShape == null) continue;
-
-                __overlayShape.WalkElements("*", (e) => {
-                    if (!string.IsNullOrEmpty(e.StepParentName))
-                    {
-                        e.StepParentName = overlayPrefix + e.StepParentName;
-                    }
-                });
-                shape.StepParentShape(__overlayShape, _overlayShape.Base.ToString(), rcshape.Base.ToString(), clientApi.Logger, (textureCode, textureLocation) =>
-                {
-                    stexSource.textures[textureCode] = new CompositeTexture(textureLocation);
-                });
-            }
+            prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
         }
 
         foreach ((string textureCode, CompositeTexture texture) in itemstack.Item.Textures)
@@ -103,23 +77,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             stexSource.textures[textureCode] = texture;
         }
 
-        if (variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures))
-        {
-            foreach ((string textureCode, CompositeTexture texture) in _textures)
-            {
-                CompositeTexture ctex = texture.Clone();
-                ctex = variants.ReplacePlaceholders(ctex);
-                ctex.Bake(clientApi.Assets);
-                if (prefixedTextureCodes.ContainsKey(textureCode))
-                {
-                    stexSource.textures[overlayPrefix + textureCode] = ctex;
-                }
-                else
-                {
-                    stexSource.textures[textureCode] = ctex;
-                }
-            }
-        }
+        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
         clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes behavior", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
         return mesh;
