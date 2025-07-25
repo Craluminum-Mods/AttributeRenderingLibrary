@@ -52,7 +52,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
         Variants variants = Variants.FromStack(itemstack);
         variants.FindByVariant(shapeByType, out CompositeShape _shape);
-        _shape ??= (collObj as Item)?.Shape;
+        _shape ??= itemstack.Item.Shape;
 
         if (_shape == null) return mesh;
 

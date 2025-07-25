@@ -72,17 +72,22 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource
             }
         }
 
-        variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
-        _textures ??= Textures;
-
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
 
-        foreach ((string textureCode, CompositeTexture texture) in _textures)
+        foreach ((string textureCode, CompositeTexture texture) in itemstack.Item.Textures)
         {
-            CompositeTexture ctex = texture.Clone();
-            ctex = variants.ReplacePlaceholders(ctex);
-            ctex.Bake(clientApi.Assets);
-            stexSource.textures[textureCode] = ctex;
+            stexSource.textures[textureCode] = texture;
+        }
+
+        if (variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures))
+        {
+            foreach ((string textureCode, CompositeTexture texture) in _textures)
+            {
+                CompositeTexture ctex = texture.Clone();
+                ctex = variants.ReplacePlaceholders(ctex);
+                ctex.Bake(clientApi.Assets);
+                stexSource.textures[textureCode] = ctex;
+            }
         }
 
         clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes item", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
