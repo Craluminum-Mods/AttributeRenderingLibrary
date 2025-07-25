@@ -38,6 +38,15 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
     void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
     {
+        // Input Shape already has textures defined, as lowest priority
+
+        // Overwrite any Shape textures with those defined on the Item itself
+        foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
+        {
+            shape.Textures[textureCode] = texture.Baked.BakedName;
+        }
+
+        // Finally, overwrite with any textures defined in the Attributes as highest priority
         Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
 
         if (stack.Collectible is ItemShapeTexturesFromAttributes item)
@@ -51,15 +60,16 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
         Variants variants = Variants.FromStack(stack);
         variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
-        _textures ??= (collObj as Item)?.Textures;
-
-        foreach ((string textureCode, CompositeTexture texture) in _textures)
+        if (_textures != null)
         {
-            CompositeTexture ctex = texture.Clone();
-            ctex = variants.ReplacePlaceholders(ctex);
-            ctex.Bake(api.Assets);
-            intoDict[textureCode] = ctex;
-            shape.Textures[textureCode] = ctex.Baked.BakedName;
+            foreach ((string textureCode, CompositeTexture texture) in _textures)
+            {
+                CompositeTexture ctex = texture.Clone();
+                ctex = variants.ReplacePlaceholders(ctex);
+                ctex.Bake(api.Assets);
+                intoDict[textureCode] = ctex;
+                shape.Textures[textureCode] = ctex.Baked.BakedName;
+            }
         }
     }
 

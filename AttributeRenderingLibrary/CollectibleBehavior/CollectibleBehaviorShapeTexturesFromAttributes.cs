@@ -74,17 +74,26 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             }
         }
 
-        variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
-        _textures ??= (collObj as Item)?.Textures;
-
+        // Sets up default textures from the Shape, as lowest priority
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
 
-        foreach ((string textureCode, CompositeTexture texture) in _textures)
+        // Overwrite any Shape textures with those defined on the Item itself
+        foreach ((string textureCode, CompositeTexture texture) in itemstack.Item.Textures)
         {
-            CompositeTexture ctex = texture.Clone();
-            ctex = variants.ReplacePlaceholders(ctex);
-            ctex.Bake(clientApi.Assets);
-            stexSource.textures[textureCode] = ctex;
+            stexSource.textures[textureCode] = texture;
+        }
+
+        // Finally, overwrite with any textures defined in the Attributes as highest priority
+        variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
+        if (_textures != null)
+        {
+            foreach ((string textureCode, CompositeTexture texture) in _textures)
+            {
+                CompositeTexture ctex = texture.Clone();
+                ctex = variants.ReplacePlaceholders(ctex);
+                ctex.Bake(clientApi.Assets);
+                stexSource.textures[textureCode] = ctex;
+            }
         }
 
         clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes behavior", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
