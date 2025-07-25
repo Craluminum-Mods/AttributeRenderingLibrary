@@ -38,6 +38,11 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
     void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
     {
+        foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
+        {
+            shape.Textures[textureCode] = texture.Baked.BakedName;
+        }
+
         Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
 
         if (stack.Collectible is ItemShapeTexturesFromAttributes item)
@@ -50,16 +55,16 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
         }
 
         Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures);
-        _textures ??= (collObj as Item)?.Textures;
-
-        foreach ((string textureCode, CompositeTexture texture) in _textures)
+        if (variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures))
         {
-            CompositeTexture ctex = texture.Clone();
-            ctex = variants.ReplacePlaceholders(ctex);
-            ctex.Bake(api.Assets);
-            intoDict[textureCode] = ctex;
-            shape.Textures[textureCode] = ctex.Baked.BakedName;
+            foreach ((string textureCode, CompositeTexture texture) in _textures)
+            {
+                CompositeTexture ctex = texture.Clone();
+                ctex = variants.ReplacePlaceholders(ctex);
+                ctex.Bake(api.Assets);
+                intoDict[textureCode] = ctex;
+                shape.Textures[textureCode] = ctex.Baked.BakedName;
+            }
         }
     }
 
