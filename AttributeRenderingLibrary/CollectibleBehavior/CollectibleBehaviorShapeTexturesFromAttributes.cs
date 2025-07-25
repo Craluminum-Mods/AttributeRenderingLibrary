@@ -68,14 +68,14 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
 
-        foreach (KeyValuePair<string, CompositeTexture> val in _textures)
+        foreach ((string textureCode, CompositeTexture texture) in _textures)
         {
-            CompositeTexture ctex = val.Value.Clone();
+            CompositeTexture ctex = texture.Clone();
             ctex = variants.ReplacePlaceholders(ctex);
             ctex.Bake(clientApi.Assets);
-            stexSource.textures[val.Key] = ctex;
+            stexSource.textures[textureCode] = ctex;
         }
-        clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes item", shape, out mesh, stexSource);
+        clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes behavior", shape, out mesh, stexSource);
         return mesh;
     }
 
