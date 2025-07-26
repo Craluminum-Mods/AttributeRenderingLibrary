@@ -57,5 +57,5 @@ public class CollectibleBehaviorHeldBagTyped : CollectibleBehaviorHeldBag
             return base.GetStorageFlags(bagstack);
         }
         return storageFlags;
-    }
+    } 
 }

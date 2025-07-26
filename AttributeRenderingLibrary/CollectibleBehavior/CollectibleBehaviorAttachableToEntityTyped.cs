@@ -45,13 +45,9 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
         Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
 
-        if (stack.Collectible is ItemShapeTexturesFromAttributes item)
+        if (stack.Collectible.GetCollectibleInterface<IShapeTexturesFromAttributes>() is IShapeTexturesFromAttributes STFA)
         {
-            texturesByType = item.texturesByType;
-        }
-        else if (stack.Collectible.GetBehavior<CollectibleBehaviorShapeTexturesFromAttributes>() is CollectibleBehaviorShapeTexturesFromAttributes behavior)
-        {
-            texturesByType = behavior.texturesByType;
+            texturesByType = STFA.texturesByType;
         }
 
         Variants variants = Variants.FromStack(stack);
