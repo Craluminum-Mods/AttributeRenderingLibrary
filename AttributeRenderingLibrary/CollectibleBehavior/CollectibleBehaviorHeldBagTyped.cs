@@ -44,6 +44,8 @@ public class CollectibleBehaviorHeldBagTyped : CollectibleBehaviorHeldBag
         {
             return base.GetSlotBgColor(bagstack);
         }
+
+        slotBgColor = variants.ReplacePlaceholders(slotBgColor);
         return slotBgColor;
     }
 
