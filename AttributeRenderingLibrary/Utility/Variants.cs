@@ -99,15 +99,31 @@ public class Variants
         return input;
     }
 
+    public AssetLocation ReplacePlaceholders(AssetLocation location)
+    {
+        if (location.Domain != "game")
+        {
+            location.Path = ReplacePlaceholders(location.Path);
+            return location;
+        }
+        location = new AssetLocation(ReplacePlaceholders(location.Path));
+        if (!location.HasDomain())
+        {
+            location.Domain = "game";
+        }
+
+        return location;
+    }
+
     public CompositeShape ReplacePlaceholders(CompositeShape cshape)
     {
-        cshape.Base.Path = ReplacePlaceholders(cshape.Base.Path);
+        cshape.Base = ReplacePlaceholders(cshape.Base);
 
         if (cshape.Overlays != null && cshape.Overlays.Length > 0)
         {
             for (int i = 0; i < cshape.Overlays.Length; i++)
             {
-                cshape.Overlays[i].Base.Path = ReplacePlaceholders(cshape.Overlays[i].Base.Path);
+                cshape.Overlays[i].Base = ReplacePlaceholders(cshape.Overlays[i].Base);
             }
         }
 
