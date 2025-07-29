@@ -83,7 +83,7 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
                     CompositeShape rcshape = variants.ReplacePlaceholders(cshape.Clone());
                     if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
                     {
-                        return cshape;
+                        return rcshape;
                     }
 
                     List<CompositeShape> overlays = new();
