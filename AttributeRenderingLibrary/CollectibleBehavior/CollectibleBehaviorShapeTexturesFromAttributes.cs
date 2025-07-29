@@ -51,12 +51,12 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         Variants variants = Variants.FromStack(itemstack);
-        variants.FindByVariant(shapeByType, out CompositeShape _shape);
-        _shape ??= itemstack.Item.Shape;
+        variants.FindByVariant(shapeByType, out CompositeShape ucshape);
+        ucshape ??= itemstack.Item.Shape;
 
-        if (_shape == null) return mesh;
+        if (ucshape == null) return mesh;
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(_shape.Clone());
+        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
 
         Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();

@@ -48,12 +48,12 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource, IShap
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         Variants variants = Variants.FromStack(itemstack);
-        variants.FindByVariant(shapeByType, out CompositeShape _shape);
-        _shape ??= Shape;
+        variants.FindByVariant(shapeByType, out CompositeShape ucshape);
+        ucshape ??= Shape;
 
-        if (_shape == null) return mesh;
+        if (ucshape == null) return mesh;
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(_shape.Clone());
+        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
 
         Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();

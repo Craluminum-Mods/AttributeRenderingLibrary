@@ -76,14 +76,14 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
 
         if (attachedShapeBySlotCode != null)
         {
-            foreach ((string _slotCode, CompositeShape cshape) in attachedShapeBySlotCode)
+            foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
             {
                 if (WildcardUtil.Match(_slotCode, slotCode))
                 {
-                    CompositeShape rcshape = variants.ReplacePlaceholders(cshape.Clone());
+                    CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
                     if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
                     {
-                        return cshape;
+                        return rcshape;
                     }
 
                     List<CompositeShape> overlays = new();
