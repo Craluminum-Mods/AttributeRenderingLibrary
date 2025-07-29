@@ -80,8 +80,13 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
             {
                 if (WildcardUtil.Match(_slotCode, slotCode))
                 {
-                    List<CompositeShape> overlays = new();
                     CompositeShape rcshape = variants.ReplacePlaceholders(cshape.Clone());
+                    if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
+                    {
+                        return cshape;
+                    }
+
+                    List<CompositeShape> overlays = new();
                     foreach (CompositeShape overlay in rcshape.Overlays)
                     {
                         if (api.Assets.Exists(overlay.Base.Clone().WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json")))
