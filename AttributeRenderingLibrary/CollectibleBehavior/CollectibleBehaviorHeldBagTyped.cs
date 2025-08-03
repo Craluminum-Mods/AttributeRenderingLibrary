@@ -18,13 +18,18 @@ public class CollectibleBehaviorHeldBagTyped : CollectibleBehaviorHeldBag
     {
         base.Initialize(properties);
 
-        quantitySlotsByType = properties["quantitySlots"].AsObject(defaultValue: new Dictionary<string, int>());
-        slotBgColorByType = properties["slotBgColor"].AsObject(defaultValue: new Dictionary<string, string>());
-        storageFlagsByType = properties["storageFlags"].AsObject(defaultValue: new Dictionary<string, int>()).ToDictionary(x => x.Key, x => (EnumItemStorageFlags)x.Value);
+        quantitySlotsByType = properties["quantitySlots"].AsObject<Dictionary<string, int>>();
+        slotBgColorByType = properties["slotBgColor"].AsObject<Dictionary<string, string>>();
+        storageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, int>>()?.ToDictionary(x => x.Key, x => (EnumItemStorageFlags)x.Value);
     }
 
     public override int GetQuantitySlots(ItemStack bagstack)
     {
+        if (quantitySlotsByType == null || !quantitySlotsByType.Any())
+        {
+            return base.GetQuantitySlots(bagstack);
+        }
+
         Variants variants = Variants.FromStack(bagstack);
         bool found = variants.FindByVariant(quantitySlotsByType, out int quantitySlots);
 
@@ -37,6 +42,11 @@ public class CollectibleBehaviorHeldBagTyped : CollectibleBehaviorHeldBag
 
     public override string GetSlotBgColor(ItemStack bagstack)
     {
+        if (slotBgColorByType == null || !slotBgColorByType.Any())
+        {
+            return base.GetSlotBgColor(bagstack);
+        }
+
         Variants variants = Variants.FromStack(bagstack);
         bool found = variants.FindByVariant(slotBgColorByType, out string slotBgColor);
 
@@ -51,6 +61,11 @@ public class CollectibleBehaviorHeldBagTyped : CollectibleBehaviorHeldBag
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack bagstack)
     {
+        if (storageFlagsByType == null || !storageFlagsByType.Any())
+        {
+            return base.GetStorageFlags(bagstack);
+        }
+
         Variants variants = Variants.FromStack(bagstack);
         bool found = variants.FindByVariant(storageFlagsByType, out EnumItemStorageFlags storageFlags);
 

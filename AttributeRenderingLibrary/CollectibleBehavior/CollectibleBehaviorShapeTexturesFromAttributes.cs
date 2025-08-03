@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -31,11 +32,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
         if (properties != null)
         {
-            NameByType = properties["name"].AsObject(defaultValue: new Dictionary<string, List<object>>());
-            DescriptionByType = properties["description"].AsObject(defaultValue: new Dictionary<string, List<object>>());
+            NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
+            DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
 
-            shapeByType = properties["shape"].AsObject(defaultValue: new Dictionary<string, CompositeShape>());
-            texturesByType = properties["textures"].AsObject(defaultValue: new Dictionary<string, Dictionary<string, CompositeTexture>>());
+            shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
+            texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
         }
     }
 
@@ -104,6 +105,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
     {
+        if (NameByType == null || !NameByType.Any())
+        {
+            return;
+        }
+
         Variants variants = Variants.FromStack(itemStack);
         variants.FindByVariant(NameByType, out List<object> _langKeys);
 
@@ -119,6 +125,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
+        if (DescriptionByType == null || !DescriptionByType.Any())
+        {
+            return;
+        }
+
         Variants variants = Variants.FromStack(inSlot.Itemstack);
         variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
         variants.GetDescription(dsc, _langKeys);

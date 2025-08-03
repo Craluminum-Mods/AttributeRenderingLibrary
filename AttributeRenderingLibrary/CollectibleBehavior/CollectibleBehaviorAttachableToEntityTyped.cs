@@ -24,10 +24,10 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
     {
         base.Initialize(properties);
 
-        attachedShapeBySlotCodeByType = properties["attachedShapeBySlotCode"].AsObject(defaultValue: new Dictionary<string, OrderedDictionary<string, CompositeShape>>());
-        categoryCodeByType = properties["categoryCode"].AsObject(defaultValue: new Dictionary<string, string>());
-        disableElementsByType = properties["disableElements"].AsObject(defaultValue: new Dictionary<string, string[]>());
-        keepElementsByType = properties["keepElements"].AsObject(defaultValue: new Dictionary<string, string[]>());
+        attachedShapeBySlotCodeByType = properties["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
+        categoryCodeByType = properties["categoryCode"].AsObject<Dictionary<string, string>>();
+        disableElementsByType = properties["disableElements"].AsObject<Dictionary<string, string[]>>();
+        keepElementsByType = properties["keepElements"].AsObject<Dictionary<string, string[]>>();
     }
 
     public override void OnLoaded(ICoreAPI api)
