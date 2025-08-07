@@ -149,4 +149,6 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
     {
         return true;
     }
+
+    int IAttachableToEntity.RequiresBehindSlots { get; set; }
 }
