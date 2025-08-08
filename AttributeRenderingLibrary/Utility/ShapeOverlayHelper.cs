@@ -78,6 +78,11 @@ public class ShapeOverlayHelper
         {
             CompositeTexture ctex = texture.Clone();
             ctex = variants.ReplacePlaceholders(ctex);
+            if (!clientApi.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
+            {
+                ctex.Base.Path = "unknown";
+                ctex.Base.Domain = "game";
+            }
             ctex.Bake(clientApi.Assets);
             if (prefixedTextureCodes != null && prefixedTextureCodes.ContainsKey(textureCode))
             {

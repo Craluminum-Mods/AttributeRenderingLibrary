@@ -51,12 +51,18 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
         }
 
         Variants variants = Variants.FromStack(stack);
+        ICoreClientAPI capi = api as ICoreClientAPI;
         if (variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures))
         {
             foreach ((string textureCode, CompositeTexture texture) in _textures)
             {
                 CompositeTexture ctex = texture.Clone();
                 ctex = variants.ReplacePlaceholders(ctex);
+                if (!api.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
+                {
+                    ctex.Base.Path = "unknown";
+                    ctex.Base.Domain = "game";
+                }
                 ctex.Bake(api.Assets);
                 intoDict[textureCode] = ctex;
                 shape.Textures[textureCode] = ctex.Baked.BakedName;
