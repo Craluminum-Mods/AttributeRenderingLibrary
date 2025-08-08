@@ -39,7 +39,7 @@ public class ShapeOverlayHelper
         foreach (CompositeShape overlay in originShape.Overlays)
         {
             variants.ReplacePlaceholders(overlay.Base);
-            overlay.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
+            overlay.Base = overlay.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
             resolvedOverlayShape = clientApi.Assets.TryGet(overlay.Base)?.ToObject<Shape>();
 
             if (resolvedOverlayShape == null) continue;

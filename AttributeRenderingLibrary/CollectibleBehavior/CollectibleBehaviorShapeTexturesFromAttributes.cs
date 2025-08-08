@@ -58,7 +58,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         if (ucshape == null) return mesh;
 
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
+        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
         Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
         if (shape == null) return mesh;

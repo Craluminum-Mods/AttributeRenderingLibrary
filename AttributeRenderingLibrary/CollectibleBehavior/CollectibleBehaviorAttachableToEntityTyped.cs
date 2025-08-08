@@ -95,7 +95,7 @@ public class CollectibleBehaviorAttachableToEntityTyped : CollectibleBehavior, I
                     List<CompositeShape> overlays = new();
                     foreach (CompositeShape overlay in rcshape.Overlays)
                     {
-                        if (api.Assets.Exists(overlay.Base.Clone().WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json")))
+                        if (api.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
                         {
                             overlays.Add(overlay);
                         }
