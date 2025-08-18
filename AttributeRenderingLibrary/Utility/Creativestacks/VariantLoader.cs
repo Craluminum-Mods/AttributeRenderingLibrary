@@ -31,14 +31,14 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
         private const int MAX_STACKS_PER_TICK = 1000;
         private const string ATTRIBUTE_TYPE_KEY = "types";
-#if DEBUG
+#if VERBOSEDEBUG
         private const string DEBUG_FROM_COMBINE = "fromcombine";
         private const string DEBUG_COMBINE_INDEX = "index";
 #endif
 
         private int activeThreadCounter = 0;
-
-        public bool HaveWorkerThreadsFinished = true;
+        private bool forceStopWorkers = false;
+        public bool HaveWorkerThreadsFinished { get; private set; } = true;
 
         public event Action WorkerThreadsFinished;
 
@@ -49,12 +49,23 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
         public void Dispose()
         {
-            // TODO: add signal that stops all worker threads and make sure everything's actually disposed
+            if (activeThreadCounter > 0 && !HaveWorkerThreadsFinished)
+            {
+                WorkerThreadsFinished += OnReadyForDisposal;
+                forceStopWorkers = true;
+            }
             collectiblesToGenerate.Clear();
-            collectiblesToGenerate = null;
             collectibleGenerationQueue.Clear();
-            collectibleGenerationQueue = null;
+            finishedStacks.Clear();
             worldProperties.Clear();
+        }
+
+        private void OnReadyForDisposal()
+        {
+            WorkerThreadsFinished -= OnReadyForDisposal;
+            collectiblesToGenerate = null;
+            collectibleGenerationQueue = null;
+            finishedStacks = null;
             worldProperties = null;
         }
 
@@ -77,6 +88,10 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 return;
             }
             HaveWorkerThreadsFinished = false;
+            forceStopWorkers = false;
+
+            // TODO: banish this base-game guessing game to the shadow realm,
+            // and implement a heuristic for figuring out ok thread counts
 
             // lifted from base game, probably fine as-is
             int maxThreads = (serverApi.Server.IsDedicated ? 3 : 8);
@@ -118,6 +133,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 return;
             }
             HaveWorkerThreadsFinished = false;
+            forceStopWorkers = false;
 
             ConcurrentQueue<CollectibleObject> processingQueue = new();
             for (int i = 0; i < collectiblesToGenerate.Count; i++)
@@ -301,6 +317,12 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         /// </summary>
         public void CollectCollectibleObjectsToGenerate()
         {
+            if (!HaveWorkerThreadsFinished || activeThreadCounter > 0)
+            {
+                logger.Warning("Error loading collectibles with attribute variants; previous collectibles still in use by some threads");
+                return;
+            }
+
             collectibleGenerationQueue.Clear();
 
             CollectibleBehaviorGenerateCreativeStacks behavior;
@@ -328,6 +350,12 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         /// </summary>
         public void CollectVariantsFromWorldProperties()
         {
+            if (!HaveWorkerThreadsFinished || activeThreadCounter > 0)
+            {
+                logger.Warning("Error collecting world property variant groups, worldProperties are still in use by some threads");
+                return;
+            }
+
             worldProperties.Clear();
 
             Dictionary<int, AssetLocation> locations = new();
@@ -415,15 +443,16 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         private void StackGenerationWorker()
         {
             CollectibleAndStackGenerationBehavior operand;
-            Dictionary<string, CombineState> variantGroups = new();
+            Dictionary<string, CombineState> variantGroups;
 
             List<JsonObject> variantAttributes;
             JsonItemStack[] resultStacks;
 
-            while (collectibleGenerationQueue.TryDequeue(out operand))
+            while (collectibleGenerationQueue.TryDequeue(out operand) && !forceStopWorkers)
             {
+                variantGroups = new();
                 CollectVariantGroupsForInstance(operand.CollectibleBehavior, variantGroups);
-#if DEBUG
+#if VERBOSEDEBUG
                 logger.Debug($"found {variantGroups.Count} variant groups for collectible {operand.CollectibleObject.Code}");
                 foreach (var entry in variantGroups)
                 {
@@ -462,7 +491,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 };
                 // resolve seems to only perform read operations on WorldAccessor,
                 // so this should be fine to do off the main thread I think
-#if DEBUG
+#if VERBOSEDEBUG
                 result[i].Resolve(serverApi.World, "attributerenderinglibrary");
 #else
                 result[i].Resolve(serverApi.World, "attributerenderinglibrary", false);
@@ -520,7 +549,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 jtemplate = new JObject();
                 jattribute[group.Code] = JToken.FromObject(state);
                 jtemplate[ATTRIBUTE_TYPE_KEY] = jattribute;
-#if DEBUG
+#if VERBOSEDEBUG
                 jtemplate[DEBUG_FROM_COMBINE] = "add";
                 jtemplate[DEBUG_COMBINE_INDEX] = i.ToString();
 #endif
@@ -571,7 +600,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                         template[ATTRIBUTE_TYPE_KEY] = new JObject();
                         multiplyVariants[i] = new JsonObject(template);
 
-#if DEBUG
+#if VERBOSEDEBUG
                         multiplyVariants[i].Token[DEBUG_FROM_COMBINE] = "multiply";
                         multiplyVariants[i].Token[DEBUG_COMBINE_INDEX] = i.ToString();
 #endif
@@ -607,7 +636,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
                 template = new JsonObject(new JObject());
                 template.Token[group.Code] = JToken.FromObject(state);
-#if DEBUG
+#if VERBOSEDEBUG
                 template.Token[DEBUG_FROM_COMBINE] = "multiplyselective";
                 template.Token[DEBUG_COMBINE_INDEX] = i.ToString();
 #endif
@@ -642,10 +671,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
             foreach (var variantGroup in stackBehavior.AttributeVariantGroups)
             {
-                /*if (!IsVariantCodeValid(variantGroup))
-                {
-                    continue;
-                }*/
                 uniqueVariantCodes.Clear();
 
                 if (variantGroup.States != null && variantGroup.States.Length > 0)
@@ -658,7 +683,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 {
                     foreach (var variant in worldVariants)
                     {
-                        // uniqueVariantCodes.AddRange(variant.Codes);
                         uniqueVariantCodes.Add(variant.Code);
                     }
                 }
