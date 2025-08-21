@@ -42,14 +42,35 @@ public class Variants
         Elements.TryAdd(key, value);
     }
 
-    public void Set(Variant variant)
+    public void Set(params Variant[] newVariants)
     {
+        if (newVariants == null || newVariants.Length == 0)
+        {
+            return;
+        }
+
+        foreach (Variant variant in newVariants)
+        {
         Set(variant.Key, variant.Value);
     }
+    }
 
-    public void RemoveKey(string key)
+    public void Set(Dictionary<string, string> newVariants)
     {
-        Elements.Remove(key);
+        if (newVariants == null || newVariants.Count == 0)
+        {
+            return;
+    }
+
+        foreach ((string key, string value) in newVariants)
+        {
+            Set(key, value);
+        }
+    }
+
+    public void RemoveKeys(params string[] keys)
+    {
+        Elements.RemoveAllByKey(key => keys.Contains(key));
     }
 
     public static Variants FromTreeAttribute(ITreeAttribute rootTree)

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -9,10 +8,11 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource, IShapeTexturesFromAttributes
+public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName
 {
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
+    public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -37,6 +37,7 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource, IShap
         {
             NameByType = Attributes["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = Attributes["description"].AsObject<Dictionary<string, List<object>>>();
+            ContainedDescriptionByType = Attributes["containedDescription"].AsObject<Dictionary<string, List<object>>>();
 
             shapeByType = Attributes["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = Attributes["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -102,7 +103,7 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource, IShap
 
     public override string GetHeldItemName(ItemStack itemStack)
     {
-        if (NameByType == null || !NameByType.Any())
+        if (NameByType == null || NameByType.Count == 0)
         {
             return base.GetHeldItemName(itemStack);
         }
@@ -122,7 +123,7 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource, IShap
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        if (DescriptionByType == null || !DescriptionByType.Any())
+        if (DescriptionByType == null || DescriptionByType.Count == 0)
         {
             return;
         }
@@ -141,5 +142,30 @@ public class ItemShapeTexturesFromAttributes : Item, IContainedMeshSource, IShap
     public virtual string GetMeshCacheKey(ItemStack itemstack)
     {
         return $"{itemstack.Collectible.Code}-{Variants.FromStack(itemstack)}";
+    }
+
+    public virtual string GetContainedInfo(ItemSlot inSlot)
+    {
+        if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
+        {
+            return GetHeldItemName(inSlot.Itemstack);
+        }
+
+        StringBuilder dsc = new();
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys);
+
+        if (_langKeys == null || _langKeys.Count == 0)
+        {
+            return GetHeldItemName(inSlot.Itemstack);
+        }
+
+        variants.GetDescription(dsc, _langKeys);
+        return dsc.ToString();
+    }
+
+    public virtual string GetContainedName(ItemSlot inSlot, int quantity)
+    {
+        return GetHeldItemName(inSlot.Itemstack);
     }
 }
