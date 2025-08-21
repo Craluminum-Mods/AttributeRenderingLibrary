@@ -1,12 +1,12 @@
 ﻿using HarmonyLib;
-using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.Util;
 
 namespace AttributeRenderingLibrary;
 
@@ -31,7 +31,7 @@ public class Variants
     {
         return Elements.GetValueSafe(key);
     }
-    
+
     public void Set(string key, string value)
     {
         if (Elements.ContainsKey(key))
@@ -51,8 +51,8 @@ public class Variants
 
         foreach (Variant variant in newVariants)
         {
-        Set(variant.Key, variant.Value);
-    }
+            Set(variant.Key, variant.Value);
+        }
     }
 
     public void Set(Dictionary<string, string> newVariants)
@@ -60,7 +60,7 @@ public class Variants
         if (newVariants == null || newVariants.Count == 0)
         {
             return;
-    }
+        }
 
         foreach ((string key, string value) in newVariants)
         {
@@ -185,68 +185,5 @@ public class Variants
         {
             Elements = Elements
         };
-    }
-
-    public void AppendTranslatedText(StringBuilder sb, List<object> entries)
-    {
-        foreach (var entry in entries)
-        {
-            if (entry is string)
-            {
-                sb.Append(Lang.GetMatching(ReplacePlaceholders(entry.ToString())));
-            }
-            else if (entry is JArray array && array.Any())
-            {
-                object[] args = array.Skip(1).Select(arg =>
-                {
-                    if (arg.Type == JTokenType.String)
-                    {
-                        return (object)ReplacePlaceholders(arg.ToString());
-                    }
-                    return (object)arg;
-                }).ToArray();
-
-                string key = ReplacePlaceholders(array[0].ToString());
-                sb.Append(Lang.GetMatching(key, args).ToArray());
-            }
-        }
-    }
-
-    public string GetName(List<object> entries)
-    {
-        if (!Any || entries == null || !entries.Any())
-        {
-            return "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        AppendTranslatedText(sb, entries);
-        return sb.ToString();
-    }
-
-    public void GetDescription(StringBuilder sb, List<object> entries)
-    {
-        if (!Any || entries == null || !entries.Any())
-        {
-            return;
-        }
-
-        AppendTranslatedText(sb, entries);
-    }
-
-    public void GetDebugDescription(StringBuilder sb, bool withDebugInfo = false)
-    {
-        if (!Any)
-        {
-            return;
-        }
-        if (withDebugInfo)
-        {
-            sb.AppendLine();
-            foreach ((string key, string value) in Elements)
-            {
-                sb.AppendLine($"DEBUG::{key}-{value}");
-            }
-        }
     }
 }
