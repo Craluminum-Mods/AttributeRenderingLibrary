@@ -70,22 +70,11 @@ public static class VariantExtensions
     /// </remarks>
     public static void OverwriteVariants(this ItemStack oldStack, out ItemStack newStack, Dictionary<string, string> setVariants = null, List<string> removeVariants = null, Variants variants = null)
     {
-        Variants newVariants = variants?.Clone() ?? Variants.FromStack(oldStack.Clone())?.Clone();
-
-        setVariants ??= new();
-        removeVariants ??= new();
-
-        foreach ((string key, string value) in setVariants)
-        {
-            newVariants.Set(key, value);
-        }
-
-        foreach (string key in removeVariants)
-        {
-            newVariants.RemoveKey(key);
-        }
-
         newStack = oldStack.Clone();
+        Variants newVariants = variants?.Clone() ?? Variants.FromStack(newStack);
+
+        newVariants.Set(setVariants);
+        newVariants.RemoveKeys(removeVariants?.ToArray());
         newVariants.ToStack(newStack);
     }
 }
