@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -10,10 +9,11 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavior, IContainedMeshSource, IShapeTexturesFromAttributes
+public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavior, IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName
 {
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
+    public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -34,6 +34,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         {
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+            ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -105,7 +106,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
     {
-        if (NameByType == null || !NameByType.Any())
+        if (NameByType == null || NameByType.Count == 0)
         {
             return;
         }
@@ -125,7 +126,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
-        if (DescriptionByType == null || !DescriptionByType.Any())
+        if (DescriptionByType == null || DescriptionByType.Count == 0)
         {
             return;
         }
@@ -144,5 +145,30 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public virtual string GetMeshCacheKey(ItemStack itemstack)
     {
         return $"{itemstack.Collectible.Code}-{Variants.FromStack(itemstack)}";
+    }
+
+    public virtual string GetContainedInfo(ItemSlot inSlot)
+    {
+        if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
+        {
+            return collObj.GetHeldItemName(inSlot.Itemstack);
+        }
+
+        StringBuilder dsc = new();
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys);
+
+        if (_langKeys == null || _langKeys.Count == 0)
+        {
+            return collObj.GetHeldItemName(inSlot.Itemstack);
+        }
+
+        variants.GetDescription(dsc, _langKeys);
+        return dsc.ToString();
+    }
+
+    public virtual string GetContainedName(ItemSlot inSlot, int quantity)
+    {
+        return collObj.GetHeldItemName(inSlot.Itemstack);
     }
 }
