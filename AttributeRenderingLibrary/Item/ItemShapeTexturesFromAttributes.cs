@@ -25,12 +25,14 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, string> categoryCodeByType = new();
     public Dictionary<string, string[]> disableElementsByType = new();
     public Dictionary<string, string[]> keepElementsByType = new();
+    private IAttachableToEntity iattr;
     #endregion
 
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
         LoadTypes();
+        iattr = IAttachableToEntity.FromAttributes(this);
     }
 
     public override void OnUnloaded(ICoreAPI api)
@@ -52,10 +54,10 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             shapeByType = Attributes["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = Attributes["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
-            attachedShapeBySlotCodeByType = Attributes["attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
-            categoryCodeByType = Attributes["attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
-            disableElementsByType = Attributes["attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
-            keepElementsByType = Attributes["attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
+            attachedShapeBySlotCodeByType = Attributes["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
+            categoryCodeByType = Attributes["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
+            disableElementsByType = Attributes["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
+            keepElementsByType = Attributes["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
         }
     }
 

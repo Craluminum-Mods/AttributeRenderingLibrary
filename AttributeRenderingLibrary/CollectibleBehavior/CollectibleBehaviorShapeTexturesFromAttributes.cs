@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -18,15 +17,17 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
     public Dictionary<string, bool> VisibleDamageEffectByType { get; protected set; } = new();
 
+    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
+
     #region IAttachableToEntity
     public Dictionary<string, OrderedDictionary<string, CompositeShape>> attachedShapeBySlotCodeByType = new();
     public Dictionary<string, string> categoryCodeByType = new();
     public Dictionary<string, string[]> disableElementsByType = new();
     public Dictionary<string, string[]> keepElementsByType = new();
+    private IAttachableToEntity iattr;
     #endregion
 
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
     private ICoreClientAPI clientApi;
 
     public CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : base(collObj) { }
@@ -40,20 +41,22 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     {
         base.Initialize(properties);
 
+        iattr = IAttachableToEntity.FromAttributes(collObj);
+
         if (properties != null)
         {
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
             ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
-            VisibleDamageEffectByType = properties["visibleDamageEffectByType"].AsObject<Dictionary<string, bool>>();
+            VisibleDamageEffectByType = properties["visibleDamageEffect"].AsObject<Dictionary<string, bool>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
-            attachedShapeBySlotCodeByType = properties["attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
-            categoryCodeByType = properties["attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
-            disableElementsByType = properties["attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
-            keepElementsByType = properties["attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
+            attachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
+            categoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
+            disableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
+            keepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
         }
     }
 
@@ -225,11 +228,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     {
         if (attachedShapeBySlotCodeByType == null || attachedShapeBySlotCodeByType.Count == 0)
         {
-            if (stack.Class != EnumItemClass.Item)
-            {
-                return stack.Block.Shape;
-            }
-            return stack.Item.Shape;
+            return iattr?.GetAttachedShape(stack, slotCode);
         }
 
         Variants variants = Variants.FromStack(stack);
@@ -261,18 +260,14 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             }
         }
 
-        if (stack.Class != EnumItemClass.Item)
-        {
-            return stack.Block.Shape;
-        }
-        return stack.Item.Shape;
+        return iattr?.GetAttachedShape(stack, slotCode);
     }
 
     string IAttachableToEntity.GetCategoryCode(ItemStack stack)
     {
         if (categoryCodeByType == null || categoryCodeByType.Count == 0)
         {
-            return "";
+            return iattr?.GetCategoryCode(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
@@ -284,7 +279,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     {
         if (disableElementsByType == null || disableElementsByType.Count == 0)
         {
-            return Array.Empty<string>();
+            return iattr?.GetDisableElements(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
@@ -296,7 +291,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     {
         if (keepElementsByType == null || keepElementsByType.Count == 0)
         {
-            return Array.Empty<string>();
+            return iattr?.GetKeepElements(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
@@ -304,16 +299,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         return keepElements;
     }
 
-    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack)
-    {
-        string texturePrefixCode = stack.Collectible.GetCollectibleInterface<IContainedMeshSource>().GetMeshCacheKey(stack);
-        return texturePrefixCode;
-    }
+    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(stack);
 
-    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack)
-    {
-        return true;
-    }
+    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
 
     int IAttachableToEntity.RequiresBehindSlots { get; set; }
 }
