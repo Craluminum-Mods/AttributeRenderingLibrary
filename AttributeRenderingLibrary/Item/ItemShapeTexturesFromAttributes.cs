@@ -223,17 +223,16 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     {
         if (attachedShapeBySlotCodeByType == null || attachedShapeBySlotCodeByType.Count == 0)
         {
-            if (stack.Class != EnumItemClass.Item)
-            {
-                return stack.Block.Shape;
-            }
-            return stack.Item.Shape;
+            return iattr?.GetAttachedShape(stack, slotCode);
         }
 
         Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(attachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode);
+        if (!variants.FindByVariant(attachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode))
+        {
+            return iattr?.GetAttachedShape(stack, slotCode);
+        }
 
-        if (attachedShapeBySlotCode != null)
+        if (attachedShapeBySlotCode != null && attachedShapeBySlotCode.Count != 0)
         {
             foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
             {
@@ -259,18 +258,14 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             }
         }
 
-        if (stack.Class != EnumItemClass.Item)
-        {
-            return stack.Block.Shape;
-        }
-        return stack.Item.Shape;
+        return iattr?.GetAttachedShape(stack, slotCode);
     }
 
     string IAttachableToEntity.GetCategoryCode(ItemStack stack)
     {
         if (categoryCodeByType == null || categoryCodeByType.Count == 0)
         {
-            return "";
+            return iattr?.GetCategoryCode(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
@@ -282,7 +277,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     {
         if (disableElementsByType == null || disableElementsByType.Count == 0)
         {
-            return Array.Empty<string>();
+            return iattr?.GetDisableElements(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
@@ -294,7 +289,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     {
         if (keepElementsByType == null || keepElementsByType.Count == 0)
         {
-            return Array.Empty<string>();
+            return iattr?.GetKeepElements(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
@@ -302,16 +297,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return keepElements;
     }
 
-    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack)
-    {
-        string texturePrefixCode = stack.Collectible.GetCollectibleInterface<IContainedMeshSource>().GetMeshCacheKey(stack);
-        return texturePrefixCode;
-    }
+    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(stack);
 
-    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack)
-    {
-        return true;
-    }
+    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
 
     int IAttachableToEntity.RequiresBehindSlots { get; set; }
 }

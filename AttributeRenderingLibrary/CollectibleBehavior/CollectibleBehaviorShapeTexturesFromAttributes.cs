@@ -35,13 +35,12 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public override void OnLoaded(ICoreAPI api)
     {
         clientApi = api as ICoreClientAPI;
+        iattr = IAttachableToEntity.FromAttributes(collObj);
     }
 
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
-
-        iattr = IAttachableToEntity.FromAttributes(collObj);
 
         if (properties != null)
         {
@@ -232,9 +231,12 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         }
 
         Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(attachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode);
+        if (!variants.FindByVariant(attachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode))
+        {
+            return iattr?.GetAttachedShape(stack, slotCode);
+        }
 
-        if (attachedShapeBySlotCode != null)
+        if (attachedShapeBySlotCode != null && attachedShapeBySlotCode.Count != 0)
         {
             foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
             {
