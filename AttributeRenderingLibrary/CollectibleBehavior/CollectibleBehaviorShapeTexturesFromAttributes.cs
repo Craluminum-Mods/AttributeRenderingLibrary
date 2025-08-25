@@ -2,6 +2,7 @@
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
@@ -9,7 +10,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavior, IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName
+public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavior, IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
@@ -17,6 +18,15 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
+
+    #region IAttachableToEntity
+    public Dictionary<string, OrderedDictionary<string, CompositeShape>> attachedShapeBySlotCodeByType = new();
+    public Dictionary<string, string> categoryCodeByType = new();
+    public Dictionary<string, string[]> disableElementsByType = new();
+    public Dictionary<string, string[]> keepElementsByType = new();
+    private IAttachableToEntity iattr;
+    #endregion
+
     private ICoreClientAPI clientApi;
 
     public CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : base(collObj) { }
@@ -24,6 +34,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public override void OnLoaded(ICoreAPI api)
     {
         clientApi = api as ICoreClientAPI;
+        iattr = IAttachableToEntity.FromAttributes(collObj);
     }
 
     public override void Initialize(JsonObject properties)
@@ -38,6 +49,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+
+            attachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
+            categoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
+            disableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
+            keepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
         }
     }
 
@@ -171,4 +187,121 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     {
         return collObj.GetHeldItemName(inSlot.Itemstack);
     }
+
+    void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
+    {
+        foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
+        {
+            shape.Textures[textureCode] = texture.Baked.BakedName;
+        }
+
+        Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
+
+        if (stack.Collectible.GetCollectibleInterface<IShapeTexturesFromAttributes>() is IShapeTexturesFromAttributes STFA)
+        {
+            texturesByType = STFA.texturesByType;
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures))
+        {
+            foreach ((string textureCode, CompositeTexture texture) in _textures)
+            {
+                CompositeTexture ctex = texture.Clone();
+                ctex = variants.ReplacePlaceholders(ctex);
+                if (!clientApi.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
+                {
+                    ctex.Base.Path = "unknown";
+                    ctex.Base.Domain = "game";
+                }
+                ctex.Bake(clientApi.Assets);
+                intoDict[textureCode] = ctex;
+                shape.Textures[textureCode] = ctex.Baked.BakedName;
+            }
+        }
+    }
+
+    CompositeShape IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode)
+    {
+        if (attachedShapeBySlotCodeByType == null || attachedShapeBySlotCodeByType.Count == 0)
+        {
+            return iattr?.GetAttachedShape(stack, slotCode);
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        if (!variants.FindByVariant(attachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode))
+        {
+            return iattr?.GetAttachedShape(stack, slotCode);
+        }
+
+        if (attachedShapeBySlotCode != null && attachedShapeBySlotCode.Count != 0)
+        {
+            foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
+            {
+                if (WildcardUtil.Match(_slotCode, slotCode))
+                {
+                    CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
+                    if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
+                    {
+                        return rcshape;
+                    }
+
+                    List<CompositeShape> overlays = new();
+                    foreach (CompositeShape overlay in rcshape.Overlays)
+                    {
+                        if (clientApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
+                        {
+                            overlays.Add(overlay);
+                        }
+                    }
+                    rcshape.Overlays = overlays.ToArray();
+                    return rcshape;
+                }
+            }
+        }
+
+        return iattr?.GetAttachedShape(stack, slotCode);
+    }
+
+    string IAttachableToEntity.GetCategoryCode(ItemStack stack)
+    {
+        if (categoryCodeByType == null || categoryCodeByType.Count == 0)
+        {
+            return iattr?.GetCategoryCode(stack);
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(categoryCodeByType, out string categoryCode);
+        return categoryCode;
+    }
+
+    string[] IAttachableToEntity.GetDisableElements(ItemStack stack)
+    {
+        if (disableElementsByType == null || disableElementsByType.Count == 0)
+        {
+            return iattr?.GetDisableElements(stack);
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(disableElementsByType, out string[] disableElements);
+        return disableElements;
+    }
+
+    string[] IAttachableToEntity.GetKeepElements(ItemStack stack)
+    {
+        if (keepElementsByType == null || keepElementsByType.Count == 0)
+        {
+            return iattr?.GetKeepElements(stack);
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(keepElementsByType, out string[] keepElements);
+        return keepElements;
+    }
+
+    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(stack);
+
+    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
+
+    int IAttachableToEntity.RequiresBehindSlots { get; set; }
 }
