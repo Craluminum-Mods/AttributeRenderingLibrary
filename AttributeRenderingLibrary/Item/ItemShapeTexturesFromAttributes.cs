@@ -300,6 +300,4 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(stack);
 
     bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
-
-    int IAttachableToEntity.RequiresBehindSlots { get; set; }
 }

@@ -302,6 +302,4 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(stack);
 
     bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
-
-    int IAttachableToEntity.RequiresBehindSlots { get; set; }
 }
