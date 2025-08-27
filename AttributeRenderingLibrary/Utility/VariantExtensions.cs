@@ -1,6 +1,9 @@
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Util;
 
 namespace AttributeRenderingLibrary;
@@ -70,22 +73,74 @@ public static class VariantExtensions
     /// </remarks>
     public static void OverwriteVariants(this ItemStack oldStack, out ItemStack newStack, Dictionary<string, string> setVariants = null, List<string> removeVariants = null, Variants variants = null)
     {
-        Variants newVariants = variants?.Clone() ?? Variants.FromStack(oldStack.Clone())?.Clone();
-
-        setVariants ??= new();
-        removeVariants ??= new();
-
-        foreach ((string key, string value) in setVariants)
-        {
-            newVariants.Set(key, value);
-        }
-
-        foreach (string key in removeVariants)
-        {
-            newVariants.RemoveKey(key);
-        }
-
         newStack = oldStack.Clone();
+        Variants newVariants = variants?.Clone() ?? Variants.FromStack(newStack);
+
+        newVariants.Set(setVariants);
+        newVariants.RemoveKeys(removeVariants?.ToArray());
         newVariants.ToStack(newStack);
+    }
+
+    public static void AppendTranslatedText(this Variants variants, StringBuilder sb, List<object> entries)
+    {
+        foreach (var entry in entries)
+        {
+            if (entry is string)
+            {
+                sb.Append(Lang.GetMatching(variants.ReplacePlaceholders(entry.ToString())));
+            }
+            else if (entry is JArray array && array.Any())
+            {
+                object[] args = array.Skip(1).Select(arg =>
+                {
+                    if (arg.Type == JTokenType.String)
+                    {
+                        return (object)variants.ReplacePlaceholders(arg.ToString());
+                    }
+                    return (object)arg;
+                }).ToArray();
+
+                string key = variants.ReplacePlaceholders(array[0].ToString());
+                sb.Append(Lang.GetMatching(key, args).ToArray());
+            }
+        }
+    }
+
+    public static string GetName(this Variants variants, List<object> entries)
+    {
+        if (!variants.Any || entries == null || !entries.Any())
+        {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        variants.AppendTranslatedText(sb, entries);
+        return sb.ToString();
+    }
+
+    public static void GetDescription(this Variants variants, StringBuilder sb, List<object> entries)
+    {
+        if (!variants.Any || entries == null || !entries.Any())
+        {
+            return;
+        }
+
+        variants.AppendTranslatedText(sb, entries);
+    }
+
+    public static void GetDebugDescription(this Variants variants, StringBuilder sb, bool withDebugInfo = false)
+    {
+        if (!variants.Any)
+        {
+            return;
+        }
+        if (withDebugInfo)
+        {
+            sb.AppendLine();
+            foreach (string keyVal in variants.GetAsStringArray())
+            {
+                sb.AppendLine($"DEBUG::{keyVal}");
+            }
+        }
     }
 }
