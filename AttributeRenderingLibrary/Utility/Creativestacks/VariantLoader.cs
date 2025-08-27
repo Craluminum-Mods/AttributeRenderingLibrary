@@ -31,10 +31,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
         private const int MAX_STACKS_PER_TICK = 1000;
         private const string ATTRIBUTE_TYPE_KEY = "types";
-#if VERBOSEDEBUG
-        private const string DEBUG_FROM_COMBINE = "fromcombine";
-        private const string DEBUG_COMBINE_INDEX = "index";
-#endif
 
         private int activeThreadCounter = 0;
         private bool forceStopWorkers = false;
@@ -549,10 +545,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 jtemplate = new JObject();
                 jattribute[group.Code] = JToken.FromObject(state);
                 jtemplate[ATTRIBUTE_TYPE_KEY] = jattribute;
-#if VERBOSEDEBUG
-                jtemplate[DEBUG_FROM_COMBINE] = "add";
-                jtemplate[DEBUG_COMBINE_INDEX] = i.ToString();
-#endif
 
                 attributes.Add(new JsonObject(jtemplate));
             }
@@ -599,11 +591,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                         template = new JObject();
                         template[ATTRIBUTE_TYPE_KEY] = new JObject();
                         multiplyVariants[i] = new JsonObject(template);
-
-#if VERBOSEDEBUG
-                        multiplyVariants[i].Token[DEBUG_FROM_COMBINE] = "multiply";
-                        multiplyVariants[i].Token[DEBUG_COMBINE_INDEX] = i.ToString();
-#endif
                     }
 
                     stateIndex = (i % chunkSize) / remainingLength;
@@ -636,10 +623,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
                 template = new JsonObject(new JObject());
                 template.Token[group.Code] = JToken.FromObject(state);
-#if VERBOSEDEBUG
-                template.Token[DEBUG_FROM_COMBINE] = "multiplyselective";
-                template.Token[DEBUG_COMBINE_INDEX] = i.ToString();
-#endif
 
                 foreach (var entry in variants)
                 {
