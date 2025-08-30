@@ -165,6 +165,12 @@ public class Variants
         return ctex;
     }
 
+    public BlendedOverlayTexture ReplacePlaceholders(BlendedOverlayTexture ctex)
+    {
+        ctex.Base = ReplacePlaceholders(ctex.Base);
+        return ctex;
+    }
+
     public JsonItemStack ReplacePlaceholders(JsonItemStack jstack)
     {
         foreach ((string key, string value) in Elements)

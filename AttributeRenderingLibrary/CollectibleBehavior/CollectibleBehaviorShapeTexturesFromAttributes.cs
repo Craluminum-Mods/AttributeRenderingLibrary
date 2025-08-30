@@ -17,7 +17,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
+    public Dictionary<string, CompositeShape[]> shapeOverlaysByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
+    public Dictionary<string, Dictionary<string, BlendedOverlayTexture[]>> textureOverlaysByType { get; protected set; } = new();
 
     #region IAttachableToEntity
     public Dictionary<string, OrderedDictionary<string, CompositeShape>> attachedShapeBySlotCodeByType = new();
@@ -48,7 +50,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
+            shapeOverlaysByType = properties["shapeOverlays"].AsObject<Dictionary<string, CompositeShape[]>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+            textureOverlaysByType = properties["textureOverlays"].AsObject<Dictionary<string, Dictionary<string, BlendedOverlayTexture[]>>>();
 
             attachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
             categoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
@@ -84,10 +88,24 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;
         string overlayPrefix = "";
 
+        if (shapeOverlaysByType != null && shapeOverlaysByType.Count != 0 && variants.FindByVariant(shapeOverlaysByType, out CompositeShape[] extraShapeOverlays) && extraShapeOverlays != null && extraShapeOverlays.Length != 0)
+        {
+            rcshape.Overlays ??= [];
+            rcshape.Overlays = rcshape.Overlays.Append(extraShapeOverlays);
+        }
+
         if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
         {
             overlayPrefix = GetMeshCacheKey(itemstack);
-            prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
+
+            prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, new ShapeOverlaysProperties()
+            {
+                OverlayPrefix = overlayPrefix,
+                OriginShape = rcshape,
+                Shape = shape,
+                Variants = variants,
+                TextureSource = stexSource
+            });
         }
 
         foreach ((string textureCode, CompositeTexture texture) in itemstack.Item.Textures)
@@ -95,7 +113,15 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             stexSource.textures[textureCode] = texture;
         }
 
-        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
+        ShapeOverlayHelper.BakeVariantTextures(clientApi, new BakeTextureProperties()
+        {
+            TextureSource = stexSource,
+            Variants = variants,
+            TexturesByType = texturesByType,
+            TextureOverlaysByType = textureOverlaysByType,
+            PrefixedTextureCodes = prefixedTextureCodes,
+            OverlayPrefix = overlayPrefix
+        });
 
         clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes behavior", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
         return mesh;
@@ -203,21 +229,32 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         }
 
         Variants variants = Variants.FromStack(stack);
-        if (variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures))
+
+        BakeTextureProperties props = new BakeTextureProperties()
         {
-            foreach ((string textureCode, CompositeTexture texture) in _textures)
+            Variants = variants,
+            TexturesByType = texturesByType,
+            TextureOverlaysByType = textureOverlaysByType,
+            OverlayPrefix = texturePrefixCode
+        };
+
+        if (!props.Resolve()) return;
+
+        foreach ((string textureCode, CompositeTexture texture) in props.textures)
+        {
+            CompositeTexture ctex = texture.Clone();
+
+            ctex = props.ApplyOverlaysToTexture(ctex, textureCode);
+
+            ctex = variants.ReplacePlaceholders(ctex);
+            if (!clientApi.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
             {
-                CompositeTexture ctex = texture.Clone();
-                ctex = variants.ReplacePlaceholders(ctex);
-                if (!clientApi.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
-                {
-                    ctex.Base.Path = "unknown";
-                    ctex.Base.Domain = "game";
-                }
-                ctex.Bake(clientApi.Assets);
-                intoDict[textureCode] = ctex;
-                shape.Textures[textureCode] = ctex.Baked.BakedName;
+                ctex.Base.Path = "unknown";
+                ctex.Base.Domain = "game";
             }
+            ctex.Bake(clientApi.Assets);
+            intoDict[textureCode] = ctex;
+            shape.Textures[textureCode] = ctex.Baked.BakedName;
         }
     }
 
@@ -241,6 +278,13 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
                 if (WildcardUtil.Match(_slotCode, slotCode))
                 {
                     CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
+
+                    if (variants.FindByVariant(shapeOverlaysByType, out CompositeShape[] extraShapeOverlays))
+                    {
+                        rcshape.Overlays ??= [];
+                        rcshape.Overlays = rcshape.Overlays.Append(extraShapeOverlays);
+                    }
+
                     if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
                     {
                         return rcshape;

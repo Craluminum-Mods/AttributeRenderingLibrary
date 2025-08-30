@@ -7,5 +7,7 @@ namespace AttributeRenderingLibrary;
 public interface IShapeTexturesFromAttributes
 {
     public Dictionary<string, CompositeShape> shapeByType { get; }
+    public Dictionary<string, CompositeShape[]> shapeOverlaysByType { get; }
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; }
+    public Dictionary<string, Dictionary<string, BlendedOverlayTexture[]>> textureOverlaysByType { get; }
 }
