@@ -70,6 +70,11 @@ public class Variants
 
     public void RemoveKeys(params string[] keys)
     {
+        if (keys == null || keys.Length == 0)
+        {
+            return;
+        }
+
         Elements.RemoveAllByKey(key => keys.Contains(key));
     }
 
