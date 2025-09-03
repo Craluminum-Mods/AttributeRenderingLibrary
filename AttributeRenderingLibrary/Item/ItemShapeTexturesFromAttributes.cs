@@ -19,6 +19,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; } = new();
     public Dictionary<string, float> AttackPowerByType { get; protected set; } = new();
+    public Dictionary<string, float> AttackRangeByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -56,6 +57,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             DurabilityByType = Attributes["durability"].AsObject<Dictionary<string, int>>();
             MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
             AttackPowerByType = Attributes["attackPower"].AsObject<Dictionary<string, float>>();
+            AttackRangeByType = Attributes["attackRange"].AsObject<Dictionary<string, float>>();
 
             shapeByType = Attributes["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = Attributes["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -216,6 +218,21 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return base.GetAttackPower(withItemStack);
         }
         return attackPower;
+    }
+
+    public override float GetAttackRange(IItemStack withItemStack)
+    {
+        if (AttackRangeByType == null || AttackRangeByType.Count == 0)
+        {
+            return base.GetAttackRange(withItemStack);
+        }
+
+        Variants variants = Variants.FromStack(withItemStack as ItemStack);
+        if (!variants.FindByVariant(AttackRangeByType, out float attackRange))
+        {
+            return base.GetAttackRange(withItemStack);
+        }
+        return attackRange;
     }
 
     public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
