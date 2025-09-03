@@ -18,6 +18,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
     public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; } = new();
+    public Dictionary<string, float> AttackPowerByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -54,6 +55,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             ContainedDescriptionByType = Attributes["containedDescription"].AsObject<Dictionary<string, List<object>>>();
             DurabilityByType = Attributes["durability"].AsObject<Dictionary<string, int>>();
             MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
+            AttackPowerByType = Attributes["attackPower"].AsObject<Dictionary<string, float>>();
 
             shapeByType = Attributes["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = Attributes["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -162,7 +164,6 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return base.GetMaxDurability(itemstack);
         }
 
-        StringBuilder dsc = new();
         Variants variants = Variants.FromStack(itemstack);
         if (!variants.FindByVariant(DurabilityByType, out int durability))
         {
@@ -178,7 +179,6 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return base.GetMiningSpeed(itemstack, blockSel, block, forPlayer);
         }
 
-        StringBuilder dsc = new();
         Variants variants = Variants.FromStack(itemstack as ItemStack);
         if (!variants.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeedByMaterial) || miningSpeedByMaterial == null || miningSpeedByMaterial.Count == 0)
         {
@@ -201,6 +201,21 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             finalMiningSpeed *= miningSpeed * traitMultiplier * GlobalConstants.ToolMiningSpeedModifier;
         }
         return finalMiningSpeed;
+    }
+
+    public override float GetAttackPower(IItemStack withItemStack)
+    {
+        if (AttackPowerByType == null || AttackPowerByType.Count == 0)
+        {
+            return base.GetAttackPower(withItemStack);
+        }
+
+        Variants variants = Variants.FromStack(withItemStack as ItemStack);
+        if (!variants.FindByVariant(AttackPowerByType, out float attackPower))
+        {
+            return base.GetAttackPower(withItemStack);
+        }
+        return attackPower;
     }
 
     public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)

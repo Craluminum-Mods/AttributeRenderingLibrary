@@ -166,7 +166,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             return base.OnGetMaxDurability(itemstack, ref bhHandling);
         }
 
-        StringBuilder dsc = new();
         Variants variants = Variants.FromStack(itemstack);
         if (!variants.FindByVariant(DurabilityByType, out int durability))
         {
@@ -185,7 +184,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             return base.OnGetMiningSpeed(itemstack, blockSel, block, forPlayer, ref bhHandling);
         }
 
-        StringBuilder dsc = new();
         Variants variants = Variants.FromStack(itemstack as ItemStack);
         if (!variants.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeedByMaterial) || miningSpeedByMaterial == null || miningSpeedByMaterial.Count == 0)
         {
