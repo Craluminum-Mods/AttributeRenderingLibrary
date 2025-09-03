@@ -15,6 +15,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
+    public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -46,6 +47,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
             ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
+            DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -151,6 +153,25 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
         variants.GetDescription(dsc, _langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
+    }
+
+    public override int OnGetMaxDurability(ItemStack itemstack, ref EnumHandling bhHandling)
+    {
+        if (DurabilityByType == null || DurabilityByType.Count == 0)
+        {
+            bhHandling = EnumHandling.PassThrough;
+            return base.OnGetMaxDurability(itemstack, ref bhHandling);
+        }
+
+        StringBuilder dsc = new();
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(DurabilityByType, out int durability))
+        {
+            bhHandling = EnumHandling.PassThrough;
+            return base.OnGetMaxDurability(itemstack, ref bhHandling);
+        }
+        bhHandling = EnumHandling.PreventDefault;
+        return durability;
     }
 
     public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)

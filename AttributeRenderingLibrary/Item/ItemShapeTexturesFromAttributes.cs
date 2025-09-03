@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -16,6 +15,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
+    public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -50,6 +50,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             NameByType = Attributes["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = Attributes["description"].AsObject<Dictionary<string, List<object>>>();
             ContainedDescriptionByType = Attributes["containedDescription"].AsObject<Dictionary<string, List<object>>>();
+            DurabilityByType = Attributes["durability"].AsObject<Dictionary<string, int>>();
 
             shapeByType = Attributes["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = Attributes["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -149,6 +150,22 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
         variants.GetDescription(dsc, _langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
+    }
+
+    public override int GetMaxDurability(ItemStack itemstack)
+    {
+        if (DurabilityByType == null || DurabilityByType.Count == 0)
+        {
+            return base.GetMaxDurability(itemstack);
+        }
+
+        StringBuilder dsc = new();
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(DurabilityByType, out int durability))
+        {
+            return base.GetMaxDurability(itemstack);
+        }
+        return durability;
     }
 
     public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
