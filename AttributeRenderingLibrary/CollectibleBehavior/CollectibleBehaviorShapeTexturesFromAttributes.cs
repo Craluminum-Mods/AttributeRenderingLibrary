@@ -3,6 +3,7 @@ using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
@@ -16,6 +17,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
     public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
+    public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -48,6 +50,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
             ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
             DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
+            MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -172,6 +175,40 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         }
         bhHandling = EnumHandling.PreventDefault;
         return durability;
+    }
+
+    public override float OnGetMiningSpeed(IItemStack itemstack, BlockSelection blockSel, Block block, IPlayer forPlayer, ref EnumHandling bhHandling)
+    {
+        if (MiningSpeedByType == null || MiningSpeedByType.Count == 0)
+        {
+            bhHandling = EnumHandling.PassThrough;
+            return base.OnGetMiningSpeed(itemstack, blockSel, block, forPlayer, ref bhHandling);
+        }
+
+        StringBuilder dsc = new();
+        Variants variants = Variants.FromStack(itemstack as ItemStack);
+        if (!variants.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeedByMaterial) || miningSpeedByMaterial == null || miningSpeedByMaterial.Count == 0)
+        {
+            bhHandling = EnumHandling.PassThrough;
+            return base.OnGetMiningSpeed(itemstack, blockSel, block, forPlayer, ref bhHandling);
+        }
+
+        float traitMultiplier = 1f;
+        float finalMiningSpeed = 1f;
+        EnumBlockMaterial material = block.GetBlockMaterial(forPlayer.Entity.World.BlockAccessor, blockSel.Position);
+        if (material == EnumBlockMaterial.Ore || material == EnumBlockMaterial.Stone)
+        {
+            traitMultiplier = forPlayer.Entity.Stats.GetBlended("miningSpeedMul");
+        }
+        if (!miningSpeedByMaterial.TryGetValue(material, out float miningSpeed))
+        {
+            finalMiningSpeed *= traitMultiplier;
+        }
+        else
+        {
+            finalMiningSpeed *= miningSpeed * traitMultiplier * GlobalConstants.ToolMiningSpeedModifier;
+        }
+        return finalMiningSpeed;
     }
 
     public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
