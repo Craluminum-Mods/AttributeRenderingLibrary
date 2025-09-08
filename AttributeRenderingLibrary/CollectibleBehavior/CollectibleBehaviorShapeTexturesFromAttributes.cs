@@ -13,6 +13,9 @@ namespace AttributeRenderingLibrary;
 
 public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavior, IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
+    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
+
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
@@ -27,9 +30,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
     public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; } = new();
     public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; } = new();
-
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
 
     #region IAttachableToEntity
     public Dictionary<string, OrderedDictionary<string, CompositeShape>> attachedShapeBySlotCodeByType = new();
@@ -55,6 +55,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
         if (properties != null)
         {
+            shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
+            texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
             ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
@@ -69,9 +72,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
             HeldTpUseAnimationByType = properties["heldTpUseAnimation"].AsObject<Dictionary<string, string>>();
             HeldTpHitAnimationByType = properties["heldTpHitAnimation"].AsObject<Dictionary<string, string>>();
-
-            shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
-            texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
             attachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
             categoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
