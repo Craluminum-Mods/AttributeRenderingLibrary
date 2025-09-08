@@ -19,6 +19,15 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; } = new();
 
+    public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; } = new();
+    public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; } = new();
+
+    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; } = new();
+    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; } = new();
+
+    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; } = new();
+    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; } = new();
+
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
 
@@ -51,6 +60,15 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
             DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
             MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
+
+            HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
+            HeldRightReadyAnimationByType = properties["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
+
+            HeldLeftTpIdleAnimationByType = properties["heldLeftTpIdleAnimation"].AsObject<Dictionary<string, string>>();
+            HeldRightTpIdleAnimationByType = properties["heldRightTpIdleAnimation"].AsObject<Dictionary<string, string>>();
+
+            HeldTpUseAnimationByType = properties["heldTpUseAnimation"].AsObject<Dictionary<string, string>>();
+            HeldTpHitAnimationByType = properties["heldTpHitAnimation"].AsObject<Dictionary<string, string>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -207,6 +225,74 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             finalMiningSpeed *= miningSpeed * traitMultiplier * GlobalConstants.ToolMiningSpeedModifier;
         }
         return finalMiningSpeed;
+    }
+    
+    public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
+    {
+        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
+
+        if (animCodesByType == null || animCodesByType.Count == 0)
+        {
+            return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
+        if (!variants.FindByVariant(animCodesByType, out string animCode))
+        {
+            return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+        }
+        bhHandling = EnumHandling.Handled;
+        return animCode;
+    }
+
+    public override string GetHeldTpIdleAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
+    {
+        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
+
+        if (animCodesByType == null || animCodesByType.Count == 0)
+        {
+            return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
+        if (!variants.FindByVariant(animCodesByType, out string animCode))
+        {
+            return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+        }
+        bhHandling = EnumHandling.Handled;
+        return animCode;
+    }
+
+    public override string GetHeldTpUseAnimation(ItemSlot activeHotbarSlot, Entity forEntity, ref EnumHandling bhHandling)
+    {
+        if (HeldTpUseAnimationByType == null || HeldTpUseAnimationByType.Count == 0)
+        {
+            return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
+        if (!variants.FindByVariant(HeldTpUseAnimationByType, out string animCode))
+        {
+            return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity, ref bhHandling);
+        }
+        bhHandling = EnumHandling.Handled;
+        return animCode;
+    }
+
+    public override string GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity, ref EnumHandling bhHandling)
+    {
+        if (HeldTpHitAnimationByType == null || HeldTpHitAnimationByType.Count == 0)
+        {
+            return base.GetHeldTpHitAnimation(slot, byEntity, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(slot.Itemstack);
+        if (!variants.FindByVariant(HeldTpHitAnimationByType, out string animCode))
+        {
+            return base.GetHeldTpHitAnimation(slot, byEntity, ref bhHandling);
+        }
+        bhHandling = EnumHandling.Handled;
+        return animCode;
     }
 
     public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
