@@ -78,6 +78,24 @@ public class Variants
         Elements.RemoveAllByKey(key => keys.Contains(key));
     }
 
+    public bool ContainsKey(string key)
+    {
+        return Elements.ContainsKey(key);
+    }
+
+    public void MergeVariants(Variants otherVariants, params string[] ignoreKeys)
+    {
+        foreach ((string key, string value) in otherVariants.Elements)
+        {
+            if (ignoreKeys != null && ignoreKeys.Contains(key))
+            {
+                continue;
+            }
+
+            Set(key, value);
+        }
+    }
+
     public static Variants FromTreeAttribute(ITreeAttribute rootTree)
     {
         Variants variants = new Variants();
