@@ -67,7 +67,6 @@ public class BlockBehaviorHorizontalOrientable : BlockBehavior
         {
             return [drop?.ResolvedItemstack.Clone()];
         }
-
         return [OnPickBlock(world, pos, ref handled)];
     }
 
