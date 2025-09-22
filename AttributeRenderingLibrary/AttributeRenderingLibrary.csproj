@@ -64,8 +64,8 @@
     <Company>Craluminum Mods</Company>
     <Description>Attribute-based variant system for rendering things.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression> <!-- or SPDX license -->
-    <RepositoryUrl>https://github.com/Craluminum-Mods/AttributeRenderingLibrary</RepositoryUrl>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+	<RepositoryUrl>https://github.com/Craluminum-Mods/AttributeRenderingLibrary</RepositoryUrl>
     <PackageProjectUrl>https://github.com/Craluminum-Mods/AttributeRenderingLibrary</PackageProjectUrl>
     <PackageTags>vintagestory;modding;game</PackageTags>
     <IncludeSymbols>true</IncludeSymbols>
@@ -82,5 +82,6 @@
   <ItemGroup>
     <None Include="$(TargetPath)" Pack="true" PackagePath="Mods/mod/" />
     <None Include="../README.md" Pack="true" PackagePath="/" />
+    <None Include="../LICENSE.txt" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
