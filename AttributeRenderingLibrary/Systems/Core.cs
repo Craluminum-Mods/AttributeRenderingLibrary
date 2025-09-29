@@ -15,6 +15,7 @@ public class Core : ModSystem
     public override void Start(ICoreAPI api)
     {
         api.RegisterItemClass("AttributeRenderingLibrary.ItemShapeTexturesFromAttributes", typeof(ItemShapeTexturesFromAttributes));
+        api.RegisterItemClass("AttributeRenderingLibrary.ItemWearableShapeTexturesFromAttributes", typeof(ItemWearableShapeTexturesFromAttributes));
 
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.ShapeTexturesFromAttributes", typeof(CollectibleBehaviorShapeTexturesFromAttributes));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.ContainedTransform", typeof(CollectibleBehaviorContainedTransform));
