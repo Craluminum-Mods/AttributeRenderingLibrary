@@ -191,7 +191,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             bhHandling = EnumHandling.PassThrough;
             return base.OnGetMaxDurability(itemstack, ref bhHandling);
         }
-        bhHandling = EnumHandling.PreventDefault;
+        bhHandling = EnumHandling.PreventSubsequent;
         return durability;
     }
 
@@ -225,6 +225,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         {
             finalMiningSpeed *= miningSpeed * traitMultiplier * GlobalConstants.ToolMiningSpeedModifier;
         }
+        bhHandling = EnumHandling.PreventSubsequent;
         return finalMiningSpeed;
     }
     
@@ -242,7 +243,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         {
             return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
         }
-        bhHandling = EnumHandling.Handled;
+        bhHandling = EnumHandling.PreventSubsequent;
         return animCode;
     }
 
@@ -260,7 +261,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         {
             return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
         }
-        bhHandling = EnumHandling.Handled;
+        bhHandling = EnumHandling.PreventSubsequent;
         return animCode;
     }
 
@@ -276,7 +277,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         {
             return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity, ref bhHandling);
         }
-        bhHandling = EnumHandling.Handled;
+        bhHandling = EnumHandling.PreventSubsequent;
         return animCode;
     }
 
@@ -292,7 +293,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         {
             return base.GetHeldTpHitAnimation(slot, byEntity, ref bhHandling);
         }
-        bhHandling = EnumHandling.Handled;
+        bhHandling = EnumHandling.PreventSubsequent;
         return animCode;
     }
 
