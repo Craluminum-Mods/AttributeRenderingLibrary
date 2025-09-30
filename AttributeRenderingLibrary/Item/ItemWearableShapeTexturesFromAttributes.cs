@@ -74,7 +74,7 @@ public class ItemWearableShapeTexturesFromAttributes : ItemWearable, IShapeTextu
         {
             MeshData mesh = genMesh(capi, itemstack, null);
             renderinfo.ModelRef = meshrefs[key] = mesh == null ? renderinfo.ModelRef : capi.Render.UploadMultiTextureMesh(mesh);
-            //renderinfo.NormalShaded = true;
+            renderinfo.NormalShaded = true;
         }
 
         if (Attributes["visibleDamageEffect"].AsBool())
@@ -340,7 +340,7 @@ public class ItemWearableShapeTexturesFromAttributes : ItemWearable, IShapeTextu
 
     Shape IWearableShapeSupplier.GetShape(ItemStack itemstack, Entity forEntity, string texturePrefixCode)
     {
-        ICoreClientAPI clientApi = api as ICoreClientAPI;
+        // TODO: add support for shape overlays
 
         Variants variants = Variants.FromStack(itemstack);
         variants.FindByVariant(shapeByType, out CompositeShape ucshape);
@@ -351,18 +351,8 @@ public class ItemWearableShapeTexturesFromAttributes : ItemWearable, IShapeTextu
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
-        Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
+        Shape shape = api.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
         if (shape == null) return null;
-
-        UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, clientApi.ItemTextureAtlas, shape, rcshape.Base.ToString());
-        Dictionary<string, AssetLocation> prefixedTextureCodes = null;
-        string overlayPrefix = "";
-
-        if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
-        {
-            overlayPrefix = GetMeshCacheKey(itemstack);
-            prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
-        }
 
         shape.SubclassForStepParenting(texturePrefixCode);
         return shape;
