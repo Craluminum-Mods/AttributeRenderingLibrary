@@ -24,6 +24,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, float> AttackPowerByType { get; protected set; } = new();
     public Dictionary<string, float> AttackRangeByType { get; protected set; } = new();
 
+    #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; } = new();
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; } = new();
 
@@ -32,7 +33,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; } = new();
     public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; } = new();
-
+    #endregion
     #region IAttachableToEntity
     public Dictionary<string, OrderedDictionary<string, CompositeShape>> attachedShapeBySlotCodeByType = new();
     public Dictionary<string, string> categoryCodeByType = new();
