@@ -7,8 +7,11 @@ public class Core : ModSystem
 {
     private Harmony HarmonyInstance => new Harmony(Mod.Info.ModID);
 
+    public static ICoreAPI Api;
+
     public override void StartPre(ICoreAPI api)
     {
+        Api = api;
         HarmonyInstance.PatchAllUncategorized();
     }
 

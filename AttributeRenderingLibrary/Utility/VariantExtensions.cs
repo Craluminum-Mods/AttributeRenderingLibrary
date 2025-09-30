@@ -24,6 +24,7 @@ public static class VariantExtensions
 
         if (variants == null || inDictionary == null || !inDictionary.Any())
         {
+            Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
             return false;
         }
 
@@ -34,10 +35,12 @@ public static class VariantExtensions
             if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
             {
                 result = value;
+                Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
                 return true;
             }
         }
 
+        Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
         return false;
     }
 
