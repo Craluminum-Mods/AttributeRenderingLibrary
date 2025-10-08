@@ -15,6 +15,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; } = new();
     public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; } = new();
+    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -33,6 +34,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         {
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+            DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -183,16 +185,50 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         base.OnBeforeRender(clientApi, itemstack, target, ref renderinfo);
     }
 
-    public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref float dropChanceMultiplier, ref EnumHandling handling)
+    public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref float dropQuantityMultiplier, ref EnumHandling handling)
     {
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
         {
-            handling = EnumHandling.PassThrough;
-            return null;
+            if (beBehavior.Variants.FindByVariant(DropsByType, out BlockDropItemStack[] unresolvedDrops))
+            {
+                List<ItemStack> todrop = [];
+                for (int i = 0; i < unresolvedDrops.Length; i++)
+                {
+                    BlockDropItemStack dstack = unresolvedDrops[i];
+                    ItemStack stack = dstack.ToRandomItemstackForPlayer(byPlayer, world, dropQuantityMultiplier);
+                    if (stack != null)
+                    {
+                        todrop.Add(stack);
+                        if (dstack.LastDrop)
+                        {
+                            break;
+                        }
+                    }
+                }
+                handling = EnumHandling.Handled;
+                return todrop.ToArray();
+            }
+
+            handling = EnumHandling.Handled;
+            return [OnPickBlock(world, pos, ref handling)];
         }
 
-        handling = EnumHandling.Handled;
-        return [OnPickBlock(world, pos, ref handling)];
+        handling = EnumHandling.PassThrough;
+        return null;
+    }
+
+    public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
+    {
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        {
+            handling = EnumHandling.Handled;
+            ItemStack stack = new ItemStack(block);
+            beBehavior.Variants.ToStack(stack);
+            return stack;
+        }
+
+        handling = EnumHandling.PassThrough;
+        return null;
     }
 
     public override void GetDecal(IWorldAccessor world, BlockPos pos, ITexPositionSource decalTexSource, ref MeshData decalModelData, ref MeshData blockModelData, ref EnumHandling handled)
@@ -234,20 +270,6 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             Y = (shapeForRotation?.rotateY ?? 0) * GameMath.DEG2RAD,
             Z = (shapeForRotation?.rotateZ ?? 0) * GameMath.DEG2RAD
         };
-    }
-
-    public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
-    {
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
-        {
-            handling = EnumHandling.Handled;
-            ItemStack stack = new ItemStack(block);
-            beBehavior.Variants.ToStack(stack);
-            return stack;
-        }
-
-        handling = EnumHandling.PassThrough;
-        return null;
     }
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
