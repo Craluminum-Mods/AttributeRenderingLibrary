@@ -13,6 +13,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 {
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
+    public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; } = new();
+    public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
@@ -34,6 +36,26 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+
+            LoadAndResolveCollisionAndSelectionBoxes(properties);
+        }
+    }
+
+    private void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
+    {
+        Dictionary<string, RotatableCube[]> rawCollisionsAndSelections = properties["collisionSelectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+        Dictionary<string, RotatableCube[]> rawCollisions = properties["collisionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+        Dictionary<string, RotatableCube[]> rawSelections = properties["selectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+
+        if (rawCollisionsAndSelections?.Count > 0)
+        {
+            CollisionBoxesByType = rawCollisionsAndSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            SelectionBoxesByType = rawCollisionsAndSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+        }
+        else
+        {
+            CollisionBoxesByType = rawCollisions?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            SelectionBoxesByType = rawSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
         }
     }
 
@@ -295,5 +317,31 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public virtual string GetMeshCacheKey(ItemStack itemstack)
     {
         return $"{itemstack.Collectible.Code}-{Variants.FromStack(itemstack)}";
+    }
+
+    public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
+    {
+        if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants.FindByVariant(CollisionBoxesByType, out Cuboidf[] cuboids)
+            && cuboids != null
+            && cuboids.Length > 0)
+        {
+            handled = EnumHandling.PreventSubsequent;
+            return cuboids;
+        }
+        return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
+    }
+
+    public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
+    {
+        if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants.FindByVariant(SelectionBoxesByType, out Cuboidf[] cuboids)
+            && cuboids != null
+            && cuboids.Length > 0)
+        {
+            handled = EnumHandling.PreventSubsequent;
+            return cuboids;
+        }
+        return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
     }
 }
