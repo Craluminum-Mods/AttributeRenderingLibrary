@@ -37,6 +37,7 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
     {
         Variants = Variants.FromTreeAttribute(tree);
         base.FromTreeAttributes(tree, worldForResolving);
+        Init();
     }
 
     public override void OnBlockPlaced(ItemStack byItemStack = null)
