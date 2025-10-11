@@ -94,7 +94,16 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes item", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
+        TesselationMetaData meta = new TesselationMetaData
+        {
+            QuantityElements = rcshape.QuantityElements,
+            SelectiveElements = rcshape.SelectiveElements,
+            IgnoreElements = rcshape.IgnoreElements,
+            TexSource = stexSource,
+            TypeForLogging = "ShapeTexturesFromAttributes item"
+        };
+
+        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
         return mesh;
     }
 
