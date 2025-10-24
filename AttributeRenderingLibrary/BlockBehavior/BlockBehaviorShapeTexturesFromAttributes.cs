@@ -18,6 +18,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; } = new();
 
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
+    public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
     private ICoreClientAPI clientApi;
 
@@ -37,6 +38,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
+            shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
             LoadAndResolveCollisionAndSelectionBoxes(properties);
@@ -87,8 +89,14 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         Variants variants = Variants.FromStack(itemstack);
-        variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-        ucshape ??= block.Shape;
+        variants.FindByVariant(shapeInventoryByType, out CompositeShape ucshape);
+
+        if (ucshape == null)
+        {
+            variants.FindByVariant(shapeByType, out ucshape);
+        }
+
+        ucshape ??= block.ShapeInventory ?? block.Shape;
 
         if (ucshape == null) return mesh;
 
