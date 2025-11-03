@@ -3,7 +3,6 @@ using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
-using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
@@ -21,7 +20,6 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
     public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; } = new();
     public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
-    public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; } = new();
     public Dictionary<string, float> AttackPowerByType { get; protected set; } = new();
     public Dictionary<string, float> AttackRangeByType { get; protected set; } = new();
 
@@ -70,7 +68,6 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             ContainedDescriptionByType = Attributes["containedDescription"].AsObject<Dictionary<string, List<object>>>();
             StorageFlagsByType = Attributes["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
             DurabilityByType = Attributes["durability"].AsObject<Dictionary<string, int>>();
-            MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
             AttackPowerByType = Attributes["attackPower"].AsObject<Dictionary<string, float>>();
             AttackRangeByType = Attributes["attackRange"].AsObject<Dictionary<string, float>>();
 
@@ -208,37 +205,6 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return base.GetMaxDurability(itemstack);
         }
         return durability;
-    }
-
-    public override float GetMiningSpeed(IItemStack itemstack, BlockSelection blockSel, Block block, IPlayer forPlayer)
-    {
-        if (MiningSpeedByType == null || MiningSpeedByType.Count == 0)
-        {
-            return base.GetMiningSpeed(itemstack, blockSel, block, forPlayer);
-        }
-
-        Variants variants = Variants.FromStack(itemstack as ItemStack);
-        if (!variants.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeedByMaterial) || miningSpeedByMaterial == null || miningSpeedByMaterial.Count == 0)
-        {
-            return base.GetMiningSpeed(itemstack, blockSel, block, forPlayer);
-        }
-
-        float traitMultiplier = 1f;
-        float finalMiningSpeed = 1f;
-        EnumBlockMaterial material = block.GetBlockMaterial(api.World.BlockAccessor, blockSel.Position);
-        if (material == EnumBlockMaterial.Ore || material == EnumBlockMaterial.Stone)
-        {
-            traitMultiplier = forPlayer.Entity.Stats.GetBlended("miningSpeedMul");
-        }
-        if (!miningSpeedByMaterial.TryGetValue(material, out float miningSpeed))
-        {
-            finalMiningSpeed *= traitMultiplier;
-        }
-        else
-        {
-            finalMiningSpeed *= miningSpeed * traitMultiplier * GlobalConstants.ToolMiningSpeedModifier;
-        }
-        return finalMiningSpeed;
     }
 
     public override float GetAttackPower(IItemStack withItemStack)
