@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
@@ -24,6 +25,10 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void OnLoaded(ICoreAPI api)
     {
+        // blocks with this behavior cannot be chiseled
+        block.Attributes ??= new JsonObject(new JObject());
+        block.Attributes.Token["canChisel"] = JToken.FromObject(false);
+
         clientApi = api as ICoreClientAPI;
     }
 
