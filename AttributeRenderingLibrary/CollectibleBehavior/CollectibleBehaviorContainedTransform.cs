@@ -13,14 +13,14 @@ namespace AttributeRenderingLibrary;
 /// </summary>
 public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : CollectibleBehavior(collObj), IContainedTransform
 {
-    protected Transforms transforms;
-    protected Dictionary<string, Dictionary<string, ModelTransform>> extraTransforms;
+    public Transforms BasicTransforms { get; protected set; }
+    public Dictionary<string, Dictionary<string, ModelTransform>> ExtraTransforms { get; protected set; }
 
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
-        transforms = properties["transforms"].AsObject<Transforms>();
-        extraTransforms = properties["extraTransforms"].AsObject<Dictionary<string, Dictionary<string, ModelTransform>>>()?.ToDictionary(x => x.Key.ToLowerInvariant(), x => x.Value);
+        BasicTransforms = properties["transforms"].AsObject<Transforms>();
+        ExtraTransforms = properties["extraTransforms"].AsObject<Dictionary<string, Dictionary<string, ModelTransform>>>()?.ToDictionary(x => x.Key.ToLowerInvariant(), x => x.Value);
     }
 
     public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
@@ -30,18 +30,18 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
 
     public void ApplyOnBeforeRenderTransform(EnumItemRenderTarget target, Variants variants, ref ModelTransform transform)
     {
-        Dictionary<string, ModelTransform> transformsByType = target switch
+        Dictionary<string, ModelTransform> basicTransformsByType = target switch
         {
-            EnumItemRenderTarget.Gui => transforms?.GuiTransform,
-            EnumItemRenderTarget.HandTp => transforms?.TpHandTransform,
-            EnumItemRenderTarget.HandTpOff => transforms?.TpOffHandTransform,
-            EnumItemRenderTarget.Ground => transforms?.GroundTransform,
+            EnumItemRenderTarget.Gui => BasicTransforms?.GuiTransform,
+            EnumItemRenderTarget.HandTp => BasicTransforms?.TpHandTransform,
+            EnumItemRenderTarget.HandTpOff => BasicTransforms?.TpOffHandTransform,
+            EnumItemRenderTarget.Ground => BasicTransforms?.GroundTransform,
             _ => null,
         };
 
-        if (transformsByType != null
-            && transformsByType.Count > 0
-            && variants.FindByVariant(transformsByType, out ModelTransform newTransform) && newTransform != null)
+        if (basicTransformsByType != null
+            && basicTransformsByType.Count > 0
+            && variants.FindByVariant(basicTransformsByType, out ModelTransform newTransform) && newTransform != null)
         {
             newTransform = newTransform.EnsureDefaultValues();
             transform = newTransform;
@@ -52,9 +52,9 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
     {
         attributeTransformCode = attributeTransformCode.ToLowerInvariant();
 
-        if (extraTransforms != null
-            && extraTransforms.Count > 0
-            && extraTransforms.TryGetValue(attributeTransformCode, out Dictionary<string, ModelTransform> transformsByType)
+        if (ExtraTransforms != null
+            && ExtraTransforms.Count > 0
+            && ExtraTransforms.TryGetValue(attributeTransformCode, out Dictionary<string, ModelTransform> transformsByType)
             && Variants.FromStack(stack).FindByVariant(transformsByType, out ModelTransform transform))
         {
             transform = transform.EnsureDefaultValues();
