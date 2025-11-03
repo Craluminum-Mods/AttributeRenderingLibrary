@@ -19,6 +19,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
+    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; } = new();
     public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; } = new();
     public Dictionary<string, float> AttackPowerByType { get; protected set; } = new();
@@ -67,6 +68,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             NameByType = Attributes["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = Attributes["description"].AsObject<Dictionary<string, List<object>>>();
             ContainedDescriptionByType = Attributes["containedDescription"].AsObject<Dictionary<string, List<object>>>();
+            StorageFlagsByType = Attributes["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
             DurabilityByType = Attributes["durability"].AsObject<Dictionary<string, int>>();
             MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
             AttackPowerByType = Attributes["attackPower"].AsObject<Dictionary<string, float>>();
@@ -176,6 +178,21 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
         variants.GetDescription(dsc, _langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
+    }
+
+    public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack)
+    {
+        if (StorageFlagsByType == null || StorageFlagsByType.Count == 0)
+        {
+            return base.GetStorageFlags(itemstack);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
+        {
+            return base.GetStorageFlags(itemstack);
+        }
+        return storageFlags;
     }
 
     public override int GetMaxDurability(ItemStack itemstack)

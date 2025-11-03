@@ -19,6 +19,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
+    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; } = new();
     public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; } = new();
 
@@ -62,6 +63,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
             ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
+            StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
             DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
             MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
@@ -175,6 +177,22 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
         variants.GetDescription(dsc, _langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
+    }
+
+    public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack, ref EnumHandling handling)
+    {
+        if (StorageFlagsByType == null || StorageFlagsByType.Count == 0)
+        {
+            return base.GetStorageFlags(itemstack, ref handling);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
+        {
+            return base.GetStorageFlags(itemstack, ref handling);
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return storageFlags;
     }
 
     public override int OnGetMaxDurability(ItemStack itemstack, ref EnumHandling bhHandling)
