@@ -20,7 +20,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
     public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; } = new();
-    public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; } = new();
 
     #region Animations
@@ -64,7 +63,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
             ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
             StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
-            DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
             MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
             HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -193,24 +191,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         }
         handling = EnumHandling.PreventSubsequent;
         return storageFlags;
-    }
-
-    public override int OnGetMaxDurability(ItemStack itemstack, ref EnumHandling bhHandling)
-    {
-        if (DurabilityByType == null || DurabilityByType.Count == 0)
-        {
-            bhHandling = EnumHandling.PassThrough;
-            return base.OnGetMaxDurability(itemstack, ref bhHandling);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(DurabilityByType, out int durability))
-        {
-            bhHandling = EnumHandling.PassThrough;
-            return base.OnGetMaxDurability(itemstack, ref bhHandling);
-        }
-        bhHandling = EnumHandling.PreventSubsequent;
-        return durability;
     }
 
     public override float OnGetMiningSpeed(IItemStack itemstack, BlockSelection blockSel, Block block, IPlayer forPlayer, ref EnumHandling bhHandling)
