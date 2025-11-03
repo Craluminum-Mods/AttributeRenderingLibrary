@@ -25,7 +25,7 @@ public static class GetDropsForHandbookPatch
             for (int i = 0; i < unresolvedDrops.Length; i++)
             {
                 BlockDropItemStack dstack = variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
-                if (dstack.Resolve(forPlayer.Entity.World, "", ""))
+                if (dstack.Resolve(forPlayer.Entity.World, "AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", dstack.Code))
                 {
                     resolvedDrops.Add(dstack);
                 }

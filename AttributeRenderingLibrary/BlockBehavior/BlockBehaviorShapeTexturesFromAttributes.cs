@@ -228,7 +228,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                 for (int i = 0; i < unresolvedDrops.Length; i++)
                 {
                     BlockDropItemStack dstack = beBehavior.Variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
-                    if (!dstack.Resolve(world, "", ""))
+                    if (!dstack.Resolve(world, "AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", dstack.Code))
                     {
                         break;
                     }
