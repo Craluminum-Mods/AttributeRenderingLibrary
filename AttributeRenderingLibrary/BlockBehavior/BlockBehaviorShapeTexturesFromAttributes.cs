@@ -220,7 +220,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                 List<ItemStack> todrop = [];
                 for (int i = 0; i < unresolvedDrops.Length; i++)
                 {
-                    BlockDropItemStack dstack = unresolvedDrops[i];
+                    BlockDropItemStack dstack = beBehavior.Variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
+                    if (!dstack.Resolve(world, "", ""))
+                    {
+                        break;
+                    }
                     ItemStack stack = dstack.ToRandomItemstackForPlayer(byPlayer, world, dropQuantityMultiplier);
                     if (stack != null)
                     {
@@ -231,7 +235,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                         }
                     }
                 }
-                handling = EnumHandling.Handled;
+                handling = EnumHandling.PreventSubsequent;
                 return todrop.ToArray();
             }
 
@@ -247,7 +251,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
         {
-            handling = EnumHandling.Handled;
+            handling = EnumHandling.PreventSubsequent;
             ItemStack stack = new ItemStack(block);
             beBehavior.Variants.ToStack(stack);
             return stack;
