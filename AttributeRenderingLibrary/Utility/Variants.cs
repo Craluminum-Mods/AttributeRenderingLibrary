@@ -20,7 +20,7 @@ public class Variants
     protected Dictionary<string, string> Elements { get; set; } = new();
 
     public int Count => Elements.Count;
-    public bool Any => Elements.Any();
+    public bool Any => Elements.Count != 0;
 
     public List<string> GetAsStringArray()
     {
@@ -192,10 +192,24 @@ public class Variants
         return jstack;
     }
 
+    public BlockDropItemStack ReplacePlaceholders(BlockDropItemStack bdstack)
+    {
+        bdstack.Code = ReplacePlaceholders(bdstack.Code);
+
+        if (bdstack.Attributes != null)
+        {
+            foreach ((string key, string value) in Elements)
+            {
+                bdstack.Attributes.FillPlaceHolder(key, value);
+            }
+        }
+        return bdstack;
+    }
+
     public override string ToString()
     {
         StringBuilder result = new StringBuilder();
-        if (Elements.Any())
+        if (Elements.Count != 0)
         {
             result.Append(string.Join('-', Elements.Select(x => $"{x.Key}-{x.Value}")));
         }

@@ -1,6 +1,6 @@
 ﻿
 using HarmonyLib;
-using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 using Vintagestory.API.Common;
 
 namespace AttributeRenderingLibrary;
@@ -8,22 +8,32 @@ namespace AttributeRenderingLibrary;
 [HarmonyPatch(typeof(Block), nameof(Block.GetDropsForHandbook))]
 public static class GetDropsForHandbookPatch
 {
-    [HarmonyReversePatch(HarmonyReversePatchType.Original)]
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static BlockDropItemStack[] Base(this Block instance, ItemStack handbookStack, IPlayer forPlayer) => default;
-
-    [HarmonyPrefix]
-    public static bool Prefix(Block __instance, ref BlockDropItemStack[] __result, ItemStack handbookStack, IPlayer forPlayer)
+    [HarmonyPostfix]
+    public static void Postfix(Block __instance, ref BlockDropItemStack[] __result, ItemStack handbookStack, IPlayer forPlayer)
     {
-        if (handbookStack?.Collectible?.GetCollectibleInterface<IShapeTexturesFromAttributes>() is not IShapeTexturesFromAttributes shapeTexturesFromAttributes)
+        if (handbookStack?.Collectible?.GetCollectibleInterface<IBlockShapeTexturesFromAttributes>() is not IBlockShapeTexturesFromAttributes shapeTexturesFromAttributes)
         {
-            return true;
+            return;
         }
 
-        BlockDropItemStack[] drops = Base(__instance, handbookStack, forPlayer) ?? [];
-        drops[0] = drops[0].Clone();
-        drops[0].ResolvedItemstack.SetFrom(handbookStack);
-        __result = drops;
-        return false;
+        Variants variants = Variants.FromStack(handbookStack);
+        if (variants.FindByVariant(shapeTexturesFromAttributes.DropsByType, out BlockDropItemStack[] unresolvedDrops)
+            && unresolvedDrops != null
+            && unresolvedDrops.Length > 0)
+        {
+            List<BlockDropItemStack> resolvedDrops = new(unresolvedDrops.Length);
+            for (int i = 0; i < unresolvedDrops.Length; i++)
+            {
+                BlockDropItemStack dstack = variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
+                if (dstack.Resolve(forPlayer.Entity.World, "AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", dstack.Code))
+                {
+                    resolvedDrops.Add(dstack);
+                }
+            }
+            __result = resolvedDrops.ToArray();
+            return;
+        }
+
+        __result = [new BlockDropItemStack(handbookStack)];
     }
 }

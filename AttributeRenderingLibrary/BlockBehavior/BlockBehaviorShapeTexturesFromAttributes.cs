@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
@@ -9,17 +10,25 @@ using Vintagestory.API.Util;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IShapeTexturesFromAttributes
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes
 {
-    public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
-    public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
+    public Dictionary<string, List<object>> NameByType { get; protected set; }
+    public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
+    public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
+    public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
+    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
 
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
+    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
+    public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
     private ICoreClientAPI clientApi;
 
     public override void OnLoaded(ICoreAPI api)
     {
+        // blocks with this behavior cannot be chiseled
+        block.Attributes ??= new JsonObject(new JObject());
+        block.Attributes.Token["canChisel"] = JToken.FromObject(false);
+
         clientApi = api as ICoreClientAPI;
     }
 
@@ -31,9 +40,31 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         {
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+            DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
 
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
+            shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+
+            LoadAndResolveCollisionAndSelectionBoxes(properties);
+        }
+    }
+
+    private void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
+    {
+        Dictionary<string, RotatableCube[]> rawCollisionsAndSelections = properties["collisionSelectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+        Dictionary<string, RotatableCube[]> rawCollisions = properties["collisionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+        Dictionary<string, RotatableCube[]> rawSelections = properties["selectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+
+        if (rawCollisionsAndSelections?.Count > 0)
+        {
+            CollisionBoxesByType = rawCollisionsAndSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            SelectionBoxesByType = rawCollisionsAndSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+        }
+        else
+        {
+            CollisionBoxesByType = rawCollisions?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            SelectionBoxesByType = rawSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
         }
     }
 
@@ -63,8 +94,14 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         Variants variants = Variants.FromStack(itemstack);
-        variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-        ucshape ??= block.Shape;
+        variants.FindByVariant(shapeInventoryByType, out CompositeShape ucshape);
+
+        if (ucshape == null)
+        {
+            variants.FindByVariant(shapeByType, out ucshape);
+        }
+
+        ucshape ??= block.ShapeInventory ?? block.Shape;
 
         if (ucshape == null) return mesh;
 
@@ -91,7 +128,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes blockbehavior", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
+        TesselationMetaData meta = new TesselationMetaData
+        {
+            QuantityElements = rcshape.QuantityElements,
+            SelectiveElements = rcshape.SelectiveElements,
+            IgnoreElements = rcshape.IgnoreElements,
+            TexSource = stexSource,
+            TypeForLogging = "ShapeTexturesFromAttributes block behavior"
+        };
+
+        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
         return mesh;
     }
 
@@ -132,7 +178,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
             ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-            clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes blockbehavior", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
+            TesselationMetaData meta = new TesselationMetaData
+            {
+                QuantityElements = rcshape.QuantityElements,
+                SelectiveElements = rcshape.SelectiveElements,
+                IgnoreElements = rcshape.IgnoreElements,
+                TexSource = stexSource,
+                TypeForLogging = "ShapeTexturesFromAttributes block behavior"
+            };
+
+            clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
 
             if (overrideTexturesource == null)
             {
@@ -161,16 +216,56 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         base.OnBeforeRender(clientApi, itemstack, target, ref renderinfo);
     }
 
-    public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref float dropChanceMultiplier, ref EnumHandling handling)
+    public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref float dropQuantityMultiplier, ref EnumHandling handling)
     {
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
         {
-            handling = EnumHandling.PassThrough;
-            return null;
+            if (beBehavior.Variants.FindByVariant(DropsByType, out BlockDropItemStack[] unresolvedDrops)
+                && unresolvedDrops != null
+                && unresolvedDrops.Length > 0)
+            {
+                List<ItemStack> resolvedDrops = new(unresolvedDrops.Length);
+                for (int i = 0; i < unresolvedDrops.Length; i++)
+                {
+                    BlockDropItemStack dstack = beBehavior.Variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
+                    if (!dstack.Resolve(world, "AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", dstack.Code))
+                    {
+                        break;
+                    }
+                    ItemStack stack = dstack.ToRandomItemstackForPlayer(byPlayer, world, dropQuantityMultiplier);
+                    if (stack != null)
+                    {
+                        resolvedDrops.Add(stack);
+                        if (dstack.LastDrop)
+                        {
+                            break;
+                        }
+                    }
+                }
+                handling = EnumHandling.PreventSubsequent;
+                return resolvedDrops.ToArray();
+            }
+
+            handling = EnumHandling.Handled;
+            return [OnPickBlock(world, pos, ref handling)];
         }
 
-        handling = EnumHandling.Handled;
-        return [OnPickBlock(world, pos, ref handling)];
+        handling = EnumHandling.PassThrough;
+        return null;
+    }
+
+    public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
+    {
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        {
+            handling = EnumHandling.PreventSubsequent;
+            ItemStack stack = new ItemStack(block);
+            beBehavior.Variants.ToStack(stack);
+            return stack;
+        }
+
+        handling = EnumHandling.PassThrough;
+        return null;
     }
 
     public override void GetDecal(IWorldAccessor world, BlockPos pos, ITexPositionSource decalTexSource, ref MeshData decalModelData, ref MeshData blockModelData, ref EnumHandling handled)
@@ -214,23 +309,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         };
     }
 
-    public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
-    {
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
-        {
-            handling = EnumHandling.Handled;
-            ItemStack stack = new ItemStack(block);
-            beBehavior.Variants.ToStack(stack);
-            return stack;
-        }
-
-        handling = EnumHandling.PassThrough;
-        return null;
-    }
-
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
     {
-        if (NameByType == null || !NameByType.Any())
+        if (NameByType == null || NameByType.Count == 0)
         {
             return;
         }
@@ -250,7 +331,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void GetPlacedBlockName(StringBuilder sb, IWorldAccessor world, BlockPos pos)
     {
-        if (NameByType == null || !NameByType.Any())
+        if (NameByType == null || NameByType.Count == 0)
         {
             return;
         }
@@ -276,7 +357,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
-        if (DescriptionByType == null || !DescriptionByType.Any())
+        if (DescriptionByType == null || DescriptionByType.Count == 0)
         {
             return;
         }
@@ -295,5 +376,31 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public virtual string GetMeshCacheKey(ItemStack itemstack)
     {
         return $"{itemstack.Collectible.Code}-{Variants.FromStack(itemstack)}";
+    }
+
+    public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
+    {
+        if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants.FindByVariant(CollisionBoxesByType, out Cuboidf[] cuboids)
+            && cuboids != null
+            && cuboids.Length > 0)
+        {
+            handled = EnumHandling.PreventSubsequent;
+            return cuboids;
+        }
+        return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
+    }
+
+    public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
+    {
+        if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants.FindByVariant(SelectionBoxesByType, out Cuboidf[] cuboids)
+            && cuboids != null
+            && cuboids.Length > 0)
+        {
+            handled = EnumHandling.PreventSubsequent;
+            return cuboids;
+        }
+        return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
     }
 }
