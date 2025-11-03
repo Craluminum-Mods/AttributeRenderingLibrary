@@ -12,15 +12,15 @@ namespace AttributeRenderingLibrary;
 
 public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes
 {
-    public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
-    public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
-    public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; } = new();
-    public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; } = new();
-    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; } = new();
+    public Dictionary<string, List<object>> NameByType { get; protected set; }
+    public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
+    public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
+    public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
+    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
 
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
-    public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; } = new();
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
+    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
+    public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
     private ICoreClientAPI clientApi;
 
     public override void OnLoaded(ICoreAPI api)
@@ -311,7 +311,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
     {
-        if (NameByType == null || !NameByType.Any())
+        if (NameByType == null || NameByType.Count == 0)
         {
             return;
         }
@@ -331,7 +331,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void GetPlacedBlockName(StringBuilder sb, IWorldAccessor world, BlockPos pos)
     {
-        if (NameByType == null || !NameByType.Any())
+        if (NameByType == null || NameByType.Count == 0)
         {
             return;
         }
@@ -357,7 +357,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
-        if (DescriptionByType == null || !DescriptionByType.Any())
+        if (DescriptionByType == null || DescriptionByType.Count == 0)
         {
             return;
         }

@@ -6,32 +6,30 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class CollectibleBehaviorHeldBagTyped : CollectibleBehaviorHeldBag
+public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : CollectibleBehaviorHeldBag(collObj)
 {
-    public Dictionary<string, int> quantitySlotsByType = new();
-    public Dictionary<string, string> slotBgColorByType = new();
-    public Dictionary<string, EnumItemStorageFlags> storageFlagsByType = new();
-
-    public CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : base(collObj) { }
+    public Dictionary<string, int> QuantitySlotsByType { get; protected set; }
+    public Dictionary<string, string> SlotBgColorByType { get; protected set; }
+    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
 
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
 
-        quantitySlotsByType = properties["quantitySlots"].AsObject<Dictionary<string, int>>();
-        slotBgColorByType = properties["slotBgColor"].AsObject<Dictionary<string, string>>();
-        storageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, int>>()?.ToDictionary(x => x.Key, x => (EnumItemStorageFlags)x.Value);
+        QuantitySlotsByType = properties["quantitySlots"].AsObject<Dictionary<string, int>>();
+        SlotBgColorByType = properties["slotBgColor"].AsObject<Dictionary<string, string>>();
+        StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, int>>()?.ToDictionary(x => x.Key, x => (EnumItemStorageFlags)x.Value);
     }
 
     public override int GetQuantitySlots(ItemStack bagstack)
     {
-        if (quantitySlotsByType == null || !quantitySlotsByType.Any())
+        if (QuantitySlotsByType == null || QuantitySlotsByType.Count == 0)
         {
             return base.GetQuantitySlots(bagstack);
         }
 
         Variants variants = Variants.FromStack(bagstack);
-        bool found = variants.FindByVariant(quantitySlotsByType, out int quantitySlots);
+        bool found = variants.FindByVariant(QuantitySlotsByType, out int quantitySlots);
 
         if (!found)
         {
@@ -42,13 +40,13 @@ public class CollectibleBehaviorHeldBagTyped : CollectibleBehaviorHeldBag
 
     public override string GetSlotBgColor(ItemStack bagstack)
     {
-        if (slotBgColorByType == null || !slotBgColorByType.Any())
+        if (SlotBgColorByType == null || SlotBgColorByType.Count == 0)
         {
             return base.GetSlotBgColor(bagstack);
         }
 
         Variants variants = Variants.FromStack(bagstack);
-        bool found = variants.FindByVariant(slotBgColorByType, out string slotBgColor);
+        bool found = variants.FindByVariant(SlotBgColorByType, out string slotBgColor);
 
         if (!found)
         {
@@ -61,13 +59,13 @@ public class CollectibleBehaviorHeldBagTyped : CollectibleBehaviorHeldBag
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack bagstack)
     {
-        if (storageFlagsByType == null || !storageFlagsByType.Any())
+        if (StorageFlagsByType == null || StorageFlagsByType.Count == 0)
         {
             return base.GetStorageFlags(bagstack);
         }
 
         Variants variants = Variants.FromStack(bagstack);
-        bool found = variants.FindByVariant(storageFlagsByType, out EnumItemStorageFlags storageFlags);
+        bool found = variants.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags);
 
         if (!found)
         {
