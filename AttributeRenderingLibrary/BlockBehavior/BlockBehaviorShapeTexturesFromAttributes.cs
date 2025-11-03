@@ -9,7 +9,7 @@ using Vintagestory.API.Util;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IShapeTexturesFromAttributes
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes
 {
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
@@ -215,9 +215,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
         {
-            if (beBehavior.Variants.FindByVariant(DropsByType, out BlockDropItemStack[] unresolvedDrops))
+            if (beBehavior.Variants.FindByVariant(DropsByType, out BlockDropItemStack[] unresolvedDrops)
+                && unresolvedDrops != null
+                && unresolvedDrops.Length > 0)
             {
-                List<ItemStack> todrop = [];
+                List<ItemStack> resolvedDrops = new(unresolvedDrops.Length);
                 for (int i = 0; i < unresolvedDrops.Length; i++)
                 {
                     BlockDropItemStack dstack = beBehavior.Variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
@@ -228,7 +230,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                     ItemStack stack = dstack.ToRandomItemstackForPlayer(byPlayer, world, dropQuantityMultiplier);
                     if (stack != null)
                     {
-                        todrop.Add(stack);
+                        resolvedDrops.Add(stack);
                         if (dstack.LastDrop)
                         {
                             break;
@@ -236,7 +238,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                     }
                 }
                 handling = EnumHandling.PreventSubsequent;
-                return todrop.ToArray();
+                return resolvedDrops.ToArray();
             }
 
             handling = EnumHandling.Handled;
