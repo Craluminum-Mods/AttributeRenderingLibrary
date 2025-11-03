@@ -192,6 +192,20 @@ public class Variants
         return jstack;
     }
 
+    public BlockDropItemStack ReplacePlaceholders(BlockDropItemStack bdstack)
+    {
+        bdstack.Code = ReplacePlaceholders(bdstack.Code);
+
+        if (bdstack.Attributes != null)
+        {
+            foreach ((string key, string value) in Elements)
+            {
+                bdstack.Attributes.FillPlaceHolder(key, value);
+            }
+        }
+        return bdstack;
+    }
+
     public override string ToString()
     {
         StringBuilder result = new StringBuilder();
