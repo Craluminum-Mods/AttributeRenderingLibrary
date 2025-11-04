@@ -22,7 +22,7 @@ public static class VariantExtensions
     {
         result = default;
 
-        if (variants == null || inDictionary == null || !inDictionary.Any())
+        if (variants == null || inDictionary == null || inDictionary.Count == 0)
         {
             Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
             return false;
@@ -31,7 +31,7 @@ public static class VariantExtensions
         List<string> variantAsStringArray = variants.GetAsStringArray();
         foreach ((string key, T value) in inDictionary)
         {
-            string[] keys = key.Contains("::") ? key.Split("::") : new[] { key };
+            string[] keys = key.Contains("::") ? key.Split("::") : [key];
             if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
             {
                 result = value;

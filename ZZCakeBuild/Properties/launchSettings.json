@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "CakeBuild": {
+      "commandName": "Project"
+    },
+    "CakeBuild NuGet Pkg": {
+      "commandName": "Project",
+      "commandLineArgs": "--target=Release"
+    }
+  }
+}

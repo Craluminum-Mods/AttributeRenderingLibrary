@@ -9,3 +9,8 @@ public interface IShapeTexturesFromAttributes
     public Dictionary<string, CompositeShape> shapeByType { get; }
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; }
 }
+
+public interface IBlockShapeTexturesFromAttributes : IShapeTexturesFromAttributes
+{
+    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; }
+}
