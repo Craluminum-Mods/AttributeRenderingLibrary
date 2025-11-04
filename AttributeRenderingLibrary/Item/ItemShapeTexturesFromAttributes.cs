@@ -12,26 +12,25 @@ namespace AttributeRenderingLibrary;
 
 public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
-
     public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
-    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; } = new();
-    public Dictionary<string, int> DurabilityByType { get; protected set; } = new();
-    public Dictionary<string, float> AttackPowerByType { get; protected set; } = new();
-    public Dictionary<string, float> AttackRangeByType { get; protected set; } = new();
+    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
+    public Dictionary<string, int> DurabilityByType { get; protected set; }
+    public Dictionary<string, float> AttackPowerByType { get; protected set; }
+    public Dictionary<string, float> AttackRangeByType { get; protected set; }
 
+    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
     #region Animations
-    public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; } = new();
-    public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; } = new();
+    public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
+    public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; } = new();
-    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; } = new();
+    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; }
+    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; } = new();
-    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; } = new();
+    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; }
+    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; }
     #endregion
     #region IAttachableToEntity
     public Dictionary<string, OrderedDictionary<string, CompositeShape>> attachedShapeBySlotCodeByType = new();
