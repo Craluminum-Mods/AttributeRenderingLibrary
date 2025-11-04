@@ -23,11 +23,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; } = new();
-    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; } = new();
+    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; }
+    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; } = new();
-    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; } = new();
+    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; }
+    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; }
     #endregion
     #region IAttachableToEntity
     public Dictionary<string, OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
