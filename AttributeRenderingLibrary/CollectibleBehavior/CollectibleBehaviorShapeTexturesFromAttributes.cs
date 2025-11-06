@@ -10,26 +10,34 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavior, IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
+public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : CollectibleBehavior(collObj), IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
-    public Dictionary<string, List<object>> NameByType { get; protected set; } = new();
-    public Dictionary<string, List<object>> DescriptionByType { get; protected set; } = new();
-    public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; } = new();
+    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
 
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; } = new();
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; } = new();
+    public Dictionary<string, List<object>> NameByType { get; protected set; }
+    public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
+    public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
+    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
+    #region Animations
+    public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
+    public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
 
+    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; }
+    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; }
+
+    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; }
+    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; }
+    #endregion
     #region IAttachableToEntity
-    public Dictionary<string, OrderedDictionary<string, CompositeShape>> attachedShapeBySlotCodeByType = new();
-    public Dictionary<string, string> categoryCodeByType = new();
-    public Dictionary<string, string[]> disableElementsByType = new();
-    public Dictionary<string, string[]> keepElementsByType = new();
+    public Dictionary<string, OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
+    public Dictionary<string, string> CategoryCodeByType { get; protected set; }
+    public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
+    public Dictionary<string, string[]> KeepElementsByType { get; protected set; }
     private IAttachableToEntity iattr;
     #endregion
 
     private ICoreClientAPI clientApi;
-
-    public CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : base(collObj) { }
 
     public override void OnLoaded(ICoreAPI api)
     {
@@ -43,17 +51,27 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
         if (properties != null)
         {
-            NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
-            DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
-            ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
-
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
-            attachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
-            categoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
-            disableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
-            keepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
+            NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
+            DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+            ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
+            StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
+
+            HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
+            HeldRightReadyAnimationByType = properties["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
+
+            HeldLeftTpIdleAnimationByType = properties["heldLeftTpIdleAnimation"].AsObject<Dictionary<string, string>>();
+            HeldRightTpIdleAnimationByType = properties["heldRightTpIdleAnimation"].AsObject<Dictionary<string, string>>();
+
+            HeldTpUseAnimationByType = properties["heldTpUseAnimation"].AsObject<Dictionary<string, string>>();
+            HeldTpHitAnimationByType = properties["heldTpHitAnimation"].AsObject<Dictionary<string, string>>();
+
+            AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
+            CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
+            DisableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
+            KeepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
         }
     }
 
@@ -97,7 +115,16 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        clientApi.Tesselator.TesselateShape("ShapeTexturesFromAttributes behavior", shape, out mesh, stexSource, quantityElements: rcshape.QuantityElements, selectiveElements: rcshape.SelectiveElements);
+        TesselationMetaData meta = new TesselationMetaData
+        {
+            QuantityElements = rcshape.QuantityElements,
+            SelectiveElements = rcshape.SelectiveElements,
+            IgnoreElements = rcshape.IgnoreElements,
+            TexSource = stexSource,
+            TypeForLogging = "ShapeTexturesFromAttributes item behavior"
+        };
+
+        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
         return mesh;
     }
 
@@ -153,6 +180,90 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
         variants.GetDebugDescription(dsc, withDebugInfo);
     }
 
+    public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack, ref EnumHandling handling)
+    {
+        if (StorageFlagsByType == null || StorageFlagsByType.Count == 0)
+        {
+            return base.GetStorageFlags(itemstack, ref handling);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
+        {
+            return base.GetStorageFlags(itemstack, ref handling);
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return storageFlags;
+    }
+
+    public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
+    {
+        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
+
+        if (animCodesByType == null || animCodesByType.Count == 0)
+        {
+            return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
+        if (!variants.FindByVariant(animCodesByType, out string animCode))
+        {
+            return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+        }
+        bhHandling = EnumHandling.PreventSubsequent;
+        return animCode;
+    }
+
+    public override string GetHeldTpIdleAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
+    {
+        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
+
+        if (animCodesByType == null || animCodesByType.Count == 0)
+        {
+            return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
+        if (!variants.FindByVariant(animCodesByType, out string animCode))
+        {
+            return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+        }
+        bhHandling = EnumHandling.PreventSubsequent;
+        return animCode;
+    }
+
+    public override string GetHeldTpUseAnimation(ItemSlot activeHotbarSlot, Entity forEntity, ref EnumHandling bhHandling)
+    {
+        if (HeldTpUseAnimationByType == null || HeldTpUseAnimationByType.Count == 0)
+        {
+            return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
+        if (!variants.FindByVariant(HeldTpUseAnimationByType, out string animCode))
+        {
+            return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity, ref bhHandling);
+        }
+        bhHandling = EnumHandling.PreventSubsequent;
+        return animCode;
+    }
+
+    public override string GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity, ref EnumHandling bhHandling)
+    {
+        if (HeldTpHitAnimationByType == null || HeldTpHitAnimationByType.Count == 0)
+        {
+            return base.GetHeldTpHitAnimation(slot, byEntity, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(slot.Itemstack);
+        if (!variants.FindByVariant(HeldTpHitAnimationByType, out string animCode))
+        {
+            return base.GetHeldTpHitAnimation(slot, byEntity, ref bhHandling);
+        }
+        bhHandling = EnumHandling.PreventSubsequent;
+        return animCode;
+    }
+
     public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
         return GetOrCreateMesh(itemstack, targetAtlas);
@@ -195,7 +306,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
             shape.Textures[textureCode] = texture.Baked.BakedName;
         }
 
-        Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = new();
+        Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = [];
 
         if (stack.Collectible.GetCollectibleInterface<IShapeTexturesFromAttributes>() is IShapeTexturesFromAttributes STFA)
         {
@@ -223,13 +334,13 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
     CompositeShape IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode)
     {
-        if (attachedShapeBySlotCodeByType == null || attachedShapeBySlotCodeByType.Count == 0)
+        if (AttachedShapeBySlotCodeByType == null || AttachedShapeBySlotCodeByType.Count == 0)
         {
             return iattr?.GetAttachedShape(stack, slotCode);
         }
 
         Variants variants = Variants.FromStack(stack);
-        if (!variants.FindByVariant(attachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode))
+        if (!variants.FindByVariant(AttachedShapeBySlotCodeByType, out OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode))
         {
             return iattr?.GetAttachedShape(stack, slotCode);
         }
@@ -246,7 +357,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
                         return rcshape;
                     }
 
-                    List<CompositeShape> overlays = new();
+                    List<CompositeShape> overlays = [];
                     foreach (CompositeShape overlay in rcshape.Overlays)
                     {
                         if (clientApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
@@ -265,37 +376,37 @@ public class CollectibleBehaviorShapeTexturesFromAttributes : CollectibleBehavio
 
     string IAttachableToEntity.GetCategoryCode(ItemStack stack)
     {
-        if (categoryCodeByType == null || categoryCodeByType.Count == 0)
+        if (CategoryCodeByType == null || CategoryCodeByType.Count == 0)
         {
             return iattr?.GetCategoryCode(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(categoryCodeByType, out string categoryCode);
+        variants.FindByVariant(CategoryCodeByType, out string categoryCode);
         return categoryCode;
     }
 
     string[] IAttachableToEntity.GetDisableElements(ItemStack stack)
     {
-        if (disableElementsByType == null || disableElementsByType.Count == 0)
+        if (DisableElementsByType == null || DisableElementsByType.Count == 0)
         {
             return iattr?.GetDisableElements(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(disableElementsByType, out string[] disableElements);
+        variants.FindByVariant(DisableElementsByType, out string[] disableElements);
         return disableElements;
     }
 
     string[] IAttachableToEntity.GetKeepElements(ItemStack stack)
     {
-        if (keepElementsByType == null || keepElementsByType.Count == 0)
+        if (KeepElementsByType == null || KeepElementsByType.Count == 0)
         {
             return iattr?.GetKeepElements(stack);
         }
 
         Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(keepElementsByType, out string[] keepElements);
+        variants.FindByVariant(KeepElementsByType, out string[] keepElements);
         return keepElements;
     }
 

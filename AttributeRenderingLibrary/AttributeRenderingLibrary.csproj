@@ -50,13 +50,36 @@
     </Reference>
   </ItemGroup>
 
-<ItemGroup>
-  <Content Include="assets\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  </Content>
-  <Content Include="modinfo.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  </Content>
-</ItemGroup>
-
+  <ItemGroup>
+    <Content Include="modinfo.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  
+  <PropertyGroup>
+    <PackageId>CraluminumMods.VintageStory.AttributeRenderingLibrary</PackageId>
+    <Authors>Craluminum2413 (Dana), Nanotect, BowlSoldier</Authors>
+    <Company>Craluminum Mods</Company>
+    <Description>Attribute-based variant system for rendering things.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+	<RepositoryUrl>https://github.com/Craluminum-Mods/AttributeRenderingLibrary</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Craluminum-Mods/AttributeRenderingLibrary</PackageProjectUrl>
+    <PackageTags>vintagestory;modding;game</PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  
+  <!-- Optional: include XML docs -->
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>1591</NoWarn>
+  </PropertyGroup>
+  
+  <!-- Optional: pack extra files -->
+  <ItemGroup>
+    <None Include="$(TargetPath)" Pack="true" PackagePath="Mods/mod/" />
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+    <None Include="../LICENSE.txt" Pack="true" PackagePath="/" />
+  </ItemGroup>
 </Project>

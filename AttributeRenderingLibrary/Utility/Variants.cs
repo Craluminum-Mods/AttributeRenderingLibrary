@@ -20,7 +20,7 @@ public class Variants
     protected Dictionary<string, string> Elements { get; set; } = new();
 
     public int Count => Elements.Count;
-    public bool Any => Elements.Any();
+    public bool Any => Elements.Count != 0;
 
     public List<string> GetAsStringArray()
     {
@@ -70,7 +70,30 @@ public class Variants
 
     public void RemoveKeys(params string[] keys)
     {
+        if (keys == null || keys.Length == 0)
+        {
+            return;
+        }
+
         Elements.RemoveAllByKey(key => keys.Contains(key));
+    }
+
+    public bool ContainsKey(string key)
+    {
+        return Elements.ContainsKey(key);
+    }
+
+    public void MergeVariants(Variants otherVariants, params string[] ignoreKeys)
+    {
+        foreach ((string key, string value) in otherVariants.Elements)
+        {
+            if (ignoreKeys != null && ignoreKeys.Contains(key))
+            {
+                continue;
+            }
+
+            Set(key, value);
+        }
     }
 
     public static Variants FromTreeAttribute(ITreeAttribute rootTree)
@@ -169,10 +192,24 @@ public class Variants
         return jstack;
     }
 
+    public BlockDropItemStack ReplacePlaceholders(BlockDropItemStack bdstack)
+    {
+        bdstack.Code = ReplacePlaceholders(bdstack.Code);
+
+        if (bdstack.Attributes != null)
+        {
+            foreach ((string key, string value) in Elements)
+            {
+                bdstack.Attributes.FillPlaceHolder(key, value);
+            }
+        }
+        return bdstack;
+    }
+
     public override string ToString()
     {
         StringBuilder result = new StringBuilder();
-        if (Elements.Any())
+        if (Elements.Count != 0)
         {
             result.Append(string.Join('-', Elements.Select(x => $"{x.Key}-{x.Value}")));
         }
