@@ -274,7 +274,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 }
 
                 // If all variants in a group match, the stack should be added to the tab
-                if (matchingVariants == groups.Count)
+                if (matchingVariants == subMatchers.Count)
                 {
                     return true; 
                 }
@@ -285,7 +285,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
         /// <summary>
         /// Gets the individual search strings by variant group code
-        /// </code>
         /// </summary>
         /// <param name="matcher"></param>
         /// <returns></returns>
