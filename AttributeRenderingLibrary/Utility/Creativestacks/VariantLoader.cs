@@ -12,8 +12,6 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.GameContent;
-using Vintagestory.ServerMods;
 using Vintagestory.ServerMods.NoObf;
 
 namespace AttributeRenderingLibrary.Utility.Creativestacks
@@ -447,14 +445,14 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
             {
                 variantGroups = new();
                 CollectVariantGroupsForInstance(operand.CollectibleBehavior, variantGroups);
-#if VERBOSEDEBUG
+#if DEBUG
                 logger.Debug($"found {variantGroups.Count} variant groups for collectible {operand.CollectibleObject.Code}");
                 foreach (var entry in variantGroups)
                 {
                     logger.Debug($"Variant group {entry.Key} has {entry.Value.States.Length} entries: {string.Join(", ", entry.Value)}");
                 }
 #endif
-                variantAttributes = ComposeVariantAttributes(variantGroups);
+                variantAttributes = ComposeVariantAttributes(variantGroups, operand.CollectibleBehavior.SkipCombinations, operand.CollectibleBehavior.AllowedCombinations);
                 resultStacks = ComposeStacksFromVariants(operand.CollectibleObject, variantAttributes);
 
                 finishedStacks.Enqueue(new CollectibleAndStacks
@@ -486,7 +484,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 };
                 // resolve seems to only perform read operations on WorldAccessor,
                 // so this should be fine to do off the main thread I think
-#if VERBOSEDEBUG
+#if DEBUG
                 result[i].Resolve(serverApi.World, "attributerenderinglibrary");
 #else
                 result[i].Resolve(serverApi.World, "attributerenderinglibrary", false);
@@ -501,9 +499,11 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         /// </summary>
         /// <param name="variants">The variant groups to use for generation</param>
         /// <returns>A list of all valid attribute permutations as <c>JsonObject</c></returns>
-        private List<JsonObject> ComposeVariantAttributes(Dictionary<string, CombineState> variants)
+        private List<JsonObject> ComposeVariantAttributes(Dictionary<string, CombineState> variants, List<string> skipCombinations, List<string> allowedCombinations)
         {
             List<JsonObject> attributes = new();
+            var skipMatchers = GetAllSubMatchers(skipCombinations);
+            var allowMatchers = GetAllSubMatchers(allowedCombinations);
 
             // stage 1; all non-multiply variants need to be handled individually
             foreach (var entry in variants)
@@ -521,8 +521,81 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
             // stage 2; all multiply variants can be generated at once for efficiency
             ComposeAttributesMultiply(variants, attributes);
+            if (skipMatchers.Count > 0 || allowMatchers.Count > 0)
+            {
+                attributes = attributes.Where(a => VariantIsAllowed(a, skipMatchers, allowMatchers)).ToList();
+            }
 
             return attributes;
+        }
+
+        /// <summary>
+        /// Splits the provided matchers into their key-value components for easier processing
+        /// </summary>
+        /// <param name="matchers"></param>
+        /// <returns></returns>
+        private List<Dictionary<string, string>> GetAllSubMatchers(List<string> matchers)
+        {
+            List<Dictionary<string, string>> output = new();
+
+            foreach (var entry in matchers)
+            {
+                output.Add(GetMatchersByCode(entry));
+            }
+
+            return output;
+        }
+
+        /// <summary>
+        /// Checks whether the provided attributes are allowed, given the provided skip and allow matchers
+        /// </summary>
+        /// <param name="attributes"></param>
+        /// <param name="skipMatchers"></param>
+        /// <param name="allowMatchers"></param>
+        /// <returns></returns>
+        private bool VariantIsAllowed(JsonObject attributes, List<Dictionary<string, string>> skipMatchers, List<Dictionary<string, string>> allowMatchers)
+        {
+            if (!attributes.KeyExists(ATTRIBUTE_TYPE_KEY)) return false;
+
+            var subAttributes = attributes[ATTRIBUTE_TYPE_KEY];
+
+            foreach (var matcher in skipMatchers)
+            {
+                if (AttributesMatch(subAttributes, matcher)) return false;
+            }
+
+            foreach (var matcher in allowMatchers)
+            {
+                if (AttributesMatch(subAttributes, matcher)) return true;
+            }
+
+            return allowMatchers.Count == 0;
+        }
+
+        /// <summary>
+        /// Checks if the provided attributes match the provided matcher
+        /// </summary>
+        /// <param name="attributes"></param>
+        /// <param name="matcher"></param>
+        /// <returns></returns>
+        private bool AttributesMatch(JsonObject attributes, Dictionary<string, string> matcher)
+        {
+            string token;
+            int matches = 0;
+
+            foreach (var kv in matcher)
+            {
+                if (kv.Key == "*") return true;
+                if (attributes.KeyExists(kv.Key))
+                {
+                    token = attributes[kv.Key].AsString();
+                    if (token == null) continue;
+
+                    if (kv.Value == "*" || token == kv.Value) matches++;
+                }
+            }
+
+            return matches == matcher.Count;
         }
 
         /// <summary>
@@ -643,7 +716,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         /// <summary>
         /// Collects and combines the specific different variant groups that apply to a specific combination of collectible and 
         /// </summary>
-        /// <param name="operand"></param>
+        /// <param name="stackBehavior"></param>
         /// <param name="variantGroups"></param>
         private void CollectVariantGroupsForInstance(CollectibleBehaviorGenerateCreativeStacks stackBehavior, Dictionary<string, CombineState> variantGroups)
         {

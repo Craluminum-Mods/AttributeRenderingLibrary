@@ -27,6 +27,8 @@ public class CollectibleBehaviorGenerateCreativeStacks : CollectibleBehavior
         {
             AttributeVariantGroups = properties["variantgroups"].AsObject<RegistryObjectVariantGroup[]>(defaultValue: null);
             CreativeInventory = properties["creativeinventory"].AsObject<Dictionary<string, string[]>>(defaultValue: new());
+            AllowedCombinations = properties["allowedvariants"].AsObject<List<string>>(defaultValue: new());
+            SkipCombinations = properties["skipvariants"].AsObject<List<string>>(defaultValue: new());
         }
     }
 }
