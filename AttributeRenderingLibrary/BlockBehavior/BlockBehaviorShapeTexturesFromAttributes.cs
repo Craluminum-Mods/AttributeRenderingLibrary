@@ -91,17 +91,24 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual MeshData GenGuiMesh(ItemStack itemstack)
     {
+        return GenGuiMesh(itemstack, overrideShape: null);
+    }
+
+    public virtual MeshData GenGuiMesh(ItemStack itemstack, CompositeShape overrideShape)
+    {
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         Variants variants = Variants.FromStack(itemstack);
-        variants.FindByVariant(shapeInventoryByType, out CompositeShape ucshape);
+
+        CompositeShape ucshape = overrideShape;
+        if (ucshape == null)
+            variants.FindByVariant(shapeInventoryByType, out ucshape);
 
         if (ucshape == null)
-        {
             variants.FindByVariant(shapeByType, out ucshape);
-        }
 
-        ucshape ??= block.ShapeInventory ?? block.Shape;
+        ucshape ??= block.ShapeInventory;
+        ucshape ??= block.Shape;
 
         if (ucshape == null) return mesh;
 
@@ -143,16 +150,24 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual MeshData GetOrCreateMesh(Variants variants, ITexPositionSource overrideTexturesource = null)
     {
+        return GetOrCreateMesh(variants: variants, overrideShape: null, atBlockPos: null, extraCacheKey: "", overrideTexturesource: overrideTexturesource);
+    }
+
+    public virtual MeshData GetOrCreateMesh(Variants variants, CompositeShape overrideShape, BlockPos atBlockPos, string extraCacheKey, ITexPositionSource overrideTexturesource = null)
+    {
         Dictionary<string, MeshData> cMeshes = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes", () => new Dictionary<string, MeshData>());
 
-        string key = $"{block.Code}-{variants}";
+        string key = $"{block.Code}-{variants}-{extraCacheKey}";
         if (overrideTexturesource != null || !cMeshes.TryGetValue(key, out MeshData mesh))
         {
             mesh = RenderExtensions.GenEmptyMesh();
 
-            variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-            ucshape ??= block.Shape;
-
+            CompositeShape ucshape = overrideShape;
+            if (ucshape == null)
+            {
+                variants.FindByVariant(shapeByType, out ucshape);
+                ucshape ??= block.Shape;
+            }
             if (ucshape == null) return mesh;
 
             CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
