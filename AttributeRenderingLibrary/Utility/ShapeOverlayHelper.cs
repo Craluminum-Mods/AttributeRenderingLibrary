@@ -63,14 +63,14 @@ public class ShapeOverlayHelper
     /// <param name="clientApi"></param>
     /// <param name="textureSource">The texture source to use</param>
     /// <param name="variants">The variants used to resolve the textures</param>
-    /// <param name="texturesByType">The textures grouped by variant</param>
+    /// <param name="unresolvedTextures">The textures</param>
     /// <param name="prefixedTextureCodes">The texture codes that have been prefixed</param>
     /// <param name="overlayPrefix">The texture prefix to use for prefixed codes</param>
-    public static void BakeVariantTextures(ICoreClientAPI clientApi, UniversalShapeTextureSource textureSource, Variants variants, Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType, Dictionary<string, AssetLocation> prefixedTextureCodes = null, string overlayPrefix = "")
+    public static void BakeVariantTextures(ICoreClientAPI clientApi, UniversalShapeTextureSource textureSource, Variants variants, Dictionary<string, CompositeTexture> unresolvedTextures, Dictionary<string, AssetLocation> prefixedTextureCodes = null, string overlayPrefix = "")
     {
-        if (!variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> variantTextures)) return;
+        if (unresolvedTextures == null) return;
 
-        foreach((string textureCode, CompositeTexture texture) in variantTextures)
+        foreach((string textureCode, CompositeTexture texture) in unresolvedTextures)
         {
             CompositeTexture ctex = texture.Clone();
             ctex = variants.ReplacePlaceholders(ctex);

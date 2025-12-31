@@ -170,6 +170,13 @@ public class Variants
                 cshape.Overlays[i].Base = ReplacePlaceholders(cshape.Overlays[i].Base);
             }
         }
+        if (cshape.Alternates != null && cshape.Alternates.Length > 0)
+        {
+            for (int i = 0; i < cshape.Alternates.Length; i++)
+            {
+                cshape.Alternates[i].Base = ReplacePlaceholders(cshape.Alternates[i].Base);
+            }
+        }
 
         return cshape;
     }

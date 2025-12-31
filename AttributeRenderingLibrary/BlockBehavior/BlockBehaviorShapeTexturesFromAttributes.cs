@@ -133,8 +133,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         {
             stexSource.textures[textureCode] = texture;
         }
-
-        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
+        
+        variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> unresolvedTextures);
+        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, unresolvedTextures, prefixedTextureCodes, overlayPrefix);
 
         TesselationMetaData meta = new TesselationMetaData
         {
@@ -157,22 +158,38 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public virtual MeshData GetOrCreateMesh(Variants variants, CompositeShape overrideShape, BlockPos atBlockPos, string extraCacheKey, ITexPositionSource overrideTexturesource = null)
     {
         Dictionary<string, MeshData> cMeshes = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes", () => new Dictionary<string, MeshData>());
-
         string key = $"{block.Code}-{variants}-{extraCacheKey}";
+
+        CompositeShape ucshape = overrideShape;
+        if (ucshape == null)
+        {
+            variants.FindByVariant(shapeByType, out ucshape);
+            ucshape ??= block.Shape;
+        }
+        if (atBlockPos != null && ucshape != null && ucshape.Alternates != null)
+        {
+            ucshape.LoadAlternates(clientApi.Assets, clientApi.Logger);
+            if (ucshape.BakedAlternates != null)
+            {
+                int randomizer = GameMath.MurmurHash3Mod(atBlockPos.X, atBlockPos.Y, atBlockPos.Z, ucshape.BakedAlternates.Length);
+                key += "-alternate:" + randomizer;
+                ucshape = ucshape.BakedAlternates[randomizer];
+            }
+        }
+
+        variants.FindByVariant(texturesByType, out var _unresolvedTextures);
+        Dictionary<string, CompositeTexture> unresolvedTextures = _unresolvedTextures.ToDictionary(x => x.Key, y => y.Value.Clone());
+
         if (overrideTexturesource != null || !cMeshes.TryGetValue(key, out MeshData mesh))
         {
             mesh = RenderExtensions.GenEmptyMesh();
 
-            CompositeShape ucshape = overrideShape;
-            if (ucshape == null)
-            {
-                variants.FindByVariant(shapeByType, out ucshape);
-                ucshape ??= block.Shape;
-            }
             if (ucshape == null) return mesh;
 
             CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
             rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
+
+            if (rcshape == null) return mesh;
 
             Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
             if (shape == null) return mesh;
@@ -192,7 +209,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                 stexSource.textures[textureCode] = texture;
             }
 
-            ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
+            ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, unresolvedTextures, prefixedTextureCodes, overlayPrefix);
 
             TesselationMetaData meta = new TesselationMetaData
             {
@@ -294,8 +311,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         Vec3f rotationRad = GetRotation(world, pos);
         float[] mat = Matrixf.Create().Translate(0.5f, 0.5f, 0.5f).Rotate(rotationRad).Translate(-0.5f, -0.5f, -0.5f).Values;
-        MeshData decalMesh = GetOrCreateMesh(beBehavior.Variants, overrideTexturesource: decalTexSource).Clone().MatrixTransform(mat);
-        MeshData blockMesh = GetOrCreateMesh(beBehavior.Variants).Clone().MatrixTransform(mat);
+        MeshData decalMesh = GetOrCreateMesh(beBehavior.Variants, overrideShape: null, pos, "", overrideTexturesource: decalTexSource).Clone().MatrixTransform(mat);
+        MeshData blockMesh = GetOrCreateMesh(beBehavior.Variants, overrideShape: null, pos, "").Clone().MatrixTransform(mat);
         decalModelData = decalMesh;
         blockModelData = blockMesh;
         return;

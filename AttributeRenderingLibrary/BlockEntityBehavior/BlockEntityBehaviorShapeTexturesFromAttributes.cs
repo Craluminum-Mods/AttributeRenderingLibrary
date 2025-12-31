@@ -23,7 +23,7 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
 
         if (Api.Side == EnumAppSide.Client)
         {
-            mesh = OwnBehavior.GetOrCreateMesh(Variants);
+            mesh = OwnBehavior.GetOrCreateMesh(Variants, overrideShape: null, atBlockPos: Pos, extraCacheKey: "");
         }
     }
 

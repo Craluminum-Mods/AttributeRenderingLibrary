@@ -113,7 +113,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             stexSource.textures[textureCode] = texture;
         }
 
-        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
+        variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> unresolvedTextures);
+        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, unresolvedTextures, prefixedTextureCodes, overlayPrefix);
 
         TesselationMetaData meta = new TesselationMetaData
         {
