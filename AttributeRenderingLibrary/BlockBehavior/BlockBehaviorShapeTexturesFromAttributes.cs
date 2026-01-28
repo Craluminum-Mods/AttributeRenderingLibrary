@@ -22,6 +22,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
     public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
+    #region Extra shape overrides
+    public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
+    public Dictionary<string, string[]> ShapeSelectiveElementsByType { get; protected set; }
+    #endregion
+
     private ICoreClientAPI clientApi;
 
     public override void OnLoaded(ICoreAPI api)
@@ -42,10 +47,13 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
             DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
-
+            
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+
+            ShapeIgnoreElementsByType = properties["shapeIgnoreElements"].AsObject<Dictionary<string, string[]>>();
+            ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
 
             LoadAndResolveCollisionAndSelectionBoxes(properties);
         }
@@ -139,8 +147,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         TesselationMetaData meta = new TesselationMetaData
         {
             QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = rcshape.SelectiveElements,
-            IgnoreElements = rcshape.IgnoreElements,
+            SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
+            IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
             TexSource = stexSource,
             TypeForLogging = "ShapeTexturesFromAttributes block behavior"
         };
@@ -197,8 +205,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             TesselationMetaData meta = new TesselationMetaData
             {
                 QuantityElements = rcshape.QuantityElements,
-                SelectiveElements = rcshape.SelectiveElements,
-                IgnoreElements = rcshape.IgnoreElements,
+                SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
+                IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
                 TexSource = stexSource,
                 TypeForLogging = "ShapeTexturesFromAttributes block behavior"
             };
@@ -211,6 +219,32 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             }
         }
         return mesh;
+    }
+
+    public virtual string[] GetShapeIgnoreElements(Variants variants, CompositeShape cshape)
+    {
+        if (ShapeIgnoreElementsByType == null || ShapeIgnoreElementsByType.Count <= 0)
+        {
+            return cshape.IgnoreElements;
+        }
+        if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] ignoreElements) && ignoreElements != null)
+        {
+            return cshape.IgnoreElements.Append(ignoreElements);
+        }
+        return cshape.IgnoreElements;
+    }
+
+    public virtual string[] GetShapeSelectiveElements(Variants variants, CompositeShape cshape)
+    {
+        if (ShapeSelectiveElementsByType == null || ShapeSelectiveElementsByType.Count <= 0)
+        {
+            return cshape.SelectiveElements;
+        }
+        if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] selectiveElements) && selectiveElements != null)
+        {
+            return cshape.SelectiveElements.Append(selectiveElements);
+        }
+        return cshape.SelectiveElements;
     }
 
     public override void OnBeforeRender(ICoreClientAPI clientApi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)

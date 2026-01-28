@@ -29,6 +29,10 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; }
     #endregion
+    #region Extra shape overrides
+    public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
+    public Dictionary<string, string[]> ShapeSelectiveElementsByType { get; protected set; }
+    #endregion
     #region IAttachableToEntity
     public Dictionary<string, OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
     public Dictionary<string, string> CategoryCodeByType { get; protected set; }
@@ -53,6 +57,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         {
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+
+            ShapeIgnoreElementsByType = properties["shapeIgnoreElements"].AsObject<Dictionary<string, string[]>>();
+            ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
 
             NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
             DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
@@ -118,14 +125,42 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         TesselationMetaData meta = new TesselationMetaData
         {
             QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = rcshape.SelectiveElements,
-            IgnoreElements = rcshape.IgnoreElements,
+            SelectiveElements = GetShapeSelectiveElements(itemstack, rcshape),
+            IgnoreElements = GetShapeIgnoreElements(itemstack, rcshape),
             TexSource = stexSource,
             TypeForLogging = "ShapeTexturesFromAttributes item behavior"
         };
 
         clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
         return mesh;
+    }
+
+    public virtual string[] GetShapeIgnoreElements(ItemStack itemStack, CompositeShape cshape)
+    {
+        if (ShapeIgnoreElementsByType == null || ShapeIgnoreElementsByType.Count <= 0)
+        {
+            return cshape.IgnoreElements;
+        }
+        Variants variants = Variants.FromStack(itemStack);
+        if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] ignoreElements) && ignoreElements != null)
+        {
+            return cshape.IgnoreElements.Append(ignoreElements);
+        }
+        return cshape.IgnoreElements;
+    }
+
+    public virtual string[] GetShapeSelectiveElements(ItemStack itemStack, CompositeShape cshape)
+    {
+        if (ShapeSelectiveElementsByType == null || ShapeSelectiveElementsByType.Count <= 0)
+        {
+            return cshape.SelectiveElements;
+        }
+        Variants variants = Variants.FromStack(itemStack);
+        if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] selectiveElements) && selectiveElements != null)
+        {
+            return cshape.SelectiveElements.Append(selectiveElements);
+        }
+        return cshape.SelectiveElements;
     }
 
     public override void OnBeforeRender(ICoreClientAPI clientApi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
