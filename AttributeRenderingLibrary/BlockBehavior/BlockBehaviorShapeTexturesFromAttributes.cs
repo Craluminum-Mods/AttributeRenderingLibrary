@@ -396,7 +396,13 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
     {
+        if (CollisionBoxesByType == null || CollisionBoxesByType.Count == 0)
+        {
+            return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
+        }
+
         if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants != null
             && beBehavior.Variants.FindByVariant(CollisionBoxesByType, out Cuboidf[] cuboids)
             && cuboids != null
             && cuboids.Length > 0)
@@ -409,7 +415,13 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
     {
+        if (SelectionBoxesByType == null || SelectionBoxesByType.Count == 0)
+        {
+            return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
+        }
+
         if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants != null
             && beBehavior.Variants.FindByVariant(SelectionBoxesByType, out Cuboidf[] cuboids)
             && cuboids != null
             && cuboids.Length > 0)
