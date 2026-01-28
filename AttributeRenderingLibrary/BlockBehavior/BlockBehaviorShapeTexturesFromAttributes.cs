@@ -7,10 +7,11 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
+using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource
 {
     public Dictionary<string, List<object>> NameByType { get; protected set; }
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
@@ -91,17 +92,24 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual MeshData GenGuiMesh(ItemStack itemstack)
     {
+        return GenGuiMesh(itemstack, overrideShape: null);
+    }
+
+    public virtual MeshData GenGuiMesh(ItemStack itemstack, CompositeShape overrideShape)
+    {
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         Variants variants = Variants.FromStack(itemstack);
-        variants.FindByVariant(shapeInventoryByType, out CompositeShape ucshape);
+
+        CompositeShape ucshape = overrideShape;
+        if (ucshape == null)
+            variants.FindByVariant(shapeInventoryByType, out ucshape);
 
         if (ucshape == null)
-        {
             variants.FindByVariant(shapeByType, out ucshape);
-        }
 
-        ucshape ??= block.ShapeInventory ?? block.Shape;
+        ucshape ??= block.ShapeInventory;
+        ucshape ??= block.Shape;
 
         if (ucshape == null) return mesh;
 
@@ -143,16 +151,24 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual MeshData GetOrCreateMesh(Variants variants, ITexPositionSource overrideTexturesource = null)
     {
+        return GetOrCreateMesh(variants: variants, overrideShape: null, atBlockPos: null, extraCacheKey: "", overrideTexturesource: overrideTexturesource);
+    }
+
+    public virtual MeshData GetOrCreateMesh(Variants variants, CompositeShape overrideShape, BlockPos atBlockPos, string extraCacheKey, ITexPositionSource overrideTexturesource = null)
+    {
         Dictionary<string, MeshData> cMeshes = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes", () => new Dictionary<string, MeshData>());
 
-        string key = $"{block.Code}-{variants}";
+        string key = $"{block.Code}-{variants}-{extraCacheKey}";
         if (overrideTexturesource != null || !cMeshes.TryGetValue(key, out MeshData mesh))
         {
             mesh = RenderExtensions.GenEmptyMesh();
 
-            variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-            ucshape ??= block.Shape;
-
+            CompositeShape ucshape = overrideShape;
+            if (ucshape == null)
+            {
+                variants.FindByVariant(shapeByType, out ucshape);
+                ucshape ??= block.Shape;
+            }
             if (ucshape == null) return mesh;
 
             CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
@@ -380,7 +396,13 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
     {
+        if (CollisionBoxesByType == null || CollisionBoxesByType.Count == 0)
+        {
+            return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
+        }
+
         if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants != null
             && beBehavior.Variants.FindByVariant(CollisionBoxesByType, out Cuboidf[] cuboids)
             && cuboids != null
             && cuboids.Length > 0)
@@ -393,7 +415,13 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
     {
+        if (SelectionBoxesByType == null || SelectionBoxesByType.Count == 0)
+        {
+            return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
+        }
+
         if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants != null
             && beBehavior.Variants.FindByVariant(SelectionBoxesByType, out Cuboidf[] cuboids)
             && cuboids != null
             && cuboids.Length > 0)

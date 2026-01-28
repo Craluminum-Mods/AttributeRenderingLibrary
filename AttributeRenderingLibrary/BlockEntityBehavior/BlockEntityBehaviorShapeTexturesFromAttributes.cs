@@ -53,7 +53,18 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
     {
         Vec3f rotationRad = OwnBehavior.GetRotation(Api.World, Pos);
         MeshData clonedMesh = mesh.Clone();
-        clonedMesh = clonedMesh.Rotate(Vec3f.Half, rotationRad.X, rotationRad.Y, rotationRad.Z);
+
+        if (Block.RandomizeRotations)
+        {
+            int randomSelector = GameMath.MurmurHash3(-Blockentity.Pos.X, (Blockentity.Block.RandomizeAxes == EnumRandomizeAxes.XYZ) ? Blockentity.Pos.Y : 0, Blockentity.Pos.Z);
+            float[] matrix = TesselationMetaData.randomRotMatrices[GameMath.Mod(randomSelector, TesselationMetaData.randomRotMatrices.Length)];
+            clonedMesh = clonedMesh.MatrixTransform(matrix);
+        }
+        else
+        {
+            clonedMesh = clonedMesh.Rotate(Vec3f.Half, rotationRad.X, rotationRad.Y, rotationRad.Z);
+        }
+
         mesher.AddMeshData(clonedMesh);
         return true; // skip default mesh
     }
