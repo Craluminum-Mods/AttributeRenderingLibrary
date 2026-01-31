@@ -4,7 +4,7 @@
     "name": "Attribute Rendering Library",
     "authors": ["Craluminum2413 (Dana)", "Nanotect", "BowlSoldier"],
     "description": "Attribute-based variant system for rendering things and much more.",
-    "version": "2.6.0",
+    "version": "2.7.0",
     "dependencies": {
         "game": "1.21.0"
     }
