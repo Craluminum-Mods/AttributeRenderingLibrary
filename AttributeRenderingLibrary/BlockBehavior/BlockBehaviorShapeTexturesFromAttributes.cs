@@ -24,7 +24,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
     #region Extra shape overrides
     public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
+    public Dictionary<string, string[]> ShapeIgnoreElementsCombineByType { get; protected set; }
     public Dictionary<string, string[]> ShapeSelectiveElementsByType { get; protected set; }
+    public Dictionary<string, string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
     #endregion
 
     private ICoreClientAPI clientApi;
@@ -53,7 +55,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
             ShapeIgnoreElementsByType = properties["shapeIgnoreElements"].AsObject<Dictionary<string, string[]>>();
+            ShapeIgnoreElementsCombineByType = properties["shapeIgnoreElementsCombine"].AsObject<Dictionary<string, string[]>>();
             ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
+            ShapeSelectiveElementsCombineByType = properties["shapeSelectiveElementsCombine"].AsObject<Dictionary<string, string[]>>();
 
             LoadAndResolveCollisionAndSelectionBoxes(properties);
         }
@@ -223,27 +227,47 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual string[] GetShapeIgnoreElements(Variants variants, CompositeShape cshape)
     {
-        if (ShapeIgnoreElementsByType == null || ShapeIgnoreElementsByType.Count <= 0)
+        if (ShapeIgnoreElementsByType is { Count: > 0 })
         {
-            return cshape.IgnoreElements;
+            if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] selectiveElements) && selectiveElements != null)
+            {
+                return cshape.IgnoreElements.Append(selectiveElements);
+            }
         }
-        if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] ignoreElements) && ignoreElements != null)
+        
+        if (ShapeIgnoreElementsCombineByType is { Count: > 0 })
         {
-            return cshape.IgnoreElements.Append(ignoreElements);
+            List<string> result = cshape.IgnoreElements is null ? new() : new(cshape.IgnoreElements);
+            foreach (var subset in variants.FindAllByVariant(ShapeIgnoreElementsCombineByType))
+            {
+                result.AddRange(subset);
+            }
+            return result.ToArray();
         }
+        
         return cshape.IgnoreElements;
     }
 
     public virtual string[] GetShapeSelectiveElements(Variants variants, CompositeShape cshape)
     {
-        if (ShapeSelectiveElementsByType == null || ShapeSelectiveElementsByType.Count <= 0)
+        if (ShapeSelectiveElementsByType is { Count: > 0 })
         {
-            return cshape.SelectiveElements;
+            if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] selectiveElements) && selectiveElements != null)
+            {
+                return cshape.SelectiveElements.Append(selectiveElements);
+            }
         }
-        if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] selectiveElements) && selectiveElements != null)
+        
+        if (ShapeSelectiveElementsCombineByType is { Count: > 0 })
         {
-            return cshape.SelectiveElements.Append(selectiveElements);
+            List<string> result = cshape.SelectiveElements is null ? new() : new(cshape.SelectiveElements);
+            foreach (var subset in variants.FindAllByVariant(ShapeSelectiveElementsCombineByType))
+            {
+                result.AddRange(subset);
+            }
+            return result.ToArray();
         }
+        
         return cshape.SelectiveElements;
     }
 

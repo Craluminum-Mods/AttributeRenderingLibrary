@@ -43,6 +43,36 @@ public static class VariantExtensions
         Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
         return false;
     }
+    
+    /// <summary>
+    /// Similar to FindByVariant, but returns multiple matching values
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="variants"></param>
+    /// <param name="inDictionary">List of keys, including keys with '::' separator used as AND operator </param>
+    /// <param name="result"></param>
+    /// <returns>True, if value by key is found, otherwise false</returns>
+    public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, IDictionary<string, T> inDictionary)
+    {
+        if (variants == null || inDictionary == null || inDictionary.Count == 0)
+        {
+            Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+            yield break;
+        }
+
+        List<string> variantAsStringArray = variants.GetAsStringArray();
+        foreach ((string key, T value) in inDictionary)
+        {
+            string[] keys = key.Contains("::") ? key.Split("::") : [key];
+            if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
+            {
+                Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+                yield return value;
+            }
+        }
+
+        Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+    }
 
     public static bool IsTrue(this Variants variants, Dictionary<string, bool> inDictionary)
     {
