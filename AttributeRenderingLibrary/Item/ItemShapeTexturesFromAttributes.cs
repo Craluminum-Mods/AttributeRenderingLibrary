@@ -149,9 +149,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         if (ShapeIgnoreElementsByType is { Count: > 0 })
         {
             Variants variants = Variants.FromStack(itemStack);
-            if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] selectiveElements) && selectiveElements != null)
+            if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] ignoreElements) && ignoreElements != null)
             {
-                return cshape.IgnoreElements.Append(selectiveElements);
+                return cshape.IgnoreElements.Append(variants.ReplacePlaceholders(ignoreElements));
             }
         }
         
@@ -159,9 +159,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         {
             Variants variants = Variants.FromStack(itemStack);
             List<string> result = cshape.IgnoreElements is null ? new() : new(cshape.IgnoreElements);
-            foreach (var subset in variants.FindAllByVariant(ShapeIgnoreElementsCombineByType))
+            foreach (string[] subset in variants.FindAllByVariant(ShapeIgnoreElementsCombineByType))
             {
-                result.AddRange(subset);
+                result.AddRange(variants.ReplacePlaceholders(subset));
             }
             return result.ToArray();
         }
@@ -176,7 +176,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             Variants variants = Variants.FromStack(itemStack);
             if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] selectiveElements) && selectiveElements != null)
             {
-                return cshape.SelectiveElements.Append(selectiveElements);
+                return cshape.SelectiveElements.Append(variants.ReplacePlaceholders(selectiveElements));
             }
         }
         
@@ -184,9 +184,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         {
             Variants variants = Variants.FromStack(itemStack);
             List<string> result = cshape.SelectiveElements is null ? new() : new(cshape.SelectiveElements);
-            foreach (var subset in variants.FindAllByVariant(ShapeSelectiveElementsCombineByType))
+            foreach (string[] subset in variants.FindAllByVariant(ShapeSelectiveElementsCombineByType))
             {
-                result.AddRange(subset);
+                result.AddRange(variants.ReplacePlaceholders(subset));
             }
             return result.ToArray();
         }

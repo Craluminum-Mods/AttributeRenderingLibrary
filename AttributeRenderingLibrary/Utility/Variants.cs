@@ -143,6 +143,15 @@ public class Variants
         return input;
     }
 
+    public string[] ReplacePlaceholders(string[] input)
+    {
+        for (int i = 0; i < input.Length; i++)
+        {
+            input[i] = ReplacePlaceholders(input[i]);
+        }
+        return input;
+    }
+
     public AssetLocation ReplacePlaceholders(AssetLocation location)
     {
         if (location.Domain != "game")
