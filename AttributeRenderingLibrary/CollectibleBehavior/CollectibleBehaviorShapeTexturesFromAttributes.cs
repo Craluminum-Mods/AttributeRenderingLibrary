@@ -147,7 +147,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         EntityProperties props = clientApi.World.GetEntityType(new AssetLocation("player"));
-        Shape entityShape = props.Client.LoadedShape;
+        Shape entityShape = props.Client.LoadedShape.Clone();
         AssetLocation shapePathForLogging = props.Client.Shape.Base;
         Shape newShape;
 
