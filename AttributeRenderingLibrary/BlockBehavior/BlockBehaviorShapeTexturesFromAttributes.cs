@@ -13,20 +13,20 @@ namespace AttributeRenderingLibrary;
 
 public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource
 {
-    public Dictionary<string, List<object>> NameByType { get; protected set; }
-    public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
-    public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
-    public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
-    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
+    public VariantSelectionList<List<object>> NameByType { get; protected set; }
+    public VariantSelectionList<List<object>> DescriptionByType { get; protected set; }
+    public VariantSelectionList<Cuboidf[]> CollisionBoxesByType { get; protected set; }
+    public VariantSelectionList<Cuboidf[]> SelectionBoxesByType { get; protected set; }
+    public VariantSelectionList<BlockDropItemStack[]> DropsByType { get; protected set; }
 
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
-    public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
+    public VariantSelectionList<CompositeShape> shapeByType { get; protected set; }
+    public VariantSelectionList<CompositeShape> shapeInventoryByType { get; protected set; }
+    public VariantSelectionList<Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
     #region Extra shape overrides
-    public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeIgnoreElementsCombineByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeSelectiveElementsByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
+    public VariantSelectionList<string[]> ShapeIgnoreElementsByType { get; protected set; }
+    public VariantSelectionList<string[]> ShapeIgnoreElementsCombineByType { get; protected set; }
+    public VariantSelectionList<string[]> ShapeSelectiveElementsByType { get; protected set; }
+    public VariantSelectionList<string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
     #endregion
 
     private ICoreClientAPI clientApi;
@@ -44,40 +44,45 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         base.Initialize(properties);
 
-        if (properties != null)
-        {
-            NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
-            DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
-            DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
-            
-            shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
-            shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
-            texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+        if (properties is not { Count: > 0 })
+            return;
 
-            ShapeIgnoreElementsByType = properties["shapeIgnoreElements"].AsObject<Dictionary<string, string[]>>();
-            ShapeIgnoreElementsCombineByType = properties["shapeIgnoreElementsCombine"].AsObject<Dictionary<string, string[]>>();
-            ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
-            ShapeSelectiveElementsCombineByType = properties["shapeSelectiveElementsCombine"].AsObject<Dictionary<string, string[]>>();
+        NameByType = VariantSelectionList<List<object>>.LoadFrom(properties["name"]);
+        DescriptionByType = VariantSelectionList<List<object>>.LoadFrom(properties["description"]);
+        DropsByType = VariantSelectionList<BlockDropItemStack[]>.LoadFrom(properties["drops"]);
 
-            LoadAndResolveCollisionAndSelectionBoxes(properties);
-        }
+        shapeByType = VariantSelectionList<CompositeShape>.LoadFrom(properties["shape"]);
+        shapeInventoryByType = VariantSelectionList<CompositeShape>.LoadFrom(properties["shapeInventory"]);
+        texturesByType = VariantSelectionList<Dictionary<string, CompositeTexture>>.LoadFrom(properties["textures"]);
+
+        ShapeIgnoreElementsByType = VariantSelectionList<string[]>.LoadFrom(properties["shapeIgnoreElements"]);
+        ShapeIgnoreElementsCombineByType = VariantSelectionList<string[]>.LoadFrom(properties["shapeIgnoreElementsCombine"]);
+        ShapeSelectiveElementsByType = VariantSelectionList<string[]>.LoadFrom(properties["shapeSelectiveElements"]);
+        ShapeSelectiveElementsCombineByType = VariantSelectionList<string[]>.LoadFrom(properties["shapeSelectiveElementsCombine"]);
+
+        LoadAndResolveCollisionAndSelectionBoxes(properties);
     }
 
     private void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
     {
-        Dictionary<string, RotatableCube[]> rawCollisionsAndSelections = properties["collisionSelectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
-        Dictionary<string, RotatableCube[]> rawCollisions = properties["collisionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
-        Dictionary<string, RotatableCube[]> rawSelections = properties["selectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
-
-        if (rawCollisionsAndSelections?.Count > 0)
+        if (properties["collisionSelectionBoxes"] is { Token: not null } rawCollisionsAndSelections)
         {
-            CollisionBoxesByType = rawCollisionsAndSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
-            SelectionBoxesByType = rawCollisionsAndSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            var dict = rawCollisionsAndSelections
+                .AsObject<Dictionary<string, RotatableCube[]>>();
+            CollisionBoxesByType = VariantSelectionList<Cuboidf[]>.LoadFrom(dict, cube => cube.ToCuboidf());
+            SelectionBoxesByType = VariantSelectionList<Cuboidf[]>.LoadFrom(dict, cube => cube.ToCuboidf());
         }
         else
         {
-            CollisionBoxesByType = rawCollisions?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
-            SelectionBoxesByType = rawSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            if (properties["collisionBoxes"] is { Token: not null } rawCollisions)
+                CollisionBoxesByType = VariantSelectionList<Cuboidf[]>.LoadFrom(rawCollisions
+                    .AsObject<Dictionary<string, RotatableCube[]>>(),
+                    cube => cube.ToCuboidf());
+            
+            if (properties["selectionBoxes"] is { Token: not null } rawSelections)
+                SelectionBoxesByType = VariantSelectionList<Cuboidf[]>.LoadFrom(rawSelections
+                    .AsObject<Dictionary<string, RotatableCube[]>>(),
+                    cube => cube.ToCuboidf());
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
@@ -8,17 +9,17 @@ namespace AttributeRenderingLibrary;
 
 public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : CollectibleBehaviorHeldBag(collObj)
 {
-    public Dictionary<string, int> QuantitySlotsByType { get; protected set; }
-    public Dictionary<string, string> SlotBgColorByType { get; protected set; }
-    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
+    public VariantSelectionList<int> QuantitySlotsByType { get; protected set; }
+    public VariantSelectionList<string> SlotBgColorByType { get; protected set; }
+    public VariantSelectionList<EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
 
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
 
-        QuantitySlotsByType = properties["quantitySlots"].AsObject<Dictionary<string, int>>();
-        SlotBgColorByType = properties["slotBgColor"].AsObject<Dictionary<string, string>>();
-        StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, int>>()?.ToDictionary(x => x.Key, x => (EnumItemStorageFlags)x.Value);
+        QuantitySlotsByType = VariantSelectionList<int>.LoadFrom(properties["quantitySlots"]);
+        SlotBgColorByType = VariantSelectionList<string>.LoadFrom(properties["slotBgColor"]);
+        StorageFlagsByType = VariantSelectionList<EnumItemStorageFlags>.LoadFrom(properties["storageFlags"].Token as JObject, token => (EnumItemStorageFlags)token.Value<int>());
     }
 
     public override int GetQuantitySlots(ItemStack bagstack)

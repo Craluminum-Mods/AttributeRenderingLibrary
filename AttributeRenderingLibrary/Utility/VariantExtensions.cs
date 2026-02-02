@@ -4,79 +4,48 @@ using System.Linq;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
-using Vintagestory.API.Util;
 
 namespace AttributeRenderingLibrary;
 
 public static class VariantExtensions
 {
-    /// <summary>
-    /// Similar to ByType, tries to match key (or multiple keys, if there is '::' separator used as AND operator) and give value behind it
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="variants"></param>
-    /// <param name="inDictionary">List of keys, including keys with '::' separator used as AND operator </param>
-    /// <param name="result"></param>
-    /// <returns>True, if value by key is found, otherwise false</returns>
-    public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result)
+    public static bool FindByVariant<T>(this Variants variants, VariantSelectionList<T> inList, out T result)
     {
+        Core.Api?.World.FrameProfiler.Enter("attributerenderinglibrary.findbyvariant");
+        
         result = default;
 
-        if (variants == null || inDictionary == null || inDictionary.Count == 0)
+        if (variants is null || inList is not { Count: > 0 })
         {
-            Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+            Core.Api?.World.FrameProfiler.Leave();
             return false;
         }
 
-        List<string> variantAsStringArray = variants.GetAsStringArray();
-        foreach ((string key, T value) in inDictionary)
+        if (inList.FindFirstByVariant(variants, out result))
         {
-            string[] keys = key.Contains("::") ? key.Split("::") : [key];
-            if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
-            {
-                result = value;
-                Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
-                return true;
-            }
+            Core.Api?.World.FrameProfiler.Leave();
+            return true;
         }
 
-        Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+        Core.Api?.World.FrameProfiler.Leave();
         return false;
     }
     
-    /// <summary>
-    /// Similar to FindByVariant, but returns multiple matching values
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="variants"></param>
-    /// <param name="inDictionary">List of keys, including keys with '::' separator used as AND operator </param>
-    /// <param name="result"></param>
-    /// <returns>True, if value by key is found, otherwise false</returns>
-    public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, IDictionary<string, T> inDictionary)
+    public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, VariantSelectionList<T> inList)
     {
-        if (variants == null || inDictionary == null || inDictionary.Count == 0)
+        Core.Api?.World.FrameProfiler.Enter("attributerenderinglibrary.findallbyvariant");
+        if (variants is null || inList is not { Count: > 0 })
         {
-            Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+            Core.Api?.World.FrameProfiler.Leave();
             yield break;
         }
 
-        List<string> variantAsStringArray = variants.GetAsStringArray();
-        foreach ((string key, T value) in inDictionary)
+        foreach (var entry in inList.FindAllByVariant(variants))
         {
-            string[] keys = key.Contains("::") ? key.Split("::") : [key];
-            if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
-            {
-                Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
-                yield return value;
-            }
+            yield return entry;
         }
 
-        Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
-    }
-
-    public static bool IsTrue(this Variants variants, Dictionary<string, bool> inDictionary)
-    {
-        return variants != null && variants.FindByVariant(inDictionary, out bool result) && result;
+        Core.Api?.World.FrameProfiler.Leave();
     }
 
     /// <summary>

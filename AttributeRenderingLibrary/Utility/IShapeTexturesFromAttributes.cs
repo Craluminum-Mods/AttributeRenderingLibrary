@@ -6,11 +6,11 @@ namespace AttributeRenderingLibrary;
 
 public interface IShapeTexturesFromAttributes
 {
-    public Dictionary<string, CompositeShape> shapeByType { get; }
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; }
+    public VariantSelectionList<CompositeShape> shapeByType { get; }
+    public VariantSelectionList<Dictionary<string, CompositeTexture>> texturesByType { get; }
 }
 
 public interface IBlockShapeTexturesFromAttributes : IShapeTexturesFromAttributes
 {
-    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; }
+    public VariantSelectionList<BlockDropItemStack[]> DropsByType { get; }
 }
