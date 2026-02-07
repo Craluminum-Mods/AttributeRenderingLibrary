@@ -17,7 +17,7 @@ public class Variants
 {
     public const string RootAttributeName = "types";
 
-    protected Dictionary<string, string> Elements { get; set; } = new();
+    protected SortedDictionary<string, string> Elements { get; set; } = new();
 
     public int Count => Elements.Count;
     public bool Any => Elements.Count != 0;
@@ -29,7 +29,7 @@ public class Variants
 
     public string Get(string key)
     {
-        return Elements.GetValueSafe(key);
+        return Elements.GetValueOrDefault(key);
     }
 
     public void Set(string key, string value)
