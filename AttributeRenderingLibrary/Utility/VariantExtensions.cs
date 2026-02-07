@@ -20,7 +20,7 @@ public static class VariantExtensions
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result)
     {
-        Core.Api?.World.FrameProfiler.Enter("attributerenderinglibrary.findbyvariant");
+        Core.Api?.World.FrameProfiler.Enter("AttributeRenderingLibrary.FindByVariant");
         result = default;
 
         if (variants == null || inDictionary == null || inDictionary.Count == 0)
@@ -55,7 +55,7 @@ public static class VariantExtensions
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, IDictionary<string, T> inDictionary)
     {
-        Core.Api?.World.FrameProfiler.Enter("attributerenderinglibrary.findallbyvariant");
+        Core.Api?.World.FrameProfiler.Enter("AttributeRenderingLibrary.FindAllByVariant");
         if (variants == null || inDictionary == null || inDictionary.Count == 0)
         {
             Core.Api?.World.FrameProfiler.Leave();
