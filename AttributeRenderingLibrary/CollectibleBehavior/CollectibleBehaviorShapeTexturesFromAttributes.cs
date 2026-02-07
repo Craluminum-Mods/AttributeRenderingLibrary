@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -12,34 +13,34 @@ namespace AttributeRenderingLibrary;
 
 public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : CollectibleBehavior(collObj), IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
+    public VariantSelectionList<CompositeShape> shapeByType { get; protected set; }
+    public VariantSelectionList<Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
 
-    public Dictionary<string, List<object>> NameByType { get; protected set; }
-    public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
-    public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
-    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
+    public VariantSelectionList<List<object>> NameByType { get; protected set; }
+    public VariantSelectionList<List<object>> DescriptionByType { get; protected set; }
+    public VariantSelectionList<List<object>> ContainedDescriptionByType { get; protected set; }
+    public VariantSelectionList<EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
     #region Animations
-    public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
+    public VariantSelectionList<string> HeldLeftReadyAnimationByType { get; protected set; }
+    public VariantSelectionList<string> HeldRightReadyAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; }
+    public VariantSelectionList<string> HeldLeftTpIdleAnimationByType { get; protected set; }
+    public VariantSelectionList<string> HeldRightTpIdleAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; }
+    public VariantSelectionList<string> HeldTpUseAnimationByType { get; protected set; }
+    public VariantSelectionList<string> HeldTpHitAnimationByType { get; protected set; }
     #endregion
     #region Extra shape overrides
-    public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeIgnoreElementsCombineByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeSelectiveElementsByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
+    public VariantSelectionList<string[]> ShapeIgnoreElementsByType { get; protected set; }
+    public VariantSelectionList<string[]> ShapeIgnoreElementsCombineByType { get; protected set; }
+    public VariantSelectionList<string[]> ShapeSelectiveElementsByType { get; protected set; }
+    public VariantSelectionList<string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
     #endregion
     #region IAttachableToEntity
-    public Dictionary<string, OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
-    public Dictionary<string, string> CategoryCodeByType { get; protected set; }
-    public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
-    public Dictionary<string, string[]> KeepElementsByType { get; protected set; }
+    public VariantSelectionList<OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
+    public VariantSelectionList<string> CategoryCodeByType { get; protected set; }
+    public VariantSelectionList<string[]> DisableElementsByType { get; protected set; }
+    public VariantSelectionList<string[]> KeepElementsByType { get; protected set; }
     private IAttachableToEntity iattr;
     #endregion
 
@@ -54,36 +55,36 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
+        
+        if (properties is not { Count: > 0 })
+            return;
 
-        if (properties != null)
-        {
-            shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
-            texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+        shapeByType = VariantSelectionList<CompositeShape>.LoadFrom(properties["shape"]);
+        texturesByType = VariantSelectionList<Dictionary<string, CompositeTexture>>.LoadFrom(properties["textures"]);
 
-            ShapeIgnoreElementsByType = properties["shapeIgnoreElements"].AsObject<Dictionary<string, string[]>>();
-            ShapeIgnoreElementsCombineByType = properties["shapeIgnoreElementsCombine"].AsObject<Dictionary<string, string[]>>();
-            ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
-            ShapeSelectiveElementsCombineByType = properties["shapeSelectiveElementsCombine"].AsObject<Dictionary<string, string[]>>();
+        ShapeIgnoreElementsByType = VariantSelectionList<string[]>.LoadFrom(properties["shapeIgnoreElements"]);
+        ShapeIgnoreElementsCombineByType = VariantSelectionList<string[]>.LoadFrom(properties["shapeIgnoreElementsCombine"]);
+        ShapeSelectiveElementsByType = VariantSelectionList<string[]>.LoadFrom(properties["shapeSelectiveElements"]);
+        ShapeSelectiveElementsCombineByType = VariantSelectionList<string[]>.LoadFrom(properties["shapeSelectiveElementsCombine"]);
 
-            NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
-            DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
-            ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
-            StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
+        NameByType = VariantSelectionList<List<object>>.LoadFrom(properties["name"]);
+        DescriptionByType = VariantSelectionList<List<object>>.LoadFrom(properties["description"]);
+        ContainedDescriptionByType = VariantSelectionList<List<object>>.LoadFrom(properties["containedDescription"]);
+        StorageFlagsByType = VariantSelectionList<EnumItemStorageFlags>.LoadFrom(properties["storageFlags"]);
 
-            HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
-            HeldRightReadyAnimationByType = properties["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
+        HeldLeftReadyAnimationByType = VariantSelectionList<string>.LoadFrom(properties["heldLeftReadyAnimation"]);
+        HeldRightReadyAnimationByType = VariantSelectionList<string>.LoadFrom(properties["heldRightReadyAnimation"]);
 
-            HeldLeftTpIdleAnimationByType = properties["heldLeftTpIdleAnimation"].AsObject<Dictionary<string, string>>();
-            HeldRightTpIdleAnimationByType = properties["heldRightTpIdleAnimation"].AsObject<Dictionary<string, string>>();
+        HeldLeftTpIdleAnimationByType = VariantSelectionList<string>.LoadFrom(properties["heldLeftTpIdleAnimation"]);
+        HeldRightTpIdleAnimationByType = VariantSelectionList<string>.LoadFrom(properties["heldRightTpIdleAnimation"]);
 
-            HeldTpUseAnimationByType = properties["heldTpUseAnimation"].AsObject<Dictionary<string, string>>();
-            HeldTpHitAnimationByType = properties["heldTpHitAnimation"].AsObject<Dictionary<string, string>>();
+        HeldTpUseAnimationByType = VariantSelectionList<string>.LoadFrom(properties["heldTpUseAnimation"]);
+        HeldTpHitAnimationByType = VariantSelectionList<string>.LoadFrom(properties["heldTpHitAnimation"]);
 
-            AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, OrderedDictionary<string, CompositeShape>>>();
-            CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
-            DisableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
-            KeepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
-        }
+        AttachedShapeBySlotCodeByType = VariantSelectionList<OrderedDictionary<string, CompositeShape>>.LoadFrom(properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"]);
+        CategoryCodeByType = VariantSelectionList<string>.LoadFrom(properties["STFA_attachableToEntity"]?["categoryCode"]);
+        DisableElementsByType = VariantSelectionList<string[]>.LoadFrom(properties["STFA_attachableToEntity"]?["disableElements"]);
+        KeepElementsByType = VariantSelectionList<string[]>.LoadFrom(properties["STFA_attachableToEntity"]?["keepElements"]);
     }
 
     public override void OnUnloaded(ICoreAPI api)
@@ -342,7 +343,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
     {
-        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
+        VariantSelectionList<string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
 
         if (animCodesByType == null || animCodesByType.Count == 0)
         {
@@ -360,7 +361,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override string GetHeldTpIdleAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
     {
-        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
+        VariantSelectionList<string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
 
         if (animCodesByType == null || animCodesByType.Count == 0)
         {
@@ -462,7 +463,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             shape.Textures[textureCode] = texture.Baked.BakedName;
         }
 
-        Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = [];
+        VariantSelectionList<Dictionary<string, CompositeTexture>> texturesByType = null;
 
         if (stack.Collectible.GetCollectibleInterface<IShapeTexturesFromAttributes>() is IShapeTexturesFromAttributes STFA)
         {

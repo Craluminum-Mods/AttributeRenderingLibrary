@@ -14,13 +14,18 @@ namespace AttributeRenderingLibrary;
 public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : CollectibleBehavior(collObj), IContainedTransform
 {
     public Transforms BasicTransforms { get; protected set; }
-    public Dictionary<string, Dictionary<string, ModelTransform>> ExtraTransforms { get; protected set; }
+    public Dictionary<string, VariantSelectionList<ModelTransform>> ExtraTransforms { get; protected set; }
 
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
-        BasicTransforms = properties["transforms"].AsObject<Transforms>();
-        ExtraTransforms = properties["extraTransforms"].AsObject<Dictionary<string, Dictionary<string, ModelTransform>>>()?.ToDictionary(x => x.Key.ToLowerInvariant(), x => x.Value);
+        BasicTransforms = Transforms.LoadFrom(properties["transforms"]);
+        ExtraTransforms = properties["extraTransforms"]
+            .AsObject<Dictionary<string, Dictionary<string, ModelTransform>>>()
+            ?.ToDictionary(
+                x => x.Key.ToLowerInvariant(),
+                x => VariantSelectionList<ModelTransform>.LoadFrom(x.Value)
+            );
     }
 
     public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
@@ -30,7 +35,7 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
 
     public void ApplyOnBeforeRenderTransform(EnumItemRenderTarget target, Variants variants, ref ModelTransform transform)
     {
-        Dictionary<string, ModelTransform> basicTransformsByType = target switch
+        VariantSelectionList<ModelTransform> basicTransformsByType = target switch
         {
             EnumItemRenderTarget.Gui => BasicTransforms?.GuiTransform,
             EnumItemRenderTarget.HandTp => BasicTransforms?.TpHandTransform,
@@ -54,7 +59,7 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
 
         if (ExtraTransforms != null
             && ExtraTransforms.Count > 0
-            && ExtraTransforms.TryGetValue(attributeTransformCode, out Dictionary<string, ModelTransform> transformsByType)
+            && ExtraTransforms.TryGetValue(attributeTransformCode, out VariantSelectionList<ModelTransform> transformsByType)
             && Variants.FromStack(stack).FindByVariant(transformsByType, out ModelTransform transform))
         {
             transform = transform.EnsureDefaultValues();
