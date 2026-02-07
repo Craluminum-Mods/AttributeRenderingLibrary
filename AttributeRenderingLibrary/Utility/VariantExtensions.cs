@@ -20,11 +20,12 @@ public static class VariantExtensions
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result)
     {
+        Core.Api?.World.FrameProfiler.Enter("attributerenderinglibrary.findbyvariant");
         result = default;
 
         if (variants == null || inDictionary == null || inDictionary.Count == 0)
         {
-            Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+            Core.Api?.World.FrameProfiler.Leave();
             return false;
         }
 
@@ -35,12 +36,12 @@ public static class VariantExtensions
             if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
             {
                 result = value;
-                Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+                Core.Api?.World.FrameProfiler.Leave();
                 return true;
             }
         }
 
-        Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+        Core.Api?.World.FrameProfiler.Leave();
         return false;
     }
     
@@ -54,9 +55,10 @@ public static class VariantExtensions
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, IDictionary<string, T> inDictionary)
     {
+        Core.Api?.World.FrameProfiler.Enter("attributerenderinglibrary.findallbyvariant");
         if (variants == null || inDictionary == null || inDictionary.Count == 0)
         {
-            Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+            Core.Api?.World.FrameProfiler.Leave();
             yield break;
         }
 
@@ -66,12 +68,11 @@ public static class VariantExtensions
             string[] keys = key.Contains("::") ? key.Split("::") : [key];
             if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
             {
-                Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
                 yield return value;
             }
         }
 
-        Core.Api?.World.FrameProfiler.Mark("attributerenderinglibrary.findbyvariant");
+        Core.Api?.World.FrameProfiler.Leave();
     }
 
     public static bool IsTrue(this Variants variants, Dictionary<string, bool> inDictionary)
