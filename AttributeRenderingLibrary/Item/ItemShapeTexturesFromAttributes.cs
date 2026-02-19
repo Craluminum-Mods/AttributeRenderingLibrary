@@ -23,6 +23,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, float> AttackPowerByType { get; protected set; }
     public Dictionary<string, float> AttackRangeByType { get; protected set; }
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
+    public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
@@ -83,6 +84,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         AttackPowerByType = Attributes["attackPower"].AsObject<Dictionary<string, float>>();
         AttackRangeByType = Attributes["attackRange"].AsObject<Dictionary<string, float>>();
         MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
+        DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -407,6 +409,21 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         }
 
         return miningSpeed;
+    }
+
+    public override EnumItemDamageSource[] GetDamagedBy(ItemSlot slot)
+    {
+        if (DamagedByByType == null || DamagedByByType.Count == 0)
+        {
+            return base.GetDamagedBy(slot);
+        }
+
+        Variants variants = Variants.FromStack(slot.Itemstack);
+        if (!variants.FindByVariant(DamagedByByType, out EnumItemDamageSource[] damagedBy))
+        {
+            return base.GetDamagedBy(slot);
+        }
+        return damagedBy;
     }
 
     public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)
