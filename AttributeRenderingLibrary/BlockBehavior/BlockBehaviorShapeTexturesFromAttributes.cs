@@ -24,6 +24,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
     public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
     public Dictionary<string, int> DurabilityByType { get; protected set; }
+    public Dictionary<string, float> AttackPowerByType { get; protected set; }
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
     #region Extra shape overrides
     public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
@@ -87,6 +88,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
         DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
         DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
+        AttackPowerByType = properties["attackPower"].AsObject<Dictionary<string, float>>();
         MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
         AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>();
@@ -491,6 +493,21 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
         handling = EnumHandling.PreventSubsequent;
         return maxDurability;
+    }
+
+    public override float GetAttackPower(ItemStack itemstack, float attackPower, ref EnumHandling bhHandling)
+    {
+        if (AttackPowerByType == null || AttackPowerByType.Count == 0)
+        {
+            return base.GetAttackPower(itemstack, attackPower, ref bhHandling);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(AttackPowerByType, out float newAttackPower))
+        {
+            return base.GetAttackPower(itemstack, attackPower, ref bhHandling);
+        }
+        return newAttackPower;
     }
 
     public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot, ref EnumHandling handling)
