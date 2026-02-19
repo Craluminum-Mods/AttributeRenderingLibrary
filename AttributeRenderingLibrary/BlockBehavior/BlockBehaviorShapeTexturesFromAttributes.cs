@@ -12,7 +12,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource, IAttachableToEntity
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
     public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
@@ -20,6 +20,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public Dictionary<string, List<object>> NameByType { get; protected set; }
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
+    public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
     public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
     public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
     public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
@@ -88,6 +89,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
         DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+        ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
         DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
         StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
         DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
@@ -571,6 +573,31 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public virtual string GetMeshCacheKey(ItemSlot slot)
     {
         return $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
+    }
+
+    public virtual string GetContainedInfo(ItemSlot inSlot)
+    {
+        if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
+        {
+            return collObj.GetHeldItemName(inSlot.Itemstack);
+        }
+
+        StringBuilder dsc = new();
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys);
+
+        if (_langKeys == null || _langKeys.Count == 0)
+        {
+            return collObj.GetHeldItemName(inSlot.Itemstack);
+        }
+
+        variants.GetDescription(dsc, _langKeys);
+        return dsc.ToString();
+    }
+
+    public virtual string GetContainedName(ItemSlot inSlot, int quantity)
+    {
+        return collObj.GetHeldItemName(inSlot.Itemstack);
     }
 
     public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
