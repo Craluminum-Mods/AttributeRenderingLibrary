@@ -367,20 +367,32 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     /// <returns></returns>
     public virtual Vec3f GetRotation(IWorldAccessor world, BlockPos pos)
     {
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        BlockEntity blockEntity = world.BlockAccessor.GetBlockEntity(pos);
+
+        if (blockEntity == null)
         {
             return Vec3f.Zero;
         }
 
-        beBehavior.Variants.FindByVariant(shapeByType, out CompositeShape shapeForRotation);
-        shapeForRotation ??= block.Shape;
-
-        return new Vec3f
+        if (blockEntity?.GetBehavior<BEBehaviorRotatablePlaceable>() is BEBehaviorRotatablePlaceable rotatablePlaceable)
         {
-            X = (shapeForRotation?.rotateX ?? 0) * GameMath.DEG2RAD,
-            Y = (shapeForRotation?.rotateY ?? 0) * GameMath.DEG2RAD,
-            Z = (shapeForRotation?.rotateZ ?? 0) * GameMath.DEG2RAD
-        };
+            return new Vec3f(0, rotatablePlaceable.MeshAngleRad, 0);
+        }
+
+        if (blockEntity?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        {
+            beBehavior.Variants.FindByVariant(shapeByType, out CompositeShape shapeForRotation);
+            shapeForRotation ??= block.Shape;
+
+            return new Vec3f
+            {
+                X = (shapeForRotation?.rotateX ?? 0) * GameMath.DEG2RAD,
+                Y = (shapeForRotation?.rotateY ?? 0) * GameMath.DEG2RAD,
+                Z = (shapeForRotation?.rotateZ ?? 0) * GameMath.DEG2RAD
+            };
+        }
+
+        return Vec3f.Zero;
     }
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
