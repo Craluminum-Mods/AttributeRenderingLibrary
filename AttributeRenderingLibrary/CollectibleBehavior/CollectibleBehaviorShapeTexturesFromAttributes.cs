@@ -88,7 +88,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
         DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
         AttackPowerByType = properties["attackPower"].AsObject<Dictionary<string, float>>();
-        AttackRangeByType = Attributes["attackRange"].AsObject<Dictionary<string, float>>();
+        AttackRangeByType = properties["attackRange"].AsObject<Dictionary<string, float>>();
         MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
         HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
