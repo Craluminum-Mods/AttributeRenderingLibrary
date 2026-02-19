@@ -44,10 +44,12 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     #endregion
 
     private ICoreClientAPI clientApi;
+    private ICoreAPI coreApi;
 
     public override void OnLoaded(ICoreAPI api)
     {
         clientApi = api as ICoreClientAPI;
+        coreApi = api;
         iattr = IAttachableToEntity.FromAttributes(collObj);
     }
 
@@ -516,7 +518,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
                     List<CompositeShape> overlays = [];
                     foreach (CompositeShape overlay in rcshape.Overlays)
                     {
-                        if (clientApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
+                        if (coreApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
                         {
                             overlays.Add(overlay);
                         }
