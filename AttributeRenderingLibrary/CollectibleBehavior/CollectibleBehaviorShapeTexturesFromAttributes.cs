@@ -21,6 +21,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
     public Dictionary<string, int> DurabilityByType { get; protected set; }
     public Dictionary<string, float> AttackPowerByType { get; protected set; }
+    public Dictionary<string, float> AttackRangeByType { get; protected set; }
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
@@ -87,6 +88,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
         DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
         AttackPowerByType = properties["attackPower"].AsObject<Dictionary<string, float>>();
+        AttackRangeByType = Attributes["attackRange"].AsObject<Dictionary<string, float>>();
         MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
         HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -367,19 +369,36 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return maxDurability;
     }
 
-    public override float GetAttackPower(ItemStack itemstack, float attackPower, ref EnumHandling bhHandling)
+    public override float GetAttackPower(ItemStack itemstack, float attackPower, ref EnumHandling handling)
     {
         if (AttackPowerByType == null || AttackPowerByType.Count == 0)
         {
-            return base.GetAttackPower(itemstack, attackPower, ref bhHandling);
+            return base.GetAttackPower(itemstack, attackPower, ref handling);
         }
 
         Variants variants = Variants.FromStack(itemstack);
         if (!variants.FindByVariant(AttackPowerByType, out float newAttackPower))
         {
-            return base.GetAttackPower(itemstack, attackPower, ref bhHandling);
+            return base.GetAttackPower(itemstack, attackPower, ref handling);
         }
+        handling = EnumHandling.PreventSubsequent;
         return newAttackPower;
+    }
+
+    public override float GetAttackRange(ItemStack itemstack, float attackRange, ref EnumHandling handling)
+    {
+        if (AttackRangeByType == null || AttackRangeByType.Count == 0)
+        {
+            return base.GetAttackRange(itemstack, attackRange, ref handling);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(AttackRangeByType, out float newAttackRange))
+        {
+            return base.GetAttackRange(itemstack, attackRange, ref handling);
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return newAttackRange;
     }
 
     public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot, ref EnumHandling handling)
