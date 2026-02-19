@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
@@ -11,7 +12,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource, IAttachableToEntity
 {
     public Dictionary<string, List<object>> NameByType { get; protected set; }
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
@@ -28,8 +29,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, string[]> ShapeSelectiveElementsByType { get; protected set; }
     public Dictionary<string, string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
     #endregion
+    #region IAttachableToEntity
+    public Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
+    public Dictionary<string, string> CategoryCodeByType { get; protected set; }
+    public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
+    public Dictionary<string, string[]> KeepElementsByType { get; protected set; }
+    private IAttachableToEntity iattr;
+    #endregion
 
     private ICoreClientAPI clientApi;
+    private ICoreAPI coreApi;
 
     public override void OnLoaded(ICoreAPI api)
     {
@@ -38,6 +47,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         block.Attributes.Token["canChisel"] = JToken.FromObject(false);
 
         clientApi = api as ICoreClientAPI;
+        iattr = IAttachableToEntity.FromAttributes(collObj);
     }
 
     public override void Initialize(JsonObject properties)
@@ -58,6 +68,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             ShapeIgnoreElementsCombineByType = properties["shapeIgnoreElementsCombine"].AsObject<Dictionary<string, string[]>>();
             ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
             ShapeSelectiveElementsCombineByType = properties["shapeSelectiveElementsCombine"].AsObject<Dictionary<string, string[]>>();
+
+            AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>();
+            CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
+            DisableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
+            KeepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
 
             LoadAndResolveCollisionAndSelectionBoxes(properties);
         }
@@ -501,4 +516,121 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
         return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
     }
+
+    void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
+    {
+        foreach ((string textureCode, CompositeTexture texture) in stack.Block.Textures)
+        {
+            shape.Textures[textureCode] = texture.Baked.BakedName;
+        }
+
+        Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = [];
+
+        if (stack.Collectible.GetCollectibleInterface<IShapeTexturesFromAttributes>() is IShapeTexturesFromAttributes STFA)
+        {
+            texturesByType = STFA.texturesByType;
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> _textures))
+        {
+            foreach ((string textureCode, CompositeTexture texture) in _textures)
+            {
+                CompositeTexture ctex = texture.Clone();
+                ctex = variants.ReplacePlaceholders(ctex);
+                if (!coreApi.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
+                {
+                    ctex.Base.Path = "unknown";
+                    ctex.Base.Domain = "game";
+                }
+                ctex.Bake(coreApi.Assets);
+                intoDict[textureCode] = ctex;
+                shape.Textures[textureCode] = ctex.Baked.BakedName;
+            }
+        }
+    }
+
+    CompositeShape IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode)
+    {
+        if (AttachedShapeBySlotCodeByType == null || AttachedShapeBySlotCodeByType.Count == 0)
+        {
+            return iattr?.GetAttachedShape(stack, slotCode);
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        if (!variants.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode))
+        {
+            return iattr?.GetAttachedShape(stack, slotCode);
+        }
+
+        if (attachedShapeBySlotCode != null && attachedShapeBySlotCode.Count != 0)
+        {
+            foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
+            {
+                if (WildcardUtil.Match(_slotCode, slotCode))
+                {
+                    CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
+                    if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
+                    {
+                        return rcshape;
+                    }
+
+                    List<CompositeShape> overlays = [];
+                    foreach (CompositeShape overlay in rcshape.Overlays)
+                    {
+                        if (coreApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
+                        {
+                            overlays.Add(overlay);
+                        }
+                    }
+                    rcshape.Overlays = overlays.ToArray();
+                    return rcshape;
+                }
+            }
+        }
+
+        return iattr?.GetAttachedShape(stack, slotCode);
+    }
+
+    string IAttachableToEntity.GetCategoryCode(ItemStack stack)
+    {
+        if (CategoryCodeByType == null || CategoryCodeByType.Count == 0)
+        {
+            return iattr?.GetCategoryCode(stack);
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(CategoryCodeByType, out string categoryCode);
+        return categoryCode;
+    }
+
+    string[] IAttachableToEntity.GetDisableElements(ItemStack stack)
+    {
+        if (DisableElementsByType == null || DisableElementsByType.Count == 0)
+        {
+            return iattr?.GetDisableElements(stack);
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(DisableElementsByType, out string[] disableElements);
+        return disableElements;
+    }
+
+    string[] IAttachableToEntity.GetKeepElements(ItemStack stack)
+    {
+        if (KeepElementsByType == null || KeepElementsByType.Count == 0)
+        {
+            return iattr?.GetKeepElements(stack);
+        }
+
+        Variants variants = Variants.FromStack(stack);
+        variants.FindByVariant(KeepElementsByType, out string[] keepElements);
+        return keepElements;
+    }
+
+    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
+
+    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
+
+    int IAttachableToEntity.RequiresBehindSlots { get; set; }
 }
