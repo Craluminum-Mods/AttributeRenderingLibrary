@@ -23,6 +23,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
     public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
     public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
+    public Dictionary<string, int> DurabilityByType { get; protected set; }
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
     #region Extra shape overrides
     public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
@@ -85,6 +86,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
         DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
         DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
+        DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
         MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
         AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>();
@@ -473,6 +475,22 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
         variants.GetDescription(dsc, _langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
+    }
+
+    public override int GetMaxDurability(ItemStack itemstack, int durability, ref EnumHandling handling)
+    {
+        if (DurabilityByType == null || DurabilityByType.Count == 0)
+        {
+            return base.GetMaxDurability(itemstack, durability, ref handling);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(DurabilityByType, out int maxDurability))
+        {
+            return base.GetMaxDurability(itemstack, durability, ref handling);
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return maxDurability;
     }
 
     public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot, ref EnumHandling handling)
