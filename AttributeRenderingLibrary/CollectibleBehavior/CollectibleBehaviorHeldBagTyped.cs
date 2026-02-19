@@ -11,6 +11,7 @@ public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : Collec
     public Dictionary<string, int> QuantitySlotsByType { get; protected set; }
     public Dictionary<string, string> SlotBgColorByType { get; protected set; }
     public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
+    public Dictionary<string, JsonObject> StorageTagsByType { get; protected set; }
 
     public override void Initialize(JsonObject properties)
     {
@@ -19,6 +20,22 @@ public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : Collec
         QuantitySlotsByType = properties["quantitySlots"].AsObject<Dictionary<string, int>>();
         SlotBgColorByType = properties["slotBgColor"].AsObject<Dictionary<string, string>>();
         StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, int>>()?.ToDictionary(x => x.Key, x => (EnumItemStorageFlags)x.Value);
+        StorageTagsByType = properties["storageTags"].AsObject<Dictionary<string, JsonObject>>();
+    }
+
+    public override TagSet GetStorageTags(ItemStack bagstack)
+    {
+        if (StorageTagsByType == null || StorageTagsByType.Count == 0)
+        {
+            return base.GetStorageTags(bagstack);
+        }
+
+        Variants variants = Variants.FromStack(bagstack);
+        if (variants.FindByVariant(StorageTagsByType, out JsonObject storageTags) && storageTags != null)
+        {
+            return CollectibleTagSetConverter.ProxyInstance.ReadJson(storageTags.Token);
+        }
+        return base.GetStorageTags(bagstack);
     }
 
     public override int GetQuantitySlots(ItemStack bagstack)
