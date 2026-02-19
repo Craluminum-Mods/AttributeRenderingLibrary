@@ -48,36 +48,51 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         block.Attributes.Token["canChisel"] = JToken.FromObject(false);
 
         clientApi = api as ICoreClientAPI;
+        coreApi = api;
         iattr = IAttachableToEntity.FromAttributes(collObj);
+    }
+
+    public override void OnUnloaded(ICoreAPI api)
+    {
+        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
+        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
+        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
+
+        Dictionary<string, MeshData> meshes = ObjectCacheUtil.TryGet<Dictionary<string, MeshData>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
+        meshes?.Foreach(mesh => mesh.Value?.Dispose());
+        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
     }
 
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
+        LoadTypes(properties);
+    }
 
-        if (properties != null)
-        {
-            shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
-            shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
-            texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+    public virtual void LoadTypes(JsonObject properties)
+    {
+        if (properties == null) return;
 
-            ShapeIgnoreElementsByType = properties["shapeIgnoreElements"].AsObject<Dictionary<string, string[]>>();
-            ShapeIgnoreElementsCombineByType = properties["shapeIgnoreElementsCombine"].AsObject<Dictionary<string, string[]>>();
-            ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
-            ShapeSelectiveElementsCombineByType = properties["shapeSelectiveElementsCombine"].AsObject<Dictionary<string, string[]>>();
+        shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
+        shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
+        texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
-            NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
-            DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
-            DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
-            MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
+        ShapeIgnoreElementsByType = properties["shapeIgnoreElements"].AsObject<Dictionary<string, string[]>>();
+        ShapeIgnoreElementsCombineByType = properties["shapeIgnoreElementsCombine"].AsObject<Dictionary<string, string[]>>();
+        ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
+        ShapeSelectiveElementsCombineByType = properties["shapeSelectiveElementsCombine"].AsObject<Dictionary<string, string[]>>();
 
-            AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>();
-            CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
-            DisableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
-            KeepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
+        NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
+        DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+        DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
+        MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
-            LoadAndResolveCollisionAndSelectionBoxes(properties);
-        }
+        AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>();
+        CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
+        DisableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
+        KeepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
+
+        LoadAndResolveCollisionAndSelectionBoxes(properties);
     }
 
     public virtual void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
@@ -96,17 +111,6 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             CollisionBoxesByType = rawCollisions?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
             SelectionBoxesByType = rawSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
         }
-    }
-
-    public override void OnUnloaded(ICoreAPI api)
-    {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
-        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
-
-        Dictionary<string, MeshData> meshes = ObjectCacheUtil.TryGet<Dictionary<string, MeshData>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
-        meshes?.Foreach(mesh => mesh.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
     }
 
     public override bool DoPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ItemStack byItemStack, ref EnumHandling handling)
