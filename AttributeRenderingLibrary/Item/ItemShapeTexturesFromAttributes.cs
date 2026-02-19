@@ -11,9 +11,9 @@ namespace AttributeRenderingLibrary;
 
 public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
+    #region Collectible properties
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
-
     public Dictionary<string, List<object>> NameByType { get; protected set; }
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedNameByType { get; protected set; }
@@ -26,7 +26,10 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool> ToolByType { get; protected set; }
     public Dictionary<string, int> ToolTierType { get; protected set; }
+    #endregion
+    #region Collectible properties (resolvable)
     public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
+    #endregion
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }

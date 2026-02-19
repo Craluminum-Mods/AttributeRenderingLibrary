@@ -14,22 +14,25 @@ namespace AttributeRenderingLibrary;
 
 public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
+    #region Collectible properties
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
     public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
-
     public Dictionary<string, List<object>> NameByType { get; protected set; }
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedNameByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
-    public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
-    public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
-    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
     public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
     public Dictionary<string, int> DurabilityByType { get; protected set; }
     public Dictionary<string, float> AttackPowerByType { get; protected set; }
     public Dictionary<string, float> AttackRangeByType { get; protected set; }
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
+    #endregion
+    #region Block properties
+    public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
+    public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
+    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
+    #endregion
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
