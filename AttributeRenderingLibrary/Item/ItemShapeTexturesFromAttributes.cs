@@ -25,6 +25,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
     public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool> ToolByType { get; protected set; }
+    public Dictionary<string, int> ToolTierType { get; protected set; }
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
@@ -87,6 +88,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool>>();
+        ToolTierType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -441,6 +443,21 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return base.GetTool(slot);
         }
         return tool;
+    }
+
+    public override int GetToolTier(ItemSlot slot)
+    {
+        if (ToolTierType == null || ToolTierType.Count == 0)
+        {
+            return base.GetToolTier(slot);
+        }
+
+        Variants variants = Variants.FromStack(slot.Itemstack);
+        if (!variants.FindByVariant(ToolTierType, out int toolTier))
+        {
+            return base.GetToolTier(slot);
+        }
+        return toolTier;
     }
 
     public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)
