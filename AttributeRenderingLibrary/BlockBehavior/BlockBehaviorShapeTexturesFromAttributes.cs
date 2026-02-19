@@ -102,16 +102,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return true;
     }
 
-    public virtual MeshData GenGuiMesh(ItemStack itemstack)
+    public virtual MeshData GenGuiMesh(ItemSlot slot)
     {
-        return GenGuiMesh(itemstack, overrideShape: null);
+        return GenGuiMesh(slot, overrideShape: null);
     }
 
-    public virtual MeshData GenGuiMesh(ItemStack itemstack, CompositeShape overrideShape)
+    public virtual MeshData GenGuiMesh(ItemSlot slot, CompositeShape overrideShape)
     {
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
-        Variants variants = Variants.FromStack(itemstack);
+        Variants variants = Variants.FromStack(slot.Itemstack);
 
         CompositeShape ucshape = overrideShape;
         if (ucshape == null)
@@ -137,11 +137,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
         {
-            overlayPrefix = GetMeshCacheKey(itemstack);
+            overlayPrefix = GetMeshCacheKey(slot);
             prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
         }
 
-        foreach ((string textureCode, CompositeTexture texture) in itemstack.Block.Textures)
+        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack.Block.Textures)
         {
             stexSource.textures[textureCode] = texture;
         }
@@ -275,11 +275,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
 
-        string key = GetMeshCacheKey(itemstack);
+        string key = GetMeshCacheKey(renderinfo.InSlot);
 
         if (!meshRefs.TryGetValue(key, out MultiTextureMeshRef meshref))
         {
-            MeshData mesh = GenGuiMesh(itemstack);
+            MeshData mesh = GenGuiMesh(renderinfo.InSlot);
             meshref = clientApi.Render.UploadMultiTextureMesh(mesh);
             meshRefs[key] = meshref;
         }
@@ -442,14 +442,14 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         variants.GetDebugDescription(dsc, withDebugInfo);
     }
 
-    public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
+    public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
-        return GenGuiMesh(itemstack);
+        return GenGuiMesh(slot);
     }
 
-    public virtual string GetMeshCacheKey(ItemStack itemstack)
+    public virtual string GetMeshCacheKey(ItemSlot slot)
     {
-        return $"{itemstack.Collectible.Code}-{Variants.FromStack(itemstack)}";
+        return $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
     }
 
     public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)

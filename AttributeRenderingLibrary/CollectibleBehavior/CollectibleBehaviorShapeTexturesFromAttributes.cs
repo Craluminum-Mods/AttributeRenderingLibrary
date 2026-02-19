@@ -93,13 +93,13 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
     }
 
-    public virtual MeshData GetOrCreateMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas)
+    public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
     {
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
-        Variants variants = Variants.FromStack(itemstack);
+        Variants variants = Variants.FromStack(slot.Itemstack);
         variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-        ucshape ??= itemstack.Item.Shape;
+        ucshape ??= slot.Itemstack.Item.Shape;
 
         if (ucshape == null) return mesh;
 
@@ -115,11 +115,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
         {
-            overlayPrefix = GetMeshCacheKey(itemstack);
+            overlayPrefix = GetMeshCacheKey(slot);
             prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
         }
 
-        foreach ((string textureCode, CompositeTexture texture) in itemstack.Item.Textures)
+        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack.Item.Textures)
         {
             stexSource.textures[textureCode] = texture;
         }
@@ -129,8 +129,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         TesselationMetaData meta = new TesselationMetaData
         {
             QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = GetShapeSelectiveElements(itemstack, rcshape),
-            IgnoreElements = GetShapeIgnoreElements(itemstack, rcshape),
+            SelectiveElements = GetShapeSelectiveElements(slot.Itemstack, rcshape),
+            IgnoreElements = GetShapeIgnoreElements(slot.Itemstack, rcshape),
             TexSource = stexSource,
             TypeForLogging = "ShapeTexturesFromAttributes item behavior"
         };
@@ -142,7 +142,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     /// <summary>
     /// Temporary solution for wearable attachments until 1.22 is out with proper wearable support
     /// </summary>
-    public virtual MeshData GenWearableMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas)
+    public virtual MeshData GenWearableMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
     {
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
@@ -170,9 +170,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             };
         }
 
-        Variants variants = Variants.FromStack(itemstack);
+        Variants variants = Variants.FromStack(slot.Itemstack);
         variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-        ucshape ??= itemstack.Item.Shape;
+        ucshape ??= slot.Itemstack.Item.Shape;
 
 
         if (ucshape == null) return mesh;
@@ -192,7 +192,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
                 Shape oshape = Shape.TryGet(clientApi, overlay.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json"));
                 if (oshape == null)
                 {
-                    clientApi.World.Logger.Warning("[Attribute Rendering Library] Wearable shape {0} overlay {4} defined in {1} {2} not found or errored, was supposed to be at {3}. Item will be invisible.", rcshape.Base, itemstack.Class, itemstack.Collectible.Code, rcshape.Base, overlay.Base);
+                    clientApi.World.Logger.Warning("[Attribute Rendering Library] Wearable shape {0} overlay {4} defined in {1} {2} not found or errored, was supposed to be at {3}. Item will be invisible.", rcshape.Base, slot.Itemstack.Class, slot.Itemstack.Collectible.Code, rcshape.Base, overlay.Base);
                     continue;
                 }
 
@@ -206,18 +206,18 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
         {
-            overlayPrefix = GetMeshCacheKey(itemstack);
+            overlayPrefix = GetMeshCacheKey(slot);
             prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
         }
 
-        foreach ((string textureCode, CompositeTexture texture) in itemstack.Item.Textures)
+        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack.Item.Textures)
         {
             stexSource.textures[textureCode] = texture;
         }
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        clientApi.Tesselator.TesselateShapeWithJointIds("entity", newShape, out mesh, stexSource, new Vec3f(), quantityElements: rcshape.QuantityElements, selectiveElements: GetShapeSelectiveElements(itemstack, rcshape));
+        clientApi.Tesselator.TesselateShapeWithJointIds("entity", newShape, out mesh, stexSource, new Vec3f(), quantityElements: rcshape.QuantityElements, selectiveElements: GetShapeSelectiveElements(slot.Itemstack, rcshape));
 
         return mesh;
     }
@@ -276,11 +276,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     {
         Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
 
-        string key = GetMeshCacheKey(itemstack);
+        string key = GetMeshCacheKey(renderinfo.InSlot);
 
         if (!meshRefs.TryGetValue(key, out MultiTextureMeshRef meshref))
         {
-            MeshData mesh = GenMesh(itemstack, clientApi.ItemTextureAtlas, null);
+            MeshData mesh = GenMesh(renderinfo.InSlot, clientApi.ItemTextureAtlas, null);
             meshref = clientApi.Render.UploadMultiTextureMesh(mesh);
             meshRefs[key] = meshref;
         }
@@ -408,22 +408,22 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return animCode;
     }
 
-    public virtual MeshData GenMesh(ItemStack itemstack, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
+    public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
         /// Temporary solution for wearable attachments until 1.22 is out with proper wearable support
-        if (itemstack.ItemAttributes != null && itemstack.ItemAttributes.IsTrue("wearableAttachment"))
+        if (slot.Itemstack.ItemAttributes != null && slot.Itemstack.ItemAttributes.IsTrue("wearableAttachment"))
         {
-            return GenWearableMesh(itemstack, targetAtlas);
+            return GenWearableMesh(slot, targetAtlas);
         }
-        return GetOrCreateMesh(itemstack, targetAtlas);
+        return GetOrCreateMesh(slot, targetAtlas);
     }
 
-    public virtual string GetMeshCacheKey(ItemStack itemstack)
+    public virtual string GetMeshCacheKey(ItemSlot slot)
     {
-        string key = $"{itemstack.Collectible.Code}-{Variants.FromStack(itemstack)}";
+        string key = $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
 
         /// Temporary solution for wearable attachments until 1.22 is out with proper wearable support
-        if (itemstack.ItemAttributes != null && itemstack.ItemAttributes.IsTrue("wearableAttachment"))
+        if (slot.Itemstack.ItemAttributes != null && slot.Itemstack.ItemAttributes.IsTrue("wearableAttachment"))
         {
             return "ARL-wearableAttachmentModelRef-" + key;
         }
@@ -566,7 +566,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return keepElements;
     }
 
-    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(stack);
+    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
 
     bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
 
