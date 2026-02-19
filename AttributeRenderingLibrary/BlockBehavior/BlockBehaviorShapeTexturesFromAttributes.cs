@@ -80,7 +80,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
     }
 
-    private void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
+    public virtual void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
     {
         Dictionary<string, RotatableCube[]> rawCollisionsAndSelections = properties["collisionSelectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
         Dictionary<string, RotatableCube[]> rawCollisions = properties["collisionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
