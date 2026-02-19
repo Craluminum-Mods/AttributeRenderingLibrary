@@ -26,6 +26,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool> ToolByType { get; protected set; }
     public Dictionary<string, int> ToolTierType { get; protected set; }
+    public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
@@ -89,6 +90,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool>>();
         ToolTierType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
+        CombustiblePropsType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -458,6 +460,29 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return base.GetToolTier(slot);
         }
         return toolTier;
+    }
+
+    public override CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack itemstack, BlockPos pos)
+    {
+        if (itemstack == null || CombustiblePropsType == null || CombustiblePropsType.Count == 0)
+        {
+            return base.GetCombustibleProperties(world, itemstack, pos);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(CombustiblePropsType, out CombustibleProperties props) || props?.SmeltedStack == null)
+        {
+            return base.GetCombustibleProperties(world, itemstack, pos);
+        }
+
+        CombustibleProperties clonedProps = props.Clone();
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack.Clone());
+        if (!resultStack.Resolve(world, ""))
+        {
+            world.Logger.Warning($"[Attribute Rendering Library] Smelted stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for CombustibleProps by attributes. Will use default properties instead.");
+            return base.GetCombustibleProperties(world, itemstack, pos);
+        }
+        return clonedProps;
     }
 
     public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)
