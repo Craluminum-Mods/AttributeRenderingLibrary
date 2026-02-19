@@ -21,6 +21,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, int> DurabilityByType { get; protected set; }
     public Dictionary<string, float> AttackPowerByType { get; protected set; }
     public Dictionary<string, float> AttackRangeByType { get; protected set; }
+    public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
@@ -79,6 +80,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             DurabilityByType = Attributes["durability"].AsObject<Dictionary<string, int>>();
             AttackPowerByType = Attributes["attackPower"].AsObject<Dictionary<string, float>>();
             AttackRangeByType = Attributes["attackRange"].AsObject<Dictionary<string, float>>();
+            MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
             HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
             HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -388,6 +390,22 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return base.GetAttackRange(withItemStack);
         }
         return attackRange;
+    }
+
+    public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot)
+    {
+        if (MiningSpeedByType == null || MiningSpeedByType.Count == 0)
+        {
+            return base.GetMiningSpeeds(slot);
+        }
+
+        Variants variants = Variants.FromStack(slot.Itemstack);
+        if (!variants.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeed))
+        {
+            return base.GetMiningSpeeds(slot);
+        }
+
+        return miningSpeed;
     }
 
     public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)

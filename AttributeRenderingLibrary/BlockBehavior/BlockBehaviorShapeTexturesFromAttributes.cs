@@ -14,15 +14,16 @@ namespace AttributeRenderingLibrary;
 
 public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource, IAttachableToEntity
 {
+    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
+    public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
+
     public Dictionary<string, List<object>> NameByType { get; protected set; }
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
     public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
     public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
     public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
-
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
-    public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
+    public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
     #region Extra shape overrides
     public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
     public Dictionary<string, string[]> ShapeIgnoreElementsCombineByType { get; protected set; }
@@ -56,10 +57,6 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         if (properties != null)
         {
-            NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
-            DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
-            DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
-            
             shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
             shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
             texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
@@ -68,6 +65,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             ShapeIgnoreElementsCombineByType = properties["shapeIgnoreElementsCombine"].AsObject<Dictionary<string, string[]>>();
             ShapeSelectiveElementsByType = properties["shapeSelectiveElements"].AsObject<Dictionary<string, string[]>>();
             ShapeSelectiveElementsCombineByType = properties["shapeSelectiveElementsCombine"].AsObject<Dictionary<string, string[]>>();
+
+            NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
+            DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+            DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
+            MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
 
             AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>();
             CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
@@ -467,6 +469,22 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
         variants.GetDescription(dsc, _langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
+    }
+
+    public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot, ref EnumHandling handling)
+    {
+        if (MiningSpeedByType == null || MiningSpeedByType.Count == 0)
+        {
+            return base.GetMiningSpeeds(slot, ref handling);
+        }
+
+        Variants variants = Variants.FromStack(slot.Itemstack);
+        if (!variants.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeed))
+        {
+            return base.GetMiningSpeeds(slot, ref handling);
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return miningSpeed;
     }
 
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
