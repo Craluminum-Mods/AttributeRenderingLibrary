@@ -20,6 +20,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public Dictionary<string, List<object>> NameByType { get; protected set; }
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
+    public Dictionary<string, List<object>> ContainedNameByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
     public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
     public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
@@ -89,6 +90,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
         DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+        ContainedNameByType = properties["containedName"].AsObject<Dictionary<string, List<object>>>();
         ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
         DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
         StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
@@ -579,25 +581,36 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
         {
-            return collObj.GetHeldItemName(inSlot.Itemstack);
+            return inSlot.Itemstack.GetName();
+        }
+
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        if (!variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys) || _langKeys == null || _langKeys.Count == 0)
+        {
+            return inSlot.Itemstack.GetName();
         }
 
         StringBuilder dsc = new();
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
-        variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys);
-
-        if (_langKeys == null || _langKeys.Count == 0)
-        {
-            return collObj.GetHeldItemName(inSlot.Itemstack);
-        }
-
         variants.GetDescription(dsc, _langKeys);
         return dsc.ToString();
     }
 
     public virtual string GetContainedName(ItemSlot inSlot, int quantity)
     {
-        return collObj.GetHeldItemName(inSlot.Itemstack);
+        if (ContainedNameByType == null || ContainedNameByType.Count == 0)
+        {
+            return inSlot.Itemstack.GetName();
+        }
+
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        if (!variants.FindByVariant(ContainedNameByType, out List<object> _langKeys) || _langKeys == null || _langKeys.Count == 0)
+        {
+            return inSlot.Itemstack.GetName();
+        }
+
+        StringBuilder dsc = new();
+        variants.GetDescription(dsc, _langKeys);
+        return dsc.ToString();
     }
 
     public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)

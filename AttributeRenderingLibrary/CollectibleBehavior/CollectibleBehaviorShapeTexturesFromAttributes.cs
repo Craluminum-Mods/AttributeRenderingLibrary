@@ -17,6 +17,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public Dictionary<string, List<object>> NameByType { get; protected set; }
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
+    public Dictionary<string, List<object>> ContainedNameByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
     public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
     public Dictionary<string, int> DurabilityByType { get; protected set; }
@@ -84,6 +85,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         NameByType = properties["name"].AsObject<Dictionary<string, List<object>>>();
         DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
+        ContainedNameByType = properties["containedName"].AsObject<Dictionary<string, List<object>>>();
         ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
         StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
         DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
@@ -511,25 +513,36 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     {
         if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
         {
-            return collObj.GetHeldItemName(inSlot.Itemstack);
+            return inSlot.Itemstack.GetName();
+        }
+
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        if (!variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys) || _langKeys == null || _langKeys.Count == 0)
+        {
+            return inSlot.Itemstack.GetName();
         }
 
         StringBuilder dsc = new();
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
-        variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys);
-
-        if (_langKeys == null || _langKeys.Count == 0)
-        {
-            return collObj.GetHeldItemName(inSlot.Itemstack);
-        }
-
         variants.GetDescription(dsc, _langKeys);
         return dsc.ToString();
     }
 
     public virtual string GetContainedName(ItemSlot inSlot, int quantity)
     {
-        return collObj.GetHeldItemName(inSlot.Itemstack);
+        if (ContainedNameByType == null || ContainedNameByType.Count == 0)
+        {
+            return inSlot.Itemstack.GetName();
+        }
+
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        if (!variants.FindByVariant(ContainedNameByType, out List<object> _langKeys) || _langKeys == null || _langKeys.Count == 0)
+        {
+            return inSlot.Itemstack.GetName();
+        }
+
+        StringBuilder dsc = new();
+        variants.GetDescription(dsc, _langKeys);
+        return dsc.ToString();
     }
 
     void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
