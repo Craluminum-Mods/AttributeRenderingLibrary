@@ -31,6 +31,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
     public Dictionary<string, FoodNutritionProperties> NutritionPropsType { get; protected set; }
     public Dictionary<string, GrindingProperties> GrindingPropsType { get; protected set; }
+    public Dictionary<string, CrushingProperties> CrushingPropsType { get; protected set; }
     #endregion
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
@@ -98,6 +99,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         CombustiblePropsType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
         NutritionPropsType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
         GrindingPropsType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
+        CrushingPropsType = Attributes["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -482,9 +484,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         }
 
         CombustibleProperties clonedProps = props.Clone();
-        if (props.SmeltedStack != null)
+        if (clonedProps.SmeltedStack != null)
         {
-            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack.Clone());
+            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack);
             if (!resultStack.Resolve(world, ""))
             {
                 LoggerUtil.Warn(api, this, $"Smelted stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(CombustibleProperties)} by attributes. Will use default properties instead.");
@@ -508,9 +510,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         }
 
         FoodNutritionProperties clonedProps = props.Clone();
-        if (props.EatenStack != null)
+        if (clonedProps.EatenStack != null)
         {
-            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.EatenStack.Clone());
+            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.EatenStack);
             if (!resultStack.Resolve(world, ""))
             {
                 LoggerUtil.Warn(api, this, $"Eaten stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(FoodNutritionProperties)} by attributes. Will use default properties instead.");
@@ -534,13 +536,39 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         }
 
         GrindingProperties clonedProps = props.Clone();
-        if (props.GroundStack != null)
+        if (clonedProps.GroundStack != null)
         {
-            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.GroundStack.Clone());
+            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.GroundStack);
             if (!resultStack.Resolve(world, ""))
             {
                 LoggerUtil.Warn(api, this, $"Ground stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(GrindingProperties)} by attributes. Will use default properties instead.");
                 return base.GetGrindingProperties(world, itemstack);
+            }
+        }
+        return clonedProps;
+    }
+
+    public override CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack itemstack)
+    {
+        if (itemstack == null || CrushingPropsType == null || CrushingPropsType.Count == 0)
+        {
+            return base.GetCrushingProperties(world, itemstack);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(CrushingPropsType, out CrushingProperties props))
+        {
+            return base.GetCrushingProperties(world, itemstack);
+        }
+
+        CrushingProperties clonedProps = props.Clone();
+        if (clonedProps.CrushedStack != null)
+        {
+            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.CrushedStack);
+            if (!resultStack.Resolve(world, ""))
+            {
+                LoggerUtil.Warn(api, this, $"Crushed stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(CrushingProperties)} by attributes. Will use default properties instead.");
+                return base.GetCrushingProperties(world, itemstack);
             }
         }
         return clonedProps;
