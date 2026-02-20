@@ -14,7 +14,18 @@ public class Core : ModSystem
     public override void StartPre(ICoreAPI api)
     {
         Api = api;
+
         HarmonyInstance.PatchAllUncategorized();
+
+        if (api.Side.IsServer())
+        {
+            HarmonyInstance.PatchCategory("Server");
+        }
+
+        if (api.Side.IsClient())
+        {
+            HarmonyInstance.PatchCategory("Client");
+        }
     }
 
     public override void Start(ICoreAPI api)
