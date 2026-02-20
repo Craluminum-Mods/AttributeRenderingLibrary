@@ -32,6 +32,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, FoodNutritionProperties> NutritionPropsType { get; protected set; }
     public Dictionary<string, GrindingProperties> GrindingPropsType { get; protected set; }
     public Dictionary<string, CrushingProperties> CrushingPropsType { get; protected set; }
+    public Dictionary<string, TransitionableProperties[]> TransitionablePropsType { get; protected set; }
     #endregion
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
@@ -100,6 +101,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         NutritionPropsType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
         GrindingPropsType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
         CrushingPropsType = Attributes["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
+        TransitionablePropsType = Attributes["TransitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -572,6 +574,40 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             }
         }
         return clonedProps;
+    }
+
+    public override TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack itemstack, Entity forEntity)
+    {
+        if (itemstack == null || TransitionablePropsType == null || TransitionablePropsType.Count == 0)
+        {
+            return base.GetTransitionableProperties(world, itemstack, forEntity);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(TransitionablePropsType, out TransitionableProperties[] allTypedProps) || allTypedProps == null)
+        {
+            return base.GetTransitionableProperties(world, itemstack, forEntity);
+        }
+
+        List<TransitionableProperties> allResolvedProps = [];
+
+        for (int i = 0; i < allTypedProps.Length; i++)
+        {
+            TransitionableProperties clonedProps = allTypedProps[i].Clone();
+            if (clonedProps.TransitionedStack != null)
+            {
+                JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.TransitionedStack);
+                if (!resultStack.Resolve(world, ""))
+                {
+                    LoggerUtil.Warn(api, this, $"Transitioned stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(TransitionableProperties)} by attributes. Will skip it.");
+                    continue;
+                }
+            }
+
+            allResolvedProps.Add(clonedProps);
+        }
+
+        return allResolvedProps.ToArray();
     }
 
     public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)
