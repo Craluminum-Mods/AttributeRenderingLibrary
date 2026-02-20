@@ -3,10 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -19,7 +16,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
     public class VariantLoader
     {
         private ICoreServerAPI serverApi;
-        private ILogger logger;
         private List<CollectibleObject> collectiblesToGenerate = new();
         private ConcurrentQueue<CollectibleAndStackGenerationBehavior> collectibleGenerationQueue = new();
         private ConcurrentQueue<CollectibleAndStacks> finishedStacks = new();
@@ -66,7 +62,6 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         public VariantLoader(ICoreServerAPI api)
         {
             serverApi = api;
-            logger = api.ModLoader.GetModSystem<Core>().Mod.Logger;
         }
 
         /// <summary>
@@ -78,7 +73,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         {
             if (!HaveWorkerThreadsFinished || activeThreadCounter > 0)
             {
-                logger.Warning("Error composing attribute variants; Can only run one generation at a time; Some worker threads are still active");
+                LoggerUtil.Warn(serverApi, this,"Error composing attribute variants; Can only run one generation at a time; Some worker threads are still active");
                 return;
             }
             HaveWorkerThreadsFinished = false;
@@ -123,7 +118,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         {
             if (!HaveWorkerThreadsFinished || activeThreadCounter > 0)
             {
-                logger.Warning("Error composing attribute variants; Can only run one generation at a time; Some worker threads are still active");
+                LoggerUtil.Warn(serverApi, this, "Error composing attribute variants; Can only run one generation at a time; Some worker threads are still active");
                 return;
             }
             HaveWorkerThreadsFinished = false;
@@ -312,7 +307,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         {
             if (!HaveWorkerThreadsFinished || activeThreadCounter > 0)
             {
-                logger.Warning("Error loading collectibles with attribute variants; previous collectibles still in use by some threads");
+                LoggerUtil.Warn(serverApi, this, "Error loading collectibles with attribute variants; previous collectibles still in use by some threads");
                 return;
             }
 
@@ -331,11 +326,11 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                         CollectibleBehavior = behavior
                     });
 
-                    logger.Debug($"Found collectible {collectible.Code} with generate creative stack behavior");
+                    LoggerUtil.Debug(serverApi, this, $"Found collectible {collectible.Code} with generate creative stack behavior");
                 }
             }
 
-            logger.Debug($"Found total of {collectibleGenerationQueue.Count} different collectibles to process");
+            LoggerUtil.Debug(serverApi, this, $"Found total of {collectibleGenerationQueue.Count} different collectibles to process");
         }
 
         /// <summary>
@@ -345,7 +340,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         {
             if (!HaveWorkerThreadsFinished || activeThreadCounter > 0)
             {
-                logger.Warning("Error collecting world property variant groups, worldProperties are still in use by some threads");
+                LoggerUtil.Warn(serverApi, this, "Error collecting world property variant groups, worldProperties are still in use by some threads");
                 return;
             }
 
@@ -374,13 +369,13 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
                 if (worldProperty == null)
                 {
-                    logger.Warning("Worldproperty with location {0} was not found", location);
+                    LoggerUtil.Warn(serverApi, this, $"Worldproperty with location {location} was not found");
                     continue;
                 }
 
                 if (worldProperty.Code == null || worldProperty.Variants == null)
                 {
-                    logger.Warning("Error in worldproperties {0}, code or variants is null, won't load this property", location);
+                    LoggerUtil.Warn(serverApi, this, $"Error in worldproperties {location}, code or variants is null, won't load this property");
                     continue;
                 }
 
@@ -389,7 +384,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 {
                     if (worldProperty.Variants[i].Code == null)
                     {
-                        logger.Warning("Error in worldproperties {0}, variant {1}, code is null, won't load this variant", location, i);
+                        LoggerUtil.Warn(serverApi, this, $"Error in worldproperties {location}, variant {i}, code is null, won't load this variant");
                         continue;
                     }
 
@@ -402,7 +397,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 worldProperties[location] = variants.ToArray();
             }
 
-            logger.Debug($"Collected a total of {worldProperties.Count} different worldproperties to use across all collectibles");
+            LoggerUtil.Debug(serverApi, this, $"Collected a total of {worldProperties.Count} different worldproperties to use across all collectibles");
         }
 
         /// <summary>
@@ -446,10 +441,10 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 variantGroups = new();
                 CollectVariantGroupsForInstance(operand.CollectibleBehavior, variantGroups);
 #if DEBUG
-                logger.Debug($"found {variantGroups.Count} variant groups for collectible {operand.CollectibleObject.Code}");
+                LoggerUtil.Debug(serverApi, this, $"found {variantGroups.Count} variant groups for collectible {operand.CollectibleObject.Code}");
                 foreach (var entry in variantGroups)
                 {
-                    logger.Debug($"Variant group {entry.Key} has {entry.Value.States.Length} entries: {string.Join(", ", entry.Value)}");
+                    LoggerUtil.Debug(serverApi, this, $"Variant group {entry.Key} has {entry.Value.States.Length} entries: {string.Join(", ", entry.Value)}");
                 }
 #endif
                 variantAttributes = ComposeVariantAttributes(variantGroups, operand.CollectibleBehavior.SkipCombinations, operand.CollectibleBehavior.AllowedCombinations);

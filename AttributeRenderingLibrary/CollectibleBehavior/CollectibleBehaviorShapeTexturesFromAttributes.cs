@@ -208,7 +208,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
                 Shape oshape = Shape.TryGet(clientApi, overlay.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json"));
                 if (oshape == null)
                 {
-                    clientApi.World.Logger.Warning("[Attribute Rendering Library] Wearable shape {0} overlay {4} defined in {1} {2} not found or errored, was supposed to be at {3}. Item will be invisible.", rcshape.Base, slot.Itemstack.Class, slot.Itemstack.Collectible.Code, rcshape.Base, overlay.Base);
+                    LoggerUtil.Warn(clientApi, this, $"Wearable shape {rcshape.Base} overlay {overlay.Base} defined in {slot.Itemstack.Class} {slot.Itemstack.Collectible.Code} not found or errored, was supposed to be at {rcshape.Base}. Item will be invisible.");
                     continue;
                 }
 

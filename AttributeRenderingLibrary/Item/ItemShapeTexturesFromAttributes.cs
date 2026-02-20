@@ -212,7 +212,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
                 Shape oshape = Vintagestory.API.Common.Shape.TryGet(clientApi, overlay.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json"));
                 if (oshape == null)
                 {
-                    clientApi.World.Logger.Warning("[Attribute Rendering Library] Wearable shape {0} overlay {4} defined in {1} {2} not found or errored, was supposed to be at {3}. Item will be invisible.", rcshape.Base, slot.Itemstack.Class, slot.Itemstack.Collectible.Code, rcshape.Base, overlay.Base);
+                    LoggerUtil.Warn(clientApi, this, $"Wearable shape {rcshape.Base} overlay {overlay.Base} defined in {slot.Itemstack.Class} {slot.Itemstack.Collectible.Code} not found or errored, was supposed to be at {rcshape.Base}. Item will be invisible.");
                     continue;
                 }
 
@@ -482,7 +482,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack.Clone());
         if (!resultStack.Resolve(world, ""))
         {
-            world.Logger.Warning($"[Attribute Rendering Library] Smelted stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for CombustibleProps by attributes. Will use default properties instead.");
+            LoggerUtil.Warn(api, this, $"[Attribute Rendering Library] Smelted stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for CombustibleProps by attributes. Will use default properties instead.");
             return base.GetCombustibleProperties(world, itemstack, pos);
         }
         return clonedProps;
