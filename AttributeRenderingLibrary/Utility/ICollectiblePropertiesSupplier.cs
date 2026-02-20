@@ -4,6 +4,22 @@ using Vintagestory.API.MathTools;
 namespace AttributeRenderingLibrary;
 
 /// <summary>
+/// Other properties that aren't handled by <see cref="CollectibleObject"/>
+/// </summary>
+public interface ICollectiblePropertiesSupplier
+{
+
+}
+
+/// <summary>
+/// <see cref="CollectibleObject"/> properties that aren't handled by <see cref="CollectibleObject.CollectibleBehaviors"/>
+/// </summary>
+public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
+{
+
+}
+
+/// <summary>
 /// <see cref="Block"/> properties that aren't handled by <see cref="Block.BlockBehaviors"/>
 /// </summary>
 public interface IBlockPropertiesSupplier : IPropertiesSupplier
