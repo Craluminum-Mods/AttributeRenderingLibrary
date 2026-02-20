@@ -20,7 +20,7 @@ public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : Collec
         QuantitySlotsByType = properties["quantitySlots"].AsObject<Dictionary<string, int>>();
         SlotBgColorByType = properties["slotBgColor"].AsObject<Dictionary<string, string>>();
         StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, int>>()?.ToDictionary(x => x.Key, x => (EnumItemStorageFlags)x.Value);
-        StorageTagsByType = properties["storageTags"].AsObject<Dictionary<string, JsonObject>>();
+        StorageTagsByType = properties["tags"].AsObject<Dictionary<string, JsonObject>>();
     }
 
     public override TagSet GetStorageTags(ItemStack bagstack)
