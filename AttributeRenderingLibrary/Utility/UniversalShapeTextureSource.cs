@@ -45,7 +45,7 @@ public class UniversalShapeTextureSource : ITexPositionSource
                 {
                     if (!missingTextures.Contains(texturePath))
                     {
-                        LoggerUtil.Warn(capi, this, $"[AttributeRenderingLibrary] Shape {filenameForLogging} has an element using texture code {textureCode}, but no such texture exists");
+                        LoggerUtil.Warn(capi, this, $"Shape {filenameForLogging} has an element using texture code {textureCode}, but no such texture exists");
                         missingTextures.Add(texturePath);
                     }
 
