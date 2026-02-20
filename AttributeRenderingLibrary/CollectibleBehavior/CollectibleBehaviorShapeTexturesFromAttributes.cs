@@ -487,7 +487,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         bhHandling = EnumHandling.PreventSubsequent;
         return animCode;
     }
-
+    #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
         /// Temporary solution for wearable attachments until 1.22 is out with proper wearable support
@@ -509,7 +509,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         }
         return key;
     }
-
+    #endregion
+    #region IContainedCustomName
     public virtual string GetContainedInfo(ItemSlot inSlot)
     {
         if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
@@ -545,8 +546,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         variants.GetDescription(dsc, _langKeys);
         return dsc.ToString();
     }
-
-    void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
+    #endregion
+    #region IAttachableToEntity
+    public virtual void CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
     {
         foreach ((string textureCode, CompositeTexture texture) in stack.Item.Textures)
         {
@@ -579,7 +581,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         }
     }
 
-    CompositeShape IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode)
+    public virtual CompositeShape GetAttachedShape(ItemStack stack, string slotCode)
     {
         if (AttachedShapeBySlotCodeByType == null || AttachedShapeBySlotCodeByType.Count == 0)
         {
@@ -621,7 +623,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return iattr?.GetAttachedShape(stack, slotCode);
     }
 
-    string IAttachableToEntity.GetCategoryCode(ItemStack stack)
+    public virtual string GetCategoryCode(ItemStack stack)
     {
         if (CategoryCodeByType == null || CategoryCodeByType.Count == 0)
         {
@@ -633,7 +635,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return categoryCode;
     }
 
-    string[] IAttachableToEntity.GetDisableElements(ItemStack stack)
+    public virtual string[] GetDisableElements(ItemStack stack)
     {
         if (DisableElementsByType == null || DisableElementsByType.Count == 0)
         {
@@ -645,7 +647,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return disableElements;
     }
 
-    string[] IAttachableToEntity.GetKeepElements(ItemStack stack)
+    public virtual string[] GetKeepElements(ItemStack stack)
     {
         if (KeepElementsByType == null || KeepElementsByType.Count == 0)
         {
@@ -657,9 +659,10 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return keepElements;
     }
 
-    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
+    public virtual string GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
 
-    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
+    public virtual bool IsAttachable(Entity toEntity, ItemStack itemStack) => true;
 
-    int IAttachableToEntity.RequiresBehindSlots { get; set; }
+    public virtual int RequiresBehindSlots { get; set; }
+    #endregion
 }

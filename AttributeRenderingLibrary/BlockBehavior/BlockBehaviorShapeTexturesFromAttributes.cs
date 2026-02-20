@@ -414,40 +414,42 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return;
     }
 
-    /// <summary>
-    /// Rotation (in radians) for the block at the given position
-    /// </summary>
-    /// <param name="world"></param>
-    /// <param name="pos"></param>
-    /// <returns></returns>
-    public virtual Vec3f GetRotation(IWorldAccessor world, BlockPos pos)
+    public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
     {
-        BlockEntity blockEntity = world.BlockAccessor.GetBlockEntity(pos);
-
-        if (blockEntity == null)
+        if (CollisionBoxesByType == null || CollisionBoxesByType.Count == 0)
         {
-            return Vec3f.Zero;
+            return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
         }
 
-        if (blockEntity?.GetBehavior<BEBehaviorRotatablePlaceable>() is BEBehaviorRotatablePlaceable rotatablePlaceable)
+        if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants != null
+            && beBehavior.Variants.FindByVariant(CollisionBoxesByType, out Cuboidf[] cuboids)
+            && cuboids != null
+            && cuboids.Length > 0)
         {
-            return new Vec3f(0, rotatablePlaceable.MeshAngleRad, 0);
+            handled = EnumHandling.PreventSubsequent;
+            return cuboids;
+        }
+        return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
+    }
+
+    public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
+    {
+        if (SelectionBoxesByType == null || SelectionBoxesByType.Count == 0)
+        {
+            return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
         }
 
-        if (blockEntity?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
+            && beBehavior.Variants != null
+            && beBehavior.Variants.FindByVariant(SelectionBoxesByType, out Cuboidf[] cuboids)
+            && cuboids != null
+            && cuboids.Length > 0)
         {
-            beBehavior.Variants.FindByVariant(shapeByType, out CompositeShape shapeForRotation);
-            shapeForRotation ??= block.Shape;
-
-            return new Vec3f
-            {
-                X = (shapeForRotation?.rotateX ?? 0) * GameMath.DEG2RAD,
-                Y = (shapeForRotation?.rotateY ?? 0) * GameMath.DEG2RAD,
-                Z = (shapeForRotation?.rotateZ ?? 0) * GameMath.DEG2RAD
-            };
+            handled = EnumHandling.PreventSubsequent;
+            return cuboids;
         }
-
-        return Vec3f.Zero;
+        return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
     }
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
@@ -657,6 +659,42 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return animCode;
     }
 
+    /// <summary>
+    /// Rotation (in radians) for the block at the given position
+    /// </summary>
+    /// <param name="world"></param>
+    /// <param name="pos"></param>
+    /// <returns></returns>
+    public virtual Vec3f GetRotation(IWorldAccessor world, BlockPos pos)
+    {
+        BlockEntity blockEntity = world.BlockAccessor.GetBlockEntity(pos);
+
+        if (blockEntity == null)
+        {
+            return Vec3f.Zero;
+        }
+
+        if (blockEntity?.GetBehavior<BEBehaviorRotatablePlaceable>() is BEBehaviorRotatablePlaceable rotatablePlaceable)
+        {
+            return new Vec3f(0, rotatablePlaceable.MeshAngleRad, 0);
+        }
+
+        if (blockEntity?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        {
+            beBehavior.Variants.FindByVariant(shapeByType, out CompositeShape shapeForRotation);
+            shapeForRotation ??= block.Shape;
+
+            return new Vec3f
+            {
+                X = (shapeForRotation?.rotateX ?? 0) * GameMath.DEG2RAD,
+                Y = (shapeForRotation?.rotateY ?? 0) * GameMath.DEG2RAD,
+                Z = (shapeForRotation?.rotateZ ?? 0) * GameMath.DEG2RAD
+            };
+        }
+
+        return Vec3f.Zero;
+    }
+    #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
         return GenGuiMesh(slot);
@@ -666,7 +704,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         return $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
     }
-
+    #endregion
+    #region IContainedCustomName
     public virtual string GetContainedInfo(ItemSlot inSlot)
     {
         if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
@@ -702,46 +741,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         variants.GetDescription(dsc, _langKeys);
         return dsc.ToString();
     }
-
-    public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
-    {
-        if (CollisionBoxesByType == null || CollisionBoxesByType.Count == 0)
-        {
-            return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
-        }
-
-        if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
-            && beBehavior.Variants != null
-            && beBehavior.Variants.FindByVariant(CollisionBoxesByType, out Cuboidf[] cuboids)
-            && cuboids != null
-            && cuboids.Length > 0)
-        {
-            handled = EnumHandling.PreventSubsequent;
-            return cuboids;
-        }
-        return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
-    }
-
-    public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos, ref EnumHandling handled)
-    {
-        if (SelectionBoxesByType == null || SelectionBoxesByType.Count == 0)
-        {
-            return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
-        }
-
-        if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior
-            && beBehavior.Variants != null
-            && beBehavior.Variants.FindByVariant(SelectionBoxesByType, out Cuboidf[] cuboids)
-            && cuboids != null
-            && cuboids.Length > 0)
-        {
-            handled = EnumHandling.PreventSubsequent;
-            return cuboids;
-        }
-        return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
-    }
-
-    void IAttachableToEntity.CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
+    #endregion
+    #region IAttachableToEntity
+    public virtual void CollectTextures(ItemStack stack, Shape shape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
     {
         foreach ((string textureCode, CompositeTexture texture) in stack.Block.Textures)
         {
@@ -774,7 +776,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
     }
 
-    CompositeShape IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode)
+    public virtual CompositeShape GetAttachedShape(ItemStack stack, string slotCode)
     {
         if (AttachedShapeBySlotCodeByType == null || AttachedShapeBySlotCodeByType.Count == 0)
         {
@@ -816,7 +818,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return iattr?.GetAttachedShape(stack, slotCode);
     }
 
-    string IAttachableToEntity.GetCategoryCode(ItemStack stack)
+    public virtual string GetCategoryCode(ItemStack stack)
     {
         if (CategoryCodeByType == null || CategoryCodeByType.Count == 0)
         {
@@ -828,7 +830,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return categoryCode;
     }
 
-    string[] IAttachableToEntity.GetDisableElements(ItemStack stack)
+    public virtual string[] GetDisableElements(ItemStack stack)
     {
         if (DisableElementsByType == null || DisableElementsByType.Count == 0)
         {
@@ -840,7 +842,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return disableElements;
     }
 
-    string[] IAttachableToEntity.GetKeepElements(ItemStack stack)
+    public virtual string[] GetKeepElements(ItemStack stack)
     {
         if (KeepElementsByType == null || KeepElementsByType.Count == 0)
         {
@@ -852,9 +854,10 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return keepElements;
     }
 
-    string IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
+    public virtual string GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
 
-    bool IAttachableToEntity.IsAttachable(Entity toEntity, ItemStack itemStack) => true;
+    public virtual bool IsAttachable(Entity toEntity, ItemStack itemStack) => true;
 
-    int IAttachableToEntity.RequiresBehindSlots { get; set; }
+    public virtual int RequiresBehindSlots { get; set; }
+    #endregion
 }
