@@ -25,7 +25,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
     public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool> ToolByType { get; protected set; }
-    public Dictionary<string, int> ToolTierType { get; protected set; }
+    public Dictionary<string, int> ToolTierByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
     public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
@@ -92,7 +92,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool>>();
-        ToolTierType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
+        ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
         CombustiblePropsType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -452,13 +452,13 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override int GetToolTier(ItemSlot slot)
     {
-        if (ToolTierType == null || ToolTierType.Count == 0)
+        if (ToolTierByType == null || ToolTierByType.Count == 0)
         {
             return base.GetToolTier(slot);
         }
 
         Variants variants = Variants.FromStack(slot.Itemstack);
-        if (!variants.FindByVariant(ToolTierType, out int toolTier))
+        if (!variants.FindByVariant(ToolTierByType, out int toolTier))
         {
             return base.GetToolTier(slot);
         }
