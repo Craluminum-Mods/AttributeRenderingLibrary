@@ -3,7 +3,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 
-namespace AttributeRenderingLibrary;
+namespace AttributeRenderingLibrary.HarmonyPatches;
 
 [HarmonyPatch(typeof(Block), nameof(Block.GetDropsForHandbook))]
 public static class GetDropsForHandbookPatch

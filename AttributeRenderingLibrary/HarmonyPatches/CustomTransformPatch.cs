@@ -4,7 +4,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 
-namespace AttributeRenderingLibrary;
+namespace AttributeRenderingLibrary.HarmonyPatches;
 
 [HarmonyPatch(typeof(BlockEntityDisplay), "applyDefaultTranforms")]
 public static class CustomTransformPatch

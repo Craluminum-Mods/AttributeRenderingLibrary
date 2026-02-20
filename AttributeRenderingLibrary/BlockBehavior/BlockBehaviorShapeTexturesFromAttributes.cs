@@ -12,7 +12,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IBlockPropertiesSupplier
 {
     #region Collectible properties
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
@@ -27,6 +27,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, float> AttackPowerByType { get; protected set; }
     public Dictionary<string, float> AttackRangeByType { get; protected set; }
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
+    public Dictionary<string, int> RequiredMiningTierByType { get; protected set; }
     #endregion
     #region Block properties
     public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
@@ -111,6 +112,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         AttackPowerByType = properties["attackPower"].AsObject<Dictionary<string, float>>();
         AttackRangeByType = properties["attackRange"].AsObject<Dictionary<string, float>>();
         MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
+        RequiredMiningTierByType = properties["requiredMiningTier"].AsObject<Dictionary<string, int>>();
 
         HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = properties["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -859,5 +861,27 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public virtual bool IsAttachable(Entity toEntity, ItemStack itemStack) => true;
 
     public virtual int RequiresBehindSlots { get; set; }
+    #endregion
+    #region IBlockPropertiesSupplier
+    public virtual int GetRequiredMiningTier(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
+    {
+        int result = 0;
+        handling = EnumHandling.PassThrough;
+
+        if (RequiredMiningTierByType == null || RequiredMiningTierByType.Count == 0)
+        {
+            return result;
+        }
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        {
+            return result;
+        }
+        Variants variants = beBehavior.Variants;
+        if (variants.FindByVariant(RequiredMiningTierByType, out result))
+        {
+            handling = EnumHandling.PreventSubsequent;
+        }
+        return result;
+    }
     #endregion
 }
