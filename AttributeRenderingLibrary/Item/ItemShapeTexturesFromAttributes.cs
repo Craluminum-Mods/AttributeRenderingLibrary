@@ -29,6 +29,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     #endregion
     #region Collectible properties (resolvable)
     public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
+    public Dictionary<string, FoodNutritionProperties> NutritionPropsType { get; protected set; }
     #endregion
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
@@ -94,6 +95,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
         CombustiblePropsType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
+        NutritionPropsType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -472,17 +474,46 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         }
 
         Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(CombustiblePropsType, out CombustibleProperties props) || props?.SmeltedStack == null)
+        if (!variants.FindByVariant(CombustiblePropsType, out CombustibleProperties props))
         {
             return base.GetCombustibleProperties(world, itemstack, pos);
         }
 
         CombustibleProperties clonedProps = props.Clone();
-        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack.Clone());
-        if (!resultStack.Resolve(world, ""))
+        if (props.SmeltedStack != null)
         {
-            LoggerUtil.Warn(api, this, $"[Attribute Rendering Library] Smelted stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for CombustibleProps by attributes. Will use default properties instead.");
-            return base.GetCombustibleProperties(world, itemstack, pos);
+            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack.Clone());
+            if (!resultStack.Resolve(world, ""))
+            {
+                LoggerUtil.Warn(api, this, $"Smelted stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for CombustibleProps by attributes. Will use default properties instead.");
+                return base.GetCombustibleProperties(world, itemstack, pos);
+            }
+        }
+        return clonedProps;
+    }
+
+    public override FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack itemstack, Entity forEntity)
+    {
+        if (itemstack == null || NutritionPropsType == null || NutritionPropsType.Count == 0)
+        {
+            return base.GetNutritionProperties(world, itemstack, forEntity);
+        }
+
+        Variants variants = Variants.FromStack(itemstack);
+        if (!variants.FindByVariant(NutritionPropsType, out FoodNutritionProperties props) || props?.EatenStack == null)
+        {
+            return base.GetNutritionProperties(world, itemstack, forEntity);
+        }
+
+        FoodNutritionProperties clonedProps = props.Clone();
+        if (props.EatenStack != null)
+        {
+            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.EatenStack.Clone());
+            if (!resultStack.Resolve(world, ""))
+            {
+                LoggerUtil.Warn(api, this, $"Eaten stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for NutritionProps by attributes. Will use default properties instead.");
+                return base.GetNutritionProperties(world, itemstack, forEntity);
+            }
         }
         return clonedProps;
     }
