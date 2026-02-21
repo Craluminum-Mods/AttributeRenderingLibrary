@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -259,7 +260,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
                 return cshape.IgnoreElements.Append(variants.ReplacePlaceholders(ignoreElements));
             }
         }
-        
+
         if (ShapeIgnoreElementsCombineByType is { Count: > 0 })
         {
             Variants variants = Variants.FromStack(itemStack);
@@ -270,7 +271,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             }
             return result.ToArray();
         }
-        
+
         return cshape.IgnoreElements;
     }
 
@@ -284,7 +285,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
                 return cshape.SelectiveElements.Append(variants.ReplacePlaceholders(selectiveElements));
             }
         }
-        
+
         if (ShapeSelectiveElementsCombineByType is { Count: > 0 })
         {
             Variants variants = Variants.FromStack(itemStack);
@@ -295,7 +296,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             }
             return result.ToArray();
         }
-        
+
         return cshape.SelectiveElements;
     }
 
@@ -320,46 +321,28 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override string GetHeldItemName(ItemStack itemStack)
     {
-        if (NameByType == null || NameByType.Count == 0)
+        if (!itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
         {
             return base.GetHeldItemName(itemStack);
         }
-
-        Variants variants = Variants.FromStack(itemStack);
-        variants.FindByVariant(NameByType, out List<object> _langKeys);
-
-        string name = variants.GetName(_langKeys);
-        if (string.IsNullOrEmpty(name))
-        {
-            name = base.GetHeldItemName(itemStack);
-        }
-        return name;
+        return variants.GetName(langKeys);
     }
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        if (DescriptionByType == null || DescriptionByType.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
         {
             return;
         }
-
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
-        variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
-        variants.GetDescription(dsc, _langKeys);
+        variants.GetDescription(dsc, langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
     }
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack)
     {
-        if (StorageFlagsByType == null || StorageFlagsByType.Count == 0)
-        {
-            return base.GetStorageFlags(itemstack);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
+        if (!itemstack.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
         {
             return base.GetStorageFlags(itemstack);
         }
@@ -368,13 +351,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override int GetMaxDurability(ItemStack itemstack)
     {
-        if (DurabilityByType == null || DurabilityByType.Count == 0)
-        {
-            return base.GetMaxDurability(itemstack);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(DurabilityByType, out int durability))
+        if (!itemstack.FindByVariant(DurabilityByType, out int durability))
         {
             return base.GetMaxDurability(itemstack);
         }
@@ -383,13 +360,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override float GetAttackPower(ItemStack stack)
     {
-        if (AttackPowerByType == null || AttackPowerByType.Count == 0)
-        {
-            return base.GetAttackPower(stack);
-        }
-
-        Variants variants = Variants.FromStack(stack);
-        if (!variants.FindByVariant(AttackPowerByType, out float attackPower))
+        if (!stack.FindByVariant(AttackPowerByType, out float attackPower))
         {
             return base.GetAttackPower(stack);
         }
@@ -398,13 +369,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override float GetAttackRange(IItemStack withItemStack)
     {
-        if (AttackRangeByType == null || AttackRangeByType.Count == 0)
-        {
-            return base.GetAttackRange(withItemStack);
-        }
-
-        Variants variants = Variants.FromStack(withItemStack as ItemStack);
-        if (!variants.FindByVariant(AttackRangeByType, out float attackRange))
+        if (!(withItemStack as ItemStack).FindByVariant(AttackRangeByType, out float attackRange))
         {
             return base.GetAttackRange(withItemStack);
         }
@@ -413,17 +378,10 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot)
     {
-        if (MiningSpeedByType == null || MiningSpeedByType.Count == 0)
+        if (!slot.Itemstack.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeed))
         {
             return base.GetMiningSpeeds(slot);
         }
-
-        Variants variants = Variants.FromStack(slot.Itemstack);
-        if (!variants.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeed))
-        {
-            return base.GetMiningSpeeds(slot);
-        }
-
         return miningSpeed;
     }
 
@@ -453,16 +411,10 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         }
         return toolTier;
     }
-    
+
     public override CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack itemstack, BlockPos pos)
     {
-        if (itemstack == null || CombustiblePropsType == null || CombustiblePropsType.Count == 0)
-        {
-            return base.GetCombustibleProperties(world, itemstack, pos);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(CombustiblePropsType, out CombustibleProperties props))
+        if (!itemstack.FindByVariant(CombustiblePropsType, out CombustibleProperties props, out Variants variants))
         {
             return base.GetCombustibleProperties(world, itemstack, pos);
         }
@@ -482,13 +434,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack itemstack, Entity forEntity)
     {
-        if (itemstack == null || NutritionPropsType == null || NutritionPropsType.Count == 0)
-        {
-            return base.GetNutritionProperties(world, itemstack, forEntity);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(NutritionPropsType, out FoodNutritionProperties props))
+        if (!itemstack.FindByVariant(NutritionPropsType, out FoodNutritionProperties props, out Variants variants))
         {
             return base.GetNutritionProperties(world, itemstack, forEntity);
         }
@@ -508,13 +454,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack itemstack)
     {
-        if (itemstack == null || GrindingPropsType == null || GrindingPropsType.Count == 0)
-        {
-            return base.GetGrindingProperties(world, itemstack);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(GrindingPropsType, out GrindingProperties props))
+        if (!itemstack.FindByVariant(GrindingPropsType, out GrindingProperties props, out Variants variants))
         {
             return base.GetGrindingProperties(world, itemstack);
         }
@@ -534,13 +474,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack itemstack)
     {
-        if (itemstack == null || CrushingPropsType == null || CrushingPropsType.Count == 0)
-        {
-            return base.GetCrushingProperties(world, itemstack);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(CrushingPropsType, out CrushingProperties props))
+        if (!itemstack.FindByVariant(CrushingPropsType, out CrushingProperties props, out Variants variants))
         {
             return base.GetCrushingProperties(world, itemstack);
         }
@@ -560,13 +494,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack itemstack, Entity forEntity)
     {
-        if (itemstack == null || TransitionablePropsType == null || TransitionablePropsType.Count == 0)
-        {
-            return base.GetTransitionableProperties(world, itemstack, forEntity);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(TransitionablePropsType, out TransitionableProperties[] allTypedProps) || allTypedProps == null)
+        if (!itemstack.FindByVariant(TransitionablePropsType, out TransitionableProperties[] allTypedProps, out Variants variants) || allTypedProps == null)
         {
             return base.GetTransitionableProperties(world, itemstack, forEntity);
         }
@@ -595,14 +523,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)
     {
         Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
-
-        if (animCodesByType == null || animCodesByType.Count == 0)
-        {
-            return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand);
-        }
-
-        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
-        if (!variants.FindByVariant(animCodesByType, out string animCode))
+        if (!activeHotbarSlot.Itemstack.FindByVariant(animCodesByType, out string animCode))
         {
             return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand);
         }
@@ -612,14 +533,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public override string GetHeldTpIdleAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)
     {
         Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
-
-        if (animCodesByType == null || animCodesByType.Count == 0)
-        {
-            return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand);
-        }
-
-        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
-        if (!variants.FindByVariant(animCodesByType, out string animCode))
+        if (!activeHotbarSlot.Itemstack.FindByVariant(animCodesByType, out string animCode))
         {
             return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand);
         }
@@ -628,13 +542,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override string GetHeldTpUseAnimation(ItemSlot activeHotbarSlot, Entity forEntity)
     {
-        if (HeldTpUseAnimationByType == null || HeldTpUseAnimationByType.Count == 0)
-        {
-            return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity);
-        }
-
-        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
-        if (!variants.FindByVariant(HeldTpUseAnimationByType, out string animCode))
+        if (!activeHotbarSlot.Itemstack.FindByVariant(HeldTpUseAnimationByType, out string animCode))
         {
             return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity);
         }
@@ -643,13 +551,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override string GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity)
     {
-        if (HeldTpHitAnimationByType == null || HeldTpHitAnimationByType.Count == 0)
-        {
-            return base.GetHeldTpHitAnimation(slot, byEntity);
-        }
-
-        Variants variants = Variants.FromStack(slot.Itemstack);
-        if (!variants.FindByVariant(HeldTpHitAnimationByType, out string animCode))
+        if (!slot.Itemstack.FindByVariant(HeldTpHitAnimationByType, out string animCode))
         {
             return base.GetHeldTpHitAnimation(slot, byEntity);
         }
@@ -681,37 +583,25 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     #region IContainedCustomName
     public virtual string GetContainedInfo(ItemSlot inSlot)
     {
-        if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
-        {
-            return inSlot.Itemstack.GetName();
-        }
-
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
-        if (!variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys) || _langKeys == null || _langKeys.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(ContainedDescriptionByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
         {
             return inSlot.Itemstack.GetName();
         }
 
         StringBuilder dsc = new();
-        variants.GetDescription(dsc, _langKeys);
+        variants.GetDescription(dsc, langKeys);
         return dsc.ToString();
     }
 
     public virtual string GetContainedName(ItemSlot inSlot, int quantity)
     {
-        if (ContainedNameByType == null || ContainedNameByType.Count == 0)
-        {
-            return inSlot.Itemstack.GetName();
-        }
-
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
-        if (!variants.FindByVariant(ContainedNameByType, out List<object> _langKeys) || _langKeys == null || _langKeys.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(ContainedNameByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
         {
             return inSlot.Itemstack.GetName();
         }
 
         StringBuilder dsc = new();
-        variants.GetDescription(dsc, _langKeys);
+        variants.GetDescription(dsc, langKeys);
         return dsc.ToString();
     }
     #endregion
@@ -751,80 +641,61 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public virtual CompositeShape GetAttachedShape(ItemStack stack, string slotCode)
     {
-        if (AttachedShapeBySlotCodeByType == null || AttachedShapeBySlotCodeByType.Count == 0)
+        if (!stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode, out Variants variants) || attachedShapeBySlotCode == null || attachedShapeBySlotCode.Count == 0)
         {
             return iattr?.GetAttachedShape(stack, slotCode);
         }
 
-        Variants variants = Variants.FromStack(stack);
-        if (!variants.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode))
+        foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
         {
-            return iattr?.GetAttachedShape(stack, slotCode);
-        }
-
-        if (attachedShapeBySlotCode != null && attachedShapeBySlotCode.Count != 0)
-        {
-            foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
+            if (WildcardUtil.Match(_slotCode, slotCode))
             {
-                if (WildcardUtil.Match(_slotCode, slotCode))
+                CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
+                if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
                 {
-                    CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-                    if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
-                    {
-                        return rcshape;
-                    }
-
-                    List<CompositeShape> overlays = [];
-                    foreach (CompositeShape overlay in rcshape.Overlays)
-                    {
-                        if (api.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
-                        {
-                            overlays.Add(overlay);
-                        }
-                    }
-                    rcshape.Overlays = overlays.ToArray();
                     return rcshape;
                 }
+
+                List<CompositeShape> overlays = [];
+                foreach (CompositeShape overlay in rcshape.Overlays)
+                {
+                    if (api.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
+                    {
+                        overlays.Add(overlay);
+                    }
+                }
+                rcshape.Overlays = overlays.ToArray();
+                return rcshape;
             }
         }
-
         return iattr?.GetAttachedShape(stack, slotCode);
     }
 
     public virtual string GetCategoryCode(ItemStack stack)
     {
-        if (CategoryCodeByType == null || CategoryCodeByType.Count == 0)
+        if (!stack.FindByVariant(CategoryCodeByType, out string categoryCode))
         {
             return iattr?.GetCategoryCode(stack);
         }
-
-        Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(CategoryCodeByType, out string categoryCode);
         return categoryCode;
     }
 
     public virtual string[] GetDisableElements(ItemStack stack)
     {
-        if (DisableElementsByType == null || DisableElementsByType.Count == 0)
+        if (!stack.FindByVariant(DisableElementsByType, out string[] elems))
         {
             return iattr?.GetDisableElements(stack);
         }
-
-        Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(DisableElementsByType, out string[] disableElements);
-        return disableElements;
+        return elems;
     }
 
     public virtual string[] GetKeepElements(ItemStack stack)
     {
-        if (KeepElementsByType == null || KeepElementsByType.Count == 0)
+        if (!stack.FindByVariant(KeepElementsByType, out string[] elems))
         {
             return iattr?.GetKeepElements(stack);
         }
-
-        Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(KeepElementsByType, out string[] keepElements);
-        return keepElements;
+        return elems;
     }
 
     public virtual string GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));

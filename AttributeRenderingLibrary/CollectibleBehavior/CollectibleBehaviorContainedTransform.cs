@@ -25,10 +25,10 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
 
     public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        ApplyOnBeforeRenderTransform(target, Variants.FromStack(itemstack), ref renderinfo.Transform);
+        ApplyOnBeforeRenderTransform(target, itemstack, ref renderinfo.Transform);
     }
 
-    public void ApplyOnBeforeRenderTransform(EnumItemRenderTarget target, Variants variants, ref ModelTransform transform)
+    public void ApplyOnBeforeRenderTransform(EnumItemRenderTarget target, ItemStack stack, ref ModelTransform transform)
     {
         Dictionary<string, ModelTransform> basicTransformsByType = target switch
         {
@@ -39,9 +39,7 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
             _ => null,
         };
 
-        if (basicTransformsByType != null
-            && basicTransformsByType.Count > 0
-            && variants.FindByVariant(basicTransformsByType, out ModelTransform newTransform) && newTransform != null)
+        if (stack.FindByVariant(basicTransformsByType, out ModelTransform newTransform) && newTransform != null)
         {
             newTransform = newTransform.EnsureDefaultValues();
             transform = newTransform;
@@ -55,7 +53,7 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
         if (ExtraTransforms != null
             && ExtraTransforms.Count > 0
             && ExtraTransforms.TryGetValue(attributeTransformCode, out Dictionary<string, ModelTransform> transformsByType)
-            && Variants.FromStack(stack).FindByVariant(transformsByType, out ModelTransform transform))
+            && stack.FindByVariant(transformsByType, out ModelTransform transform))
         {
             transform = transform.EnsureDefaultValues();
             return transform;

@@ -25,30 +25,16 @@ public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : Collec
 
     public override TagSet GetStorageTags(ItemStack bagstack)
     {
-        if (StorageTagsByType == null || StorageTagsByType.Count == 0)
+        if (!bagstack.FindByVariant(StorageTagsByType, out JsonObject storageTags) || storageTags == null)
         {
             return base.GetStorageTags(bagstack);
         }
-
-        Variants variants = Variants.FromStack(bagstack);
-        if (variants.FindByVariant(StorageTagsByType, out JsonObject storageTags) && storageTags != null)
-        {
-            return CollectibleTagSetConverter.ProxyInstance.ReadJson(storageTags.Token);
-        }
-        return base.GetStorageTags(bagstack);
+        return CollectibleTagSetConverter.ProxyInstance.ReadJson(storageTags.Token);
     }
 
     public override int GetQuantitySlots(ItemStack bagstack)
     {
-        if (QuantitySlotsByType == null || QuantitySlotsByType.Count == 0)
-        {
-            return base.GetQuantitySlots(bagstack);
-        }
-
-        Variants variants = Variants.FromStack(bagstack);
-        bool found = variants.FindByVariant(QuantitySlotsByType, out int quantitySlots);
-
-        if (!found)
+        if (!bagstack.FindByVariant(QuantitySlotsByType, out int quantitySlots))
         {
             return base.GetQuantitySlots(bagstack);
         }
@@ -57,34 +43,16 @@ public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : Collec
 
     public override string GetSlotBgColor(ItemStack bagstack)
     {
-        if (SlotBgColorByType == null || SlotBgColorByType.Count == 0)
+        if (!bagstack.FindByVariant(SlotBgColorByType, out string slotBgColor, out Variants variants))
         {
             return base.GetSlotBgColor(bagstack);
         }
-
-        Variants variants = Variants.FromStack(bagstack);
-        bool found = variants.FindByVariant(SlotBgColorByType, out string slotBgColor);
-
-        if (!found)
-        {
-            return base.GetSlotBgColor(bagstack);
-        }
-
-        slotBgColor = variants.ReplacePlaceholders(slotBgColor);
-        return slotBgColor;
+        return variants.ReplacePlaceholders(slotBgColor);
     }
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack bagstack)
     {
-        if (StorageFlagsByType == null || StorageFlagsByType.Count == 0)
-        {
-            return base.GetStorageFlags(bagstack);
-        }
-
-        Variants variants = Variants.FromStack(bagstack);
-        bool found = variants.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags);
-
-        if (!found)
+        if (!bagstack.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
         {
             return base.GetStorageFlags(bagstack);
         }

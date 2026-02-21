@@ -315,46 +315,27 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
     {
-        if (NameByType == null || NameByType.Count == 0)
+        if (!itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
         {
             return;
         }
 
-        Variants variants = Variants.FromStack(itemStack);
-        variants.FindByVariant(NameByType, out List<object> _langKeys);
-
-        string name = variants.GetName(_langKeys);
-        if (string.IsNullOrEmpty(name))
-        {
-            return;
-        }
-
-        sb.Clear();
-        sb.Append(name);
+        sb.Clear().Append(variants.GetName(langKeys));
     }
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
-        if (DescriptionByType == null || DescriptionByType.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
         {
             return;
         }
-
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
-        variants.FindByVariant(DescriptionByType, out List<object> _langKeys);
-        variants.GetDescription(dsc, _langKeys);
+        variants.GetDescription(dsc, langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
     }
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack, ref EnumHandling handling)
     {
-        if (StorageFlagsByType == null || StorageFlagsByType.Count == 0)
-        {
-            return base.GetStorageFlags(itemstack, ref handling);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
+        if (!itemstack.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
         {
             return base.GetStorageFlags(itemstack, ref handling);
         }
@@ -364,13 +345,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override int GetMaxDurability(ItemStack itemstack, int durability, ref EnumHandling handling)
     {
-        if (DurabilityByType == null || DurabilityByType.Count == 0)
-        {
-            return base.GetMaxDurability(itemstack, durability, ref handling);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(DurabilityByType, out int maxDurability))
+        if (!itemstack.FindByVariant(DurabilityByType, out int maxDurability))
         {
             return base.GetMaxDurability(itemstack, durability, ref handling);
         }
@@ -380,13 +355,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override float GetAttackPower(ItemStack itemstack, float attackPower, ref EnumHandling handling)
     {
-        if (AttackPowerByType == null || AttackPowerByType.Count == 0)
-        {
-            return base.GetAttackPower(itemstack, attackPower, ref handling);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(AttackPowerByType, out float newAttackPower))
+        if (!itemstack.FindByVariant(AttackPowerByType, out float newAttackPower))
         {
             return base.GetAttackPower(itemstack, attackPower, ref handling);
         }
@@ -396,13 +365,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override float GetAttackRange(ItemStack itemstack, float attackRange, ref EnumHandling handling)
     {
-        if (AttackRangeByType == null || AttackRangeByType.Count == 0)
-        {
-            return base.GetAttackRange(itemstack, attackRange, ref handling);
-        }
-
-        Variants variants = Variants.FromStack(itemstack);
-        if (!variants.FindByVariant(AttackRangeByType, out float newAttackRange))
+        if (!itemstack.FindByVariant(AttackRangeByType, out float newAttackRange))
         {
             return base.GetAttackRange(itemstack, attackRange, ref handling);
         }
@@ -412,13 +375,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot, ref EnumHandling handling)
     {
-        if (MiningSpeedByType == null || MiningSpeedByType.Count == 0)
-        {
-            return base.GetMiningSpeeds(slot, ref handling);
-        }
-
-        Variants variants = Variants.FromStack(slot.Itemstack);
-        if (!variants.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeed))
+        if (!slot.Itemstack.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeed))
         {
             return base.GetMiningSpeeds(slot, ref handling);
         }
@@ -426,53 +383,33 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return miningSpeed;
     }
 
-    public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
+    public override string GetHeldReadyAnimation(ItemSlot slot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
     {
         Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
-
-        if (animCodesByType == null || animCodesByType.Count == 0)
+        if (!slot.Itemstack.FindByVariant(animCodesByType, out string animCode))
         {
-            return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
-        }
-
-        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
-        if (!variants.FindByVariant(animCodesByType, out string animCode))
-        {
-            return base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+            return base.GetHeldReadyAnimation(slot, forEntity, hand, ref bhHandling);
         }
         bhHandling = EnumHandling.PreventSubsequent;
         return animCode;
     }
 
-    public override string GetHeldTpIdleAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
+    public override string GetHeldTpIdleAnimation(ItemSlot slot, Entity forEntity, EnumHand hand, ref EnumHandling bhHandling)
     {
         Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
-
-        if (animCodesByType == null || animCodesByType.Count == 0)
+        if (!slot.Itemstack.FindByVariant(animCodesByType, out string animCode))
         {
-            return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
-        }
-
-        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
-        if (!variants.FindByVariant(animCodesByType, out string animCode))
-        {
-            return base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand, ref bhHandling);
+            return base.GetHeldTpIdleAnimation(slot, forEntity, hand, ref bhHandling);
         }
         bhHandling = EnumHandling.PreventSubsequent;
         return animCode;
     }
 
-    public override string GetHeldTpUseAnimation(ItemSlot activeHotbarSlot, Entity forEntity, ref EnumHandling bhHandling)
+    public override string GetHeldTpUseAnimation(ItemSlot slot, Entity forEntity, ref EnumHandling bhHandling)
     {
-        if (HeldTpUseAnimationByType == null || HeldTpUseAnimationByType.Count == 0)
+        if (!slot.Itemstack.FindByVariant(HeldTpUseAnimationByType, out string animCode))
         {
-            return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity, ref bhHandling);
-        }
-
-        Variants variants = Variants.FromStack(activeHotbarSlot.Itemstack);
-        if (!variants.FindByVariant(HeldTpUseAnimationByType, out string animCode))
-        {
-            return base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity, ref bhHandling);
+            return base.GetHeldTpUseAnimation(slot, forEntity, ref bhHandling);
         }
         bhHandling = EnumHandling.PreventSubsequent;
         return animCode;
@@ -480,13 +417,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override string GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity, ref EnumHandling bhHandling)
     {
-        if (HeldTpHitAnimationByType == null || HeldTpHitAnimationByType.Count == 0)
-        {
-            return base.GetHeldTpHitAnimation(slot, byEntity, ref bhHandling);
-        }
-
-        Variants variants = Variants.FromStack(slot.Itemstack);
-        if (!variants.FindByVariant(HeldTpHitAnimationByType, out string animCode))
+        if (!slot.Itemstack.FindByVariant(HeldTpHitAnimationByType, out string animCode))
         {
             return base.GetHeldTpHitAnimation(slot, byEntity, ref bhHandling);
         }
@@ -519,37 +450,25 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     #region IContainedCustomName
     public virtual string GetContainedInfo(ItemSlot inSlot)
     {
-        if (ContainedDescriptionByType == null || ContainedDescriptionByType.Count == 0)
-        {
-            return inSlot.Itemstack.GetName();
-        }
-
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
-        if (!variants.FindByVariant(ContainedDescriptionByType, out List<object> _langKeys) || _langKeys == null || _langKeys.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(ContainedDescriptionByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
         {
             return inSlot.Itemstack.GetName();
         }
 
         StringBuilder dsc = new();
-        variants.GetDescription(dsc, _langKeys);
+        variants.GetDescription(dsc, langKeys);
         return dsc.ToString();
     }
 
     public virtual string GetContainedName(ItemSlot inSlot, int quantity)
     {
-        if (ContainedNameByType == null || ContainedNameByType.Count == 0)
-        {
-            return inSlot.Itemstack.GetName();
-        }
-
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
-        if (!variants.FindByVariant(ContainedNameByType, out List<object> _langKeys) || _langKeys == null || _langKeys.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(ContainedNameByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
         {
             return inSlot.Itemstack.GetName();
         }
 
         StringBuilder dsc = new();
-        variants.GetDescription(dsc, _langKeys);
+        variants.GetDescription(dsc, langKeys);
         return dsc.ToString();
     }
     #endregion
@@ -589,80 +508,61 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual CompositeShape GetAttachedShape(ItemStack stack, string slotCode)
     {
-        if (AttachedShapeBySlotCodeByType == null || AttachedShapeBySlotCodeByType.Count == 0)
+        if (!stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode, out Variants variants) || attachedShapeBySlotCode == null || attachedShapeBySlotCode.Count == 0)
         {
             return iattr?.GetAttachedShape(stack, slotCode);
         }
 
-        Variants variants = Variants.FromStack(stack);
-        if (!variants.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode))
+        foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
         {
-            return iattr?.GetAttachedShape(stack, slotCode);
-        }
-
-        if (attachedShapeBySlotCode != null && attachedShapeBySlotCode.Count != 0)
-        {
-            foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
+            if (WildcardUtil.Match(_slotCode, slotCode))
             {
-                if (WildcardUtil.Match(_slotCode, slotCode))
+                CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
+                if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
                 {
-                    CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-                    if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
-                    {
-                        return rcshape;
-                    }
-
-                    List<CompositeShape> overlays = [];
-                    foreach (CompositeShape overlay in rcshape.Overlays)
-                    {
-                        if (coreApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
-                        {
-                            overlays.Add(overlay);
-                        }
-                    }
-                    rcshape.Overlays = overlays.ToArray();
                     return rcshape;
                 }
+
+                List<CompositeShape> overlays = [];
+                foreach (CompositeShape overlay in rcshape.Overlays)
+                {
+                    if (coreApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
+                    {
+                        overlays.Add(overlay);
+                    }
+                }
+                rcshape.Overlays = overlays.ToArray();
+                return rcshape;
             }
         }
-
         return iattr?.GetAttachedShape(stack, slotCode);
     }
 
     public virtual string GetCategoryCode(ItemStack stack)
     {
-        if (CategoryCodeByType == null || CategoryCodeByType.Count == 0)
+        if (!stack.FindByVariant(CategoryCodeByType, out string categoryCode))
         {
             return iattr?.GetCategoryCode(stack);
         }
-
-        Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(CategoryCodeByType, out string categoryCode);
         return categoryCode;
     }
 
     public virtual string[] GetDisableElements(ItemStack stack)
     {
-        if (DisableElementsByType == null || DisableElementsByType.Count == 0)
+        if (!stack.FindByVariant(DisableElementsByType, out string[] elems))
         {
             return iattr?.GetDisableElements(stack);
         }
-
-        Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(DisableElementsByType, out string[] disableElements);
-        return disableElements;
+        return elems;
     }
 
     public virtual string[] GetKeepElements(ItemStack stack)
     {
-        if (KeepElementsByType == null || KeepElementsByType.Count == 0)
+        if (!stack.FindByVariant(KeepElementsByType, out string[] elems))
         {
             return iattr?.GetKeepElements(stack);
         }
-
-        Variants variants = Variants.FromStack(stack);
-        variants.FindByVariant(KeepElementsByType, out string[] keepElements);
-        return keepElements;
+        return elems;
     }
 
     public virtual string GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
