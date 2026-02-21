@@ -220,7 +220,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
-        Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
+        Shape shape = Shape.TryGet(coreApi, rcshape.Base);
         if (shape == null) return mesh;
 
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, clientApi.BlockTextureAtlas, shape, rcshape.Base.ToString());
@@ -278,7 +278,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
             rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
-            Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
+            Shape shape = Shape.TryGet(coreApi, rcshape.Base);
             if (shape == null) return mesh;
 
             UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, clientApi.BlockTextureAtlas, shape, rcshape.Base.ToString());

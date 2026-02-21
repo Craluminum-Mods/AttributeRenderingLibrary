@@ -171,7 +171,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
-        Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
+        Shape shape = Shape.TryGet(coreApi, rcshape.Base);
         if (shape == null) return mesh;
 
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());

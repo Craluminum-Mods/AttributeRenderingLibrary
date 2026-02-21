@@ -129,7 +129,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
-        Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
+        Shape shape = Shape.TryGet(coreApi, rcshape.Base);
         if (shape == null) return mesh;
 
         newShape.StepParentShape(shape, rcshape.Base.ToShortString(), shapePathForLogging.ToShortString(), clientApi.Logger, (key, code) => { });

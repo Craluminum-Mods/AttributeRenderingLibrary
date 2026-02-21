@@ -36,7 +36,7 @@ public class ShapeOverlayHelper
         {
             variants.ReplacePlaceholders(overlay.Base);
             overlay.Base = overlay.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-            resolvedOverlayShape = clientApi.Assets.TryGet(overlay.Base)?.ToObject<Shape>();
+            resolvedOverlayShape = Shape.TryGet(clientApi, overlay.Base);
 
             if (resolvedOverlayShape == null) continue;
 

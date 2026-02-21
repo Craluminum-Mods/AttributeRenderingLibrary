@@ -175,7 +175,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
-        Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
+        Shape shape = Vintagestory.API.Common.Shape.TryGet(api, rcshape.Base);
         if (shape == null) return mesh;
 
         UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
