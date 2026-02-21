@@ -62,6 +62,12 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
+
+        if (Attributes != null && Attributes.IsTrue("wearableAttachment"))
+        {
+            LoggerUtil.Warn(api, this, $"'AttributeRenderingLibrary.ItemShapeTexturesFromAttributes' class currently doesn't support wearables properly. Please, replace it with 'AttributeRenderingLibrary.Wearable' behavior for {Code} instead");
+        }
+
         LoadTypes();
         iattr = IAttachableToEntity.FromAttributes(this);
     }
@@ -172,90 +178,6 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         };
 
         clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
-        return mesh;
-    }
-
-    /// <summary>
-    /// Temporary solution for wearable attachments until 1.22 is out with proper wearable support
-    /// </summary>
-    public virtual MeshData GenWearableMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
-    {
-        ICoreClientAPI clientApi = api as ICoreClientAPI;
-        MeshData mesh = RenderExtensions.GenEmptyMesh();
-
-        EntityProperties props = clientApi.World.GetEntityType(new AssetLocation("player"));
-        Shape entityShape = props.Client.LoadedShape.Clone();
-        AssetLocation shapePathForLogging = props.Client.Shape.Base;
-        Shape newShape;
-
-        if (AttachedShapeBySlotCodeByType == null || AttachedShapeBySlotCodeByType.Count <= 0)
-        {
-            // No need to step parent anything if its just a texture on the seraph
-            newShape = entityShape;
-        }
-        else
-        {
-            newShape = new Shape()
-            {
-                Elements = entityShape.CloneElements(),
-                Animations = entityShape.CloneAnimations(),
-                AnimationsByCrc32 = entityShape.AnimationsByCrc32,
-                JointsById = entityShape.JointsById,
-                TextureWidth = entityShape.TextureWidth,
-                TextureHeight = entityShape.TextureHeight,
-                Textures = null,
-            };
-        }
-
-        Variants variants = Variants.FromStack(slot.Itemstack);
-        variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-        ucshape ??= slot.Itemstack.Item.Shape;
-
-
-        if (ucshape == null) return mesh;
-
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        Shape shape = clientApi.Assets.TryGet(rcshape.Base)?.ToObject<Shape>();
-        if (shape == null) return mesh;
-
-        newShape.StepParentShape(shape, rcshape.Base.ToShortString(), shapePathForLogging.ToShortString(), clientApi.Logger, (key, code) => { });
-
-        if (rcshape.Overlays != null)
-        {
-            foreach (var overlay in rcshape.Overlays)
-            {
-                Shape oshape = Vintagestory.API.Common.Shape.TryGet(clientApi, overlay.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json"));
-                if (oshape == null)
-                {
-                    LoggerUtil.Warn(clientApi, this, $"Wearable shape {rcshape.Base} overlay {overlay.Base} defined in {slot.Itemstack.Class} {slot.Itemstack.Collectible.Code} not found or errored, was supposed to be at {rcshape.Base}. Item will be invisible.");
-                    continue;
-                }
-
-                newShape.StepParentShape(oshape, overlay.Base.ToShortString(), shapePathForLogging.ToShortString(), clientApi.Logger, (key, Code) => { });
-            }
-        }
-
-        UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
-        Dictionary<string, AssetLocation> prefixedTextureCodes = null;
-        string overlayPrefix = "";
-
-        if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
-        {
-            overlayPrefix = GetMeshCacheKey(slot);
-            prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
-        }
-
-        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack.Item.Textures)
-        {
-            stexSource.textures[textureCode] = texture;
-        }
-
-        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
-
-        clientApi.Tesselator.TesselateShapeWithJointIds("entity", newShape, out mesh, stexSource, new Vec3f(), quantityElements: rcshape.QuantityElements, selectiveElements: GetShapeSelectiveElements(slot.Itemstack, rcshape));
-
         return mesh;
     }
 
@@ -580,24 +502,12 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
-        // Temporary solution for wearable attachments until 1.22 is out with proper wearable support
-        if (slot.Itemstack.ItemAttributes != null && slot.Itemstack.ItemAttributes.IsTrue("wearableAttachment"))
-        {
-            return GenWearableMesh(slot, targetAtlas);
-        }
         return GetOrCreateMesh(slot, targetAtlas);
     }
 
     public virtual string GetMeshCacheKey(ItemSlot slot)
     {
-        string key = $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
-
-        // Temporary solution for wearable attachments until 1.22 is out with proper wearable support
-        if (slot.Itemstack.ItemAttributes != null && slot.Itemstack.ItemAttributes.IsTrue("wearableAttachment"))
-        {
-            return "ARL-wearableAttachmentModelRef-" + key;
-        }
-        return key;
+        return $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
     }
     #endregion
     #region IContainedCustomName
