@@ -496,7 +496,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
-        /// Temporary solution for wearable attachments until 1.22 is out with proper wearable support
+        // Temporary solution for wearable attachments until 1.22 is out with proper wearable support
         if (slot.Itemstack.ItemAttributes != null && slot.Itemstack.ItemAttributes.IsTrue("wearableAttachment"))
         {
             return GenWearableMesh(slot, targetAtlas);
@@ -508,7 +508,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     {
         string key = $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
 
-        /// Temporary solution for wearable attachments until 1.22 is out with proper wearable support
+        // Temporary solution for wearable attachments until 1.22 is out with proper wearable support
         if (slot.Itemstack.ItemAttributes != null && slot.Itemstack.ItemAttributes.IsTrue("wearableAttachment"))
         {
             return "ARL-wearableAttachmentModelRef-" + key;

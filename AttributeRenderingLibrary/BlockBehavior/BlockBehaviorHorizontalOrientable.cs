@@ -7,7 +7,6 @@ namespace AttributeRenderingLibrary;
 /// <summary>
 /// Version of <see cref="Vintagestory.GameContent.BlockBehaviorHorizontalOrientable"/> that works with <see cref="Variants"/>
 /// </summary>
-/// <param name="block"></param>
 public class BlockBehaviorHorizontalOrientable : BlockBehavior
 {
     string dropBlockFace = "north";
