@@ -44,7 +44,21 @@ public static class VariantExtensions
         Core.Api?.World.FrameProfiler.Leave();
         return false;
     }
-    
+
+    /// <summary>
+    /// Alias of FindByVariant for ItemStack, to avoid null check for both dictionary and Variants every time
+    /// </summary>
+    public static bool FindByVariant<T>(this ItemStack stack, Dictionary<string, T> inDictionary, out T result)
+    {
+        result = default;
+
+        if (stack == null || inDictionary == null || inDictionary.Count == 0)
+        {
+            return false;
+        }
+        return FindByVariant(Variants.FromStack(stack), inDictionary, out result);
+    }
+
     /// <summary>
     /// Similar to FindByVariant, but returns multiple matching values
     /// </summary>
@@ -73,6 +87,18 @@ public static class VariantExtensions
         }
 
         Core.Api?.World.FrameProfiler.Leave();
+    }
+
+    /// <summary>
+    /// Alias of FindAllByVariant for ItemStack, to avoid null check for both dictionary and Variants every time
+    /// </summary>
+    public static IEnumerable<T> FindAllByVariant<T>(this ItemStack stack, IDictionary<string, T> inDictionary)
+    {
+        if (stack == null || inDictionary == null || inDictionary.Count == 0)
+        {
+            yield break;
+        }
+        yield return (T)FindAllByVariant(Variants.FromStack(stack), inDictionary);
     }
 
     public static bool IsTrue(this Variants variants, Dictionary<string, bool> inDictionary)
