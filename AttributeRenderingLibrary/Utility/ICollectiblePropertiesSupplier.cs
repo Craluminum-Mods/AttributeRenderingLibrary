@@ -17,53 +17,21 @@ public interface ICollectiblePropertiesSupplier
 /// </summary>
 public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
 {
-    public EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return [];
-    }
+    public EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling);
 
-    public EnumTool? GetTool(ItemSlot slot, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return null;
-    }
+    public EnumTool? GetTool(ItemSlot slot, ref EnumHandling handling);
 
-    public int GetToolTier(ItemSlot slot, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return 0;
-    }
+    public int GetToolTier(ItemSlot slot, ref EnumHandling handling);
 
-    public CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return null;
-    }
+    public CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos, ref EnumHandling handling);
 
-    public FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return null;
-    }
+    public FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling);
 
-    public GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return null;
-    }
+    public GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling);
 
-    public CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return null;
-    }
+    public CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling);
 
-    public TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return null;
-    }
+    public TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling);
 }
 
 /// <summary>
@@ -71,9 +39,5 @@ public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
 /// </summary>
 public interface IBlockPropertiesSupplier : IPropertiesSupplier
 {
-    public int GetRequiredMiningTier(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PassThrough;
-        return 0;
-    }
+    public int GetRequiredMiningTier(IWorldAccessor world, BlockPos pos, ref EnumHandling handling);
 }
