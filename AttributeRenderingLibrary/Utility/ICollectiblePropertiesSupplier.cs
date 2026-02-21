@@ -1,4 +1,5 @@
 ﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 
 namespace AttributeRenderingLibrary;
@@ -32,6 +33,36 @@ public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
     {
         handling = EnumHandling.PassThrough;
         return 0;
+    }
+
+    public CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return null;
+    }
+
+    public FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return null;
+    }
+
+    public GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return null;
+    }
+
+    public CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return null;
+    }
+
+    public TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return null;
     }
 }
 

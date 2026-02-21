@@ -28,6 +28,13 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, EnumTool?> ToolByType { get; protected set; }
     public Dictionary<string, int> ToolTierByType { get; protected set; }
     #endregion
+    #region Collectible properties (resolvable)
+    public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
+    public Dictionary<string, FoodNutritionProperties> NutritionPropsType { get; protected set; }
+    public Dictionary<string, GrindingProperties> GrindingPropsType { get; protected set; }
+    public Dictionary<string, CrushingProperties> CrushingPropsType { get; protected set; }
+    public Dictionary<string, TransitionableProperties[]> TransitionablePropsType { get; protected set; }
+    #endregion
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
     public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
@@ -99,6 +106,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
+        CombustiblePropsType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
+        NutritionPropsType = properties["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
+        GrindingPropsType = properties["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
+        CrushingPropsType = properties["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
+        TransitionablePropsType = properties["TransitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
 
         HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = properties["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -606,6 +618,150 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             handling = EnumHandling.PreventSubsequent;
         }
         return result;
+    }
+
+    public virtual CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos, ref EnumHandling handling)
+    {
+        CombustibleProperties result = null;
+        handling = EnumHandling.PassThrough;
+
+        if (!stack.FindByVariant(CombustiblePropsType, out result, out Variants variants) || result == null)
+        {
+            return result;
+        }
+
+        if (result.SmeltedStack == null)
+        {
+            handling = EnumHandling.PreventSubsequent;
+            return result;
+        }
+
+        CombustibleProperties clonedProps = result.Clone();
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack);
+        if (!resultStack.Resolve(world, ""))
+        {
+            LoggerUtil.Warn(world.Api, this, $"Smelted stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.SmeltedStack = null;
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return clonedProps;
+    }
+
+    public virtual FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
+    {
+        FoodNutritionProperties result = null;
+        handling = EnumHandling.PassThrough;
+
+        if (!stack.FindByVariant(NutritionPropsType, out result, out Variants variants) || result == null)
+        {
+            return result;
+        }
+
+        if (result.EatenStack == null)
+        {
+            handling = EnumHandling.PreventSubsequent;
+            return result;
+        }
+
+        FoodNutritionProperties clonedProps = result.Clone();
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.EatenStack);
+        if (!resultStack.Resolve(world, ""))
+        {
+            LoggerUtil.Warn(world.Api, this, $"Eaten stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.EatenStack = null;
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return clonedProps;
+    }
+
+    public virtual GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
+    {
+        GrindingProperties result = null;
+        handling = EnumHandling.PassThrough;
+
+        if (!stack.FindByVariant(GrindingPropsType, out result, out Variants variants) || result == null)
+        {
+            return result;
+        }
+
+        if (result.GroundStack == null)
+        {
+            handling = EnumHandling.PreventSubsequent;
+            return result;
+        }
+
+        GrindingProperties clonedProps = result.Clone();
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.GroundStack);
+        if (!resultStack.Resolve(world, ""))
+        {
+            LoggerUtil.Warn(world.Api, this, $"Ground stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.GroundStack = null;
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return clonedProps;
+    }
+
+    public virtual CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
+    {
+        CrushingProperties result = null;
+        handling = EnumHandling.PassThrough;
+
+        if (!stack.FindByVariant(CrushingPropsType, out result, out Variants variants) || result == null)
+        {
+            return result;
+        }
+
+        if (result.CrushedStack == null)
+        {
+            handling = EnumHandling.PreventSubsequent;
+            return result;
+        }
+
+        CrushingProperties clonedProps = result.Clone();
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.CrushedStack);
+        if (!resultStack.Resolve(world, ""))
+        {
+            LoggerUtil.Warn(world.Api, this, $"Crushed stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.CrushedStack = null;
+        }
+        handling = EnumHandling.PreventSubsequent;
+        return clonedProps;
+    }
+
+    public TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
+    {
+        TransitionableProperties[] result = null;
+        handling = EnumHandling.PassThrough;
+
+        if (!stack.FindByVariant(TransitionablePropsType, out result, out Variants variants) || result == null)
+        {
+            return result;
+        }
+
+        List<TransitionableProperties> allResolvedProps = [];
+
+        for (int i = 0; i < result.Length; i++)
+        {
+            if (result[i].TransitionedStack == null)
+            {
+                allResolvedProps.Add(result[i]);
+                continue;
+            }
+
+            TransitionableProperties clonedProps = result[i].Clone();
+            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.TransitionedStack);
+            if (!resultStack.Resolve(world, ""))
+            {
+                LoggerUtil.Warn(world.Api, this, $"Transitioned stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+                continue;
+            }
+
+            allResolvedProps.Add(clonedProps);
+        }
+
+        handling = EnumHandling.PreventSubsequent;
+        return allResolvedProps.ToArray();
+
     }
     #endregion
 }
