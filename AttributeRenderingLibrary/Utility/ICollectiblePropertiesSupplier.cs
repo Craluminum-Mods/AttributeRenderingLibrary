@@ -2,6 +2,7 @@
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
@@ -10,7 +11,9 @@ namespace AttributeRenderingLibrary;
 /// </summary>
 public interface ICollectiblePropertiesSupplier
 {
+    public JuiceableProperties GetJuiceableProperties(ItemStack stack, ref EnumHandling handling);
 
+    public DistillationProps GetDistillationProperties(ItemStack stack, ref EnumHandling handling);
 }
 
 /// <summary>

@@ -36,6 +36,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, GrindingProperties> GrindingPropsType { get; protected set; }
     public Dictionary<string, CrushingProperties> CrushingPropsType { get; protected set; }
     public Dictionary<string, TransitionableProperties[]> TransitionablePropsType { get; protected set; }
+    public Dictionary<string, JuiceableProperties> JuiceablePropsByType { get; protected set; }
+    public Dictionary<string, DistillationProps> DistillationPropsByType { get; protected set; }
     #endregion
     #region Animations
     public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
@@ -112,7 +114,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         NutritionPropsType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
         GrindingPropsType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
         CrushingPropsType = Attributes["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
-        TransitionablePropsType = Attributes["TransitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
+        TransitionablePropsType = Attributes["transitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
+        JuiceablePropsByType = Attributes["juiceableProperties"].AsObject<Dictionary<string, JuiceableProperties>>();
+        DistillationPropsByType = Attributes["distillationProps"].AsObject<Dictionary<string, DistillationProps>>();
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -660,5 +664,90 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public virtual bool IsAttachable(Entity toEntity, ItemStack itemStack) => true;
 
     public virtual int RequiresBehindSlots { get; set; }
+    #endregion
+    #region ICollectiblePropertiesSupplier
+    public virtual JuiceableProperties GetJuiceableProperties(ItemStack stack, ref EnumHandling handling)
+    {
+        JuiceableProperties result = null;
+        handling = EnumHandling.PassThrough;
+
+        if (!stack.FindByVariant(JuiceablePropsByType, out result, out Variants variants) || result == null)
+        {
+            return result;
+        }
+
+        JuiceableProperties clonedProps = new()
+        {
+            LitresPerItem = result.LitresPerItem,
+            PressedDryRatio = result.PressedDryRatio,
+            LiquidStack = result.LiquidStack?.Clone(),
+            PressedStack = result.PressedStack?.Clone(),
+            ReturnStack = result.ReturnStack?.Clone()
+        };
+
+        if (clonedProps.LiquidStack != null)
+        {
+            clonedProps.LiquidStack = variants.ReplacePlaceholders(clonedProps.LiquidStack);
+            if (!clonedProps.LiquidStack.Resolve(api.World, ""))
+            {
+                LoggerUtil.Warn(api, this, $"Liquid stack with code '{clonedProps.LiquidStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+                clonedProps.LiquidStack = null;
+            }
+        }
+        if (clonedProps.PressedStack != null)
+        {
+            clonedProps.PressedStack = variants.ReplacePlaceholders(clonedProps.PressedStack);
+            if (!clonedProps.PressedStack.Resolve(api.World, ""))
+            {
+                LoggerUtil.Warn(api, this, $"Pressed stack with code '{clonedProps.PressedStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+                clonedProps.PressedStack = null;
+            }
+        }
+        if (clonedProps.ReturnStack != null)
+        {
+            clonedProps.ReturnStack = variants.ReplacePlaceholders(clonedProps.ReturnStack);
+            if (!clonedProps.ReturnStack.Resolve(api.World, ""))
+            {
+                LoggerUtil.Warn(api, this, $"Return stack with code '{clonedProps.ReturnStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+                clonedProps.ReturnStack = null;
+            }
+        }
+
+        handling = EnumHandling.PreventSubsequent;
+        return clonedProps;
+    }
+
+    public virtual DistillationProps GetDistillationProperties(ItemStack stack, ref EnumHandling handling)
+    {
+        DistillationProps result = null;
+        handling = EnumHandling.PassThrough;
+
+        if (!stack.FindByVariant(DistillationPropsByType, out result, out Variants variants) || result == null)
+        {
+            return result;
+        }
+
+        if (result.DistilledStack == null)
+        {
+            handling = EnumHandling.PreventSubsequent;
+            return result;
+        }
+
+        DistillationProps clonedProps = new()
+        {
+            DistilledStack = result.DistilledStack?.Clone(),
+            Ratio = result.Ratio
+        };
+
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.DistilledStack);
+        if (!resultStack.Resolve(api.World, ""))
+        {
+            LoggerUtil.Warn(api, this, $"Distilled stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.DistilledStack = null;
+        }
+
+        handling = EnumHandling.PreventSubsequent;
+        return clonedProps;
+    }
     #endregion
 }
