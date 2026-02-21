@@ -65,11 +65,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, string> CategoryCodeByType { get; protected set; }
     public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
     public Dictionary<string, string[]> KeepElementsByType { get; protected set; }
-    private IAttachableToEntity iattr;
+    public IAttachableToEntity iattr;
     #endregion
 
-    private ICoreClientAPI clientApi;
-    private ICoreAPI coreApi;
+    public ICoreClientAPI clientApi;
+    public ICoreAPI coreApi;
 
     public override void OnLoaded(ICoreAPI api)
     {

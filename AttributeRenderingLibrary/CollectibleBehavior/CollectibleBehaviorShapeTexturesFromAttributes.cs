@@ -56,11 +56,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, string> CategoryCodeByType { get; protected set; }
     public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
     public Dictionary<string, string[]> KeepElementsByType { get; protected set; }
-    private IAttachableToEntity iattr;
+    public IAttachableToEntity iattr;
     #endregion
 
-    private ICoreClientAPI clientApi;
-    private ICoreAPI coreApi;
+    public ICoreClientAPI clientApi;
+    public ICoreAPI coreApi;
 
     public override void OnLoaded(ICoreAPI api)
     {
@@ -129,12 +129,21 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
     {
+        return GetOrCreateMesh(slot, targetAtlas, overrideShape: null);
+    }
+
+    public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, CompositeShape overrideShape)
+    {
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         Variants variants = Variants.FromStack(slot.Itemstack);
-        variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-        ucshape ??= slot.Itemstack.Item.Shape;
 
+        CompositeShape ucshape = overrideShape;
+        if (ucshape == null)
+        {
+            variants.FindByVariant(shapeByType, out ucshape);
+            ucshape ??= slot.Itemstack.Item.Shape;
+        }
         if (ucshape == null) return mesh;
 
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());

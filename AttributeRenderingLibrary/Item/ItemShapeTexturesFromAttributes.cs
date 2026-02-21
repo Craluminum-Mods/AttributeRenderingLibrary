@@ -56,7 +56,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, string> CategoryCodeByType { get; protected set; }
     public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
     public Dictionary<string, string[]> KeepElementsByType { get; protected set; }
-    private IAttachableToEntity iattr;
+    public IAttachableToEntity iattr;
     #endregion
 
     public override void OnLoaded(ICoreAPI api)
@@ -121,13 +121,22 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
     {
+        return GetOrCreateMesh(slot, targetAtlas, overrideShape: null);
+    }
+
+    public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, CompositeShape overrideShape)
+    {
         ICoreClientAPI clientApi = api as ICoreClientAPI;
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
         Variants variants = Variants.FromStack(slot.Itemstack);
-        variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-        ucshape ??= Shape;
 
+        CompositeShape ucshape = overrideShape;
+        if (ucshape == null)
+        {
+            variants.FindByVariant(shapeByType, out ucshape);
+            ucshape ??= Shape;
+        }
         if (ucshape == null) return mesh;
 
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
