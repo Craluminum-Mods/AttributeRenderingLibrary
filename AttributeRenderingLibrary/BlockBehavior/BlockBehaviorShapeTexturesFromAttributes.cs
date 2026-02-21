@@ -27,6 +27,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, float> AttackPowerByType { get; protected set; }
     public Dictionary<string, float> AttackRangeByType { get; protected set; }
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
+    public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
+    public Dictionary<string, EnumTool?> ToolByType { get; protected set; }
+    public Dictionary<string, int> ToolTierByType { get; protected set; }
     #endregion
     #region Block properties
     public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
@@ -112,6 +115,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         AttackPowerByType = properties["attackPower"].AsObject<Dictionary<string, float>>();
         AttackRangeByType = properties["attackRange"].AsObject<Dictionary<string, float>>();
         MiningSpeedByType = properties["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
+        DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
+        ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
+        ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
         RequiredMiningTierByType = properties["requiredMiningTier"].AsObject<Dictionary<string, int>>();
 
         HeldLeftReadyAnimationByType = properties["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -878,6 +884,42 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
         Variants variants = beBehavior.Variants;
         if (variants.FindByVariant(RequiredMiningTierByType, out result))
+        {
+            handling = EnumHandling.PreventSubsequent;
+        }
+        return result;
+    }
+
+    public virtual EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling)
+    {
+        EnumItemDamageSource[] result = [];
+        handling = EnumHandling.PassThrough;
+
+        if (slot.Itemstack.FindByVariant(DamagedByByType, out result))
+        {
+            handling = EnumHandling.PreventSubsequent;
+        }
+        return result;
+    }
+
+    public virtual EnumTool? GetTool(ItemSlot slot, ref EnumHandling handling)
+    {
+        EnumTool? result = null;
+        handling = EnumHandling.PassThrough;
+
+        if (slot.Itemstack.FindByVariant(ToolByType, out result))
+        {
+            handling = EnumHandling.PreventSubsequent;
+        }
+        return result;
+    }
+
+    public virtual int GetToolTier(ItemSlot slot, ref EnumHandling handling)
+    {
+        int result = 0;
+        handling = EnumHandling.PassThrough;
+
+        if (slot.Itemstack.FindByVariant(ToolTierByType, out result))
         {
             handling = EnumHandling.PreventSubsequent;
         }

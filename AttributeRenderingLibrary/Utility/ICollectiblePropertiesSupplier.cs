@@ -16,7 +16,23 @@ public interface ICollectiblePropertiesSupplier
 /// </summary>
 public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
 {
+    public EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return [];
+    }
 
+    public EnumTool? GetTool(ItemSlot slot, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return null;
+    }
+
+    public int GetToolTier(ItemSlot slot, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return 0;
+    }
 }
 
 /// <summary>

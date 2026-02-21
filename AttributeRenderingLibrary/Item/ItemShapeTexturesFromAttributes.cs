@@ -24,7 +24,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, float> AttackRangeByType { get; protected set; }
     public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
     public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
-    public Dictionary<string, EnumTool> ToolByType { get; protected set; }
+    public Dictionary<string, EnumTool?> ToolByType { get; protected set; }
     public Dictionary<string, int> ToolTierByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
@@ -95,7 +95,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         AttackRangeByType = Attributes["attackRange"].AsObject<Dictionary<string, float>>();
         MiningSpeedByType = Attributes["miningSpeed"].AsObject<Dictionary<string, Dictionary<EnumBlockMaterial, float>>>();
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
-        ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool>>();
+        ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
         CombustiblePropsType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
         NutritionPropsType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
@@ -429,13 +429,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override EnumItemDamageSource[] GetDamagedBy(ItemSlot slot)
     {
-        if (DamagedByByType == null || DamagedByByType.Count == 0)
-        {
-            return base.GetDamagedBy(slot);
-        }
-
-        Variants variants = Variants.FromStack(slot.Itemstack);
-        if (!variants.FindByVariant(DamagedByByType, out EnumItemDamageSource[] damagedBy))
+        if (!slot.Itemstack.FindByVariant(DamagedByByType, out EnumItemDamageSource[] damagedBy))
         {
             return base.GetDamagedBy(slot);
         }
@@ -444,13 +438,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override EnumTool? GetTool(ItemSlot slot)
     {
-        if (ToolByType == null || ToolByType.Count == 0)
-        {
-            return base.GetTool(slot);
-        }
-
-        Variants variants = Variants.FromStack(slot.Itemstack);
-        if (!variants.FindByVariant(ToolByType, out EnumTool tool))
+        if (!slot.Itemstack.FindByVariant(ToolByType, out EnumTool? tool))
         {
             return base.GetTool(slot);
         }
@@ -459,19 +447,13 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override int GetToolTier(ItemSlot slot)
     {
-        if (ToolTierByType == null || ToolTierByType.Count == 0)
-        {
-            return base.GetToolTier(slot);
-        }
-
-        Variants variants = Variants.FromStack(slot.Itemstack);
-        if (!variants.FindByVariant(ToolTierByType, out int toolTier))
+        if (!slot.Itemstack.FindByVariant(ToolTierByType, out int toolTier))
         {
             return base.GetToolTier(slot);
         }
         return toolTier;
     }
-
+    
     public override CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack itemstack, BlockPos pos)
     {
         if (itemstack == null || CombustiblePropsType == null || CombustiblePropsType.Count == 0)
