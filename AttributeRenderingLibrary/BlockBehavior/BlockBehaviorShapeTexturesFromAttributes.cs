@@ -15,6 +15,7 @@ namespace AttributeRenderingLibrary;
 public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IBlockPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
     #region Collectible properties
+    public Dictionary<string, TagSet> TagsByType { get; protected set; }
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
     public Dictionary<string, List<object>> NameByType { get; protected set; }
@@ -103,6 +104,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         if (properties == null) return;
 
+        LoadTags(properties);
+
         shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
         texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
@@ -147,6 +150,20 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
         RequiredMiningTierByType = properties["requiredMiningTier"].AsObject<Dictionary<string, int>>();
         LoadAndResolveCollisionAndSelectionBoxes(properties);
+    }
+
+    public virtual void LoadTags(JsonObject properties)
+    {
+        var unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
+        if (unresolvedTags == null) return;
+
+        TagsByType = [];
+
+        foreach ((string type, List<string> tags) in unresolvedTags)
+        {
+            TagRegistryError tagRegistryError = Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
+            TagsByType.Add(type, resolvedTags);
+        }
     }
 
     public virtual void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
@@ -775,6 +792,18 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public virtual int RequiresBehindSlots { get; set; }
     #endregion
     #region IBlockPropertiesSupplier
+    public virtual TagSet GetTags(ItemStack stack, ref EnumHandling handling)
+    {
+        TagSet result = new();
+        handling = EnumHandling.PassThrough;
+
+        if (stack.FindByVariant(TagsByType, out result))
+        {
+            handling = EnumHandling.PreventSubsequent;
+        }
+        return result;
+    }
+
     public virtual int GetRequiredMiningTier(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
     {
         int result = 0;

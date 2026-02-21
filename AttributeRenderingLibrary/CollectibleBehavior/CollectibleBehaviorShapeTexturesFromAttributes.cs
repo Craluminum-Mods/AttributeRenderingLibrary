@@ -13,6 +13,7 @@ namespace AttributeRenderingLibrary;
 public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : CollectibleBehavior(collObj), IShapeTexturesFromAttributes, IPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
     #region Collectible properties
+    public Dictionary<string, TagSet> TagsByType { get; protected set; }
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
     public Dictionary<string, List<object>> NameByType { get; protected set; }
@@ -91,6 +92,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     {
         if (properties == null) return;
 
+        LoadTags(properties);
+
         shapeByType = properties["shape"].AsObject<Dictionary<string, CompositeShape>>();
         texturesByType = properties["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
@@ -130,6 +133,20 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
         DisableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
         KeepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
+    }
+
+    public virtual void LoadTags(JsonObject properties)
+    {
+        var unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
+        if (unresolvedTags == null) return;
+
+        TagsByType = [];
+
+        foreach ((string type, List<string> tags) in unresolvedTags)
+        {
+            TagRegistryError tagRegistryError = Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
+            TagsByType.Add(type, resolvedTags);
+        }
     }
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
@@ -503,6 +520,18 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public virtual int RequiresBehindSlots { get; set; }
     #endregion
     #region IPropertiesSupplier
+    public virtual TagSet GetTags(ItemStack stack, ref EnumHandling handling)
+    {
+        TagSet result = new();
+        handling = EnumHandling.PassThrough;
+
+        if (stack.FindByVariant(TagsByType, out result))
+        {
+            handling = EnumHandling.PreventSubsequent;
+        }
+        return result;
+    }
+
     public virtual EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling)
     {
         EnumItemDamageSource[] result = [];

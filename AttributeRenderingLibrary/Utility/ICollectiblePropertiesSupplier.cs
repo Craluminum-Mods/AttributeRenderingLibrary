@@ -1,5 +1,6 @@
 ﻿using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
 namespace AttributeRenderingLibrary;
@@ -17,6 +18,8 @@ public interface ICollectiblePropertiesSupplier
 /// </summary>
 public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
 {
+    public TagSet GetTags(ItemStack stack, ref EnumHandling handling);
+
     public EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling);
 
     public EnumTool? GetTool(ItemSlot slot, ref EnumHandling handling);

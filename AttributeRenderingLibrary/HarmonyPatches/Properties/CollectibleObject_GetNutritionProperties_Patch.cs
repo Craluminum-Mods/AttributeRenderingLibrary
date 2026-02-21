@@ -21,9 +21,3 @@ public static class CollectibleObject_GetNutritionProperties_Patch
         }
     }
 }
-
-//public CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack itemstack, BlockPos pos)
-//public FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack itemstack, Entity forEntity)
-//public GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack itemstack)
-//public CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack itemstack)
-//public TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack itemstack, Entity forEntity)

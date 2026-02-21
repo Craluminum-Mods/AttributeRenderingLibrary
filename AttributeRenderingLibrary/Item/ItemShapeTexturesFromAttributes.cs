@@ -4,6 +4,7 @@ using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
@@ -13,6 +14,7 @@ namespace AttributeRenderingLibrary;
 public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, ICollectiblePropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
     #region Collectible properties
+    public Dictionary<string, TagSet> TagsByType { get; protected set; }
     public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
     public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
     public Dictionary<string, List<object>> NameByType { get; protected set; }
@@ -84,6 +86,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     {
         if (Attributes == null) return;
 
+        LoadTags();
+
         shapeByType = Attributes["shape"].AsObject<Dictionary<string, CompositeShape>>();
         texturesByType = Attributes["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
 
@@ -123,6 +127,29 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         CategoryCodeByType = Attributes["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
         DisableElementsByType = Attributes["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
         KeepElementsByType = Attributes["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
+    }
+
+    public virtual void LoadTags()
+    {
+        var unresolvedTags = Attributes["tags"].AsObject<Dictionary<string, List<string>>>();
+        if (unresolvedTags == null) return;
+
+        TagsByType = [];
+
+        foreach ((string type, List<string> tags) in unresolvedTags)
+        {
+            TagRegistryError tagRegistryError = Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
+            TagsByType.Add(type, resolvedTags);
+        }
+    }
+
+    public override TagSet GetTags(ItemStack stack)
+    {
+        if (!stack.FindByVariant(TagsByType, out TagSet tags))
+        {
+            return base.GetTags(stack);
+        }
+        return tags;
     }
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
