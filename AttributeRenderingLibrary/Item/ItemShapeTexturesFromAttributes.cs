@@ -412,106 +412,117 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return toolTier;
     }
 
-    public override CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack itemstack, BlockPos pos)
+    public override CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos)
     {
-        if (!itemstack.FindByVariant(CombustiblePropsType, out CombustibleProperties props, out Variants variants))
+        if (!stack.FindByVariant(CombustiblePropsType, out CombustibleProperties props, out Variants variants) || props == null)
         {
-            return base.GetCombustibleProperties(world, itemstack, pos);
+            return base.GetCombustibleProperties(world, stack, pos);
+        }
+
+        if (props.SmeltedStack == null)
+        {
+            return props;
         }
 
         CombustibleProperties clonedProps = props.Clone();
-        if (clonedProps.SmeltedStack != null)
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack);
+        if (!resultStack.Resolve(world, ""))
         {
-            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.SmeltedStack);
-            if (!resultStack.Resolve(world, ""))
-            {
-                LoggerUtil.Warn(api, this, $"Smelted stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(CombustibleProperties)} by attributes. Will use default properties instead.");
-                return base.GetCombustibleProperties(world, itemstack, pos);
-            }
+            LoggerUtil.Warn(api, this, $"Smelted stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.SmeltedStack = null;
         }
         return clonedProps;
     }
 
-    public override FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack itemstack, Entity forEntity)
+    public override FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity)
     {
-        if (!itemstack.FindByVariant(NutritionPropsType, out FoodNutritionProperties props, out Variants variants))
+        if (!stack.FindByVariant(NutritionPropsType, out FoodNutritionProperties props, out Variants variants) || props == null)
         {
-            return base.GetNutritionProperties(world, itemstack, forEntity);
+            return base.GetNutritionProperties(world, stack, forEntity);
+        }
+
+        if (props.EatenStack == null)
+        {
+            return props;
         }
 
         FoodNutritionProperties clonedProps = props.Clone();
-        if (clonedProps.EatenStack != null)
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.EatenStack);
+        if (!resultStack.Resolve(world, ""))
         {
-            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.EatenStack);
-            if (!resultStack.Resolve(world, ""))
-            {
-                LoggerUtil.Warn(api, this, $"Eaten stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(FoodNutritionProperties)} by attributes. Will use default properties instead.");
-                return base.GetNutritionProperties(world, itemstack, forEntity);
-            }
+            LoggerUtil.Warn(api, this, $"Eaten stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.EatenStack = null;
         }
         return clonedProps;
     }
 
-    public override GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack itemstack)
+    public override GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack)
     {
-        if (!itemstack.FindByVariant(GrindingPropsType, out GrindingProperties props, out Variants variants))
+        if (!stack.FindByVariant(GrindingPropsType, out GrindingProperties props, out Variants variants) || props == null)
         {
-            return base.GetGrindingProperties(world, itemstack);
+            return base.GetGrindingProperties(world, stack);
+        }
+
+        if (props.GroundStack == null)
+        {
+            return props;
         }
 
         GrindingProperties clonedProps = props.Clone();
-        if (clonedProps.GroundStack != null)
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.GroundStack);
+        if (!resultStack.Resolve(world, ""))
         {
-            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.GroundStack);
-            if (!resultStack.Resolve(world, ""))
-            {
-                LoggerUtil.Warn(api, this, $"Ground stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(GrindingProperties)} by attributes. Will use default properties instead.");
-                return base.GetGrindingProperties(world, itemstack);
-            }
+            LoggerUtil.Warn(api, this, $"Ground stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.GroundStack = null;
         }
         return clonedProps;
     }
 
-    public override CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack itemstack)
+    public override CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack)
     {
-        if (!itemstack.FindByVariant(CrushingPropsType, out CrushingProperties props, out Variants variants))
+        if (!stack.FindByVariant(CrushingPropsType, out CrushingProperties props, out Variants variants) || props == null)
         {
-            return base.GetCrushingProperties(world, itemstack);
+            return base.GetCrushingProperties(world, stack);
+        }
+
+        if (props.CrushedStack == null)
+        {
+            return props;
         }
 
         CrushingProperties clonedProps = props.Clone();
-        if (clonedProps.CrushedStack != null)
+        JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.CrushedStack);
+        if (!resultStack.Resolve(world, ""))
         {
-            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.CrushedStack);
-            if (!resultStack.Resolve(world, ""))
-            {
-                LoggerUtil.Warn(api, this, $"Crushed stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(CrushingProperties)} by attributes. Will use default properties instead.");
-                return base.GetCrushingProperties(world, itemstack);
-            }
+            LoggerUtil.Warn(api, this, $"Crushed stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+            clonedProps.CrushedStack = null;
         }
         return clonedProps;
     }
 
-    public override TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack itemstack, Entity forEntity)
+    public override TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity)
     {
-        if (!itemstack.FindByVariant(TransitionablePropsType, out TransitionableProperties[] allTypedProps, out Variants variants) || allTypedProps == null)
+        if (!stack.FindByVariant(TransitionablePropsType, out TransitionableProperties[] allTypedProps, out Variants variants) || allTypedProps == null)
         {
-            return base.GetTransitionableProperties(world, itemstack, forEntity);
+            return base.GetTransitionableProperties(world, stack, forEntity);
         }
 
         List<TransitionableProperties> allResolvedProps = [];
 
         for (int i = 0; i < allTypedProps.Length; i++)
         {
-            TransitionableProperties clonedProps = allTypedProps[i].Clone();
-            if (clonedProps.TransitionedStack != null)
+            if (allTypedProps[i].TransitionedStack == null)
             {
-                JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.TransitionedStack);
-                if (!resultStack.Resolve(world, ""))
-                {
-                    LoggerUtil.Warn(api, this, $"Transitioned stack with code '{resultStack.Code}' cannot be resolved for '{itemstack.Collectible.Code}' in '{this}' class for {nameof(TransitionableProperties)} by attributes. Will skip it.");
-                    continue;
-                }
+                allResolvedProps.Add(allTypedProps[i]);
+                continue;
+            }
+
+            TransitionableProperties clonedProps = allTypedProps[i].Clone();
+            JsonItemStack resultStack = variants.ReplacePlaceholders(clonedProps.TransitionedStack);
+            if (!resultStack.Resolve(world, ""))
+            {
+                LoggerUtil.Warn(api, this, $"Transitioned stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
+                continue;
             }
 
             allResolvedProps.Add(clonedProps);
