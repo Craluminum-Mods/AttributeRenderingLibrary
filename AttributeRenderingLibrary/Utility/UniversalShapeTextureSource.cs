@@ -27,6 +27,17 @@ public class UniversalShapeTextureSource : ITexPositionSource
         this.filenameForLogging = filenameForLogging;
     }
 
+    public UniversalShapeTextureSource(ICoreClientAPI capi, ITextureAtlasAPI targetAtlas, Shape shape, string filenameForLogging, IDictionary<string, CompositeTexture> texturesSource, TexturePathUpdater pathUpdater) : this(capi, targetAtlas, shape, filenameForLogging)
+    {
+        foreach (var val in texturesSource)
+        {
+            var ctex = val.Value.Clone();
+            ctex.Base.Path = pathUpdater(ctex.Base.Path);
+            ctex.Bake(capi.Assets);
+            textures[val.Key] = ctex;
+        }
+    }
+
     public TextureAtlasPosition this[string textureCode]
     {
         get
@@ -43,10 +54,10 @@ public class UniversalShapeTextureSource : ITexPositionSource
 
                 if (texturePath == null)
                 {
-                    if (!missingTextures.Contains(texturePath))
+                    if (!missingTextures.Contains(textureCode))
                     {
                         LoggerUtil.Warn(capi, this, $"Shape {filenameForLogging} has an element using texture code {textureCode}, but no such texture exists");
-                        missingTextures.Add(texturePath);
+                        missingTextures.Add(textureCode);
                     }
 
                     return targetAtlas.UnknownTexturePosition;
