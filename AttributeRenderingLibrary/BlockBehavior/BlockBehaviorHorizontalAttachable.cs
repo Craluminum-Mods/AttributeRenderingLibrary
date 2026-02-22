@@ -11,10 +11,10 @@ namespace AttributeRenderingLibrary;
 /// <param name="block"></param>
 public class BlockBehaviorHorizontalAttachable(Block block) : BlockBehavior(block)
 {
-    bool handleDrops = true;
-    string dropBlockFace = "north";
-    string dropBlock = null;
-    Dictionary<string, Cuboidi> attachmentAreas;
+    private bool handleDrops = true;
+    private string dropBlockFace = "north";
+    private string dropBlock = null;
+    private Dictionary<string, Cuboidi> attachmentAreas;
 
     public override void Initialize(JsonObject properties)
     {
@@ -31,11 +31,11 @@ public class BlockBehaviorHorizontalAttachable(Block block) : BlockBehavior(bloc
             dropBlock = properties["dropBlock"].AsString();
         }
 
-        var areas = properties["attachmentAreas"].AsObject<Dictionary<string, RotatableCube>>(null);
-        attachmentAreas = new Dictionary<string, Cuboidi>();
+        Dictionary<string, RotatableCube> areas = properties["attachmentAreas"].AsObject<Dictionary<string, RotatableCube>>(null);
+        attachmentAreas = [];
         if (areas != null)
         {
-            foreach (var val in areas)
+            foreach (KeyValuePair<string, RotatableCube> val in areas)
             {
                 val.Value.Origin.Set(8, 8, 8);
                 attachmentAreas[val.Key] = val.Value.RotatedCopy().ConvertToCuboidi();
@@ -96,12 +96,12 @@ public class BlockBehaviorHorizontalAttachable(Block block) : BlockBehavior(bloc
 
         if (dropBlock != null)
         {
-            ItemStack stack = new ItemStack(world.BlockAccessor.GetBlock(new AssetLocation(dropBlock)));
+            ItemStack stack = new(world.BlockAccessor.GetBlock(new AssetLocation(dropBlock)));
             beBehavior.Variants.ToStack(stack);
             return stack;
         }
-        
-        ItemStack _stack = new ItemStack(world.BlockAccessor.GetBlock(block.CodeWithParts(dropBlockFace)));
+
+        ItemStack _stack = new(world.BlockAccessor.GetBlock(block.CodeWithParts(dropBlockFace)));
         beBehavior.Variants.ToStack(_stack);
         return _stack;
     }
@@ -116,7 +116,7 @@ public class BlockBehaviorHorizontalAttachable(Block block) : BlockBehavior(bloc
         }
     }
 
-    bool TryAttachTo(IWorldAccessor world, IPlayer player, BlockSelection blockSel, ItemStack itemstack, ref string failureCode)
+    private bool TryAttachTo(IWorldAccessor world, IPlayer player, BlockSelection blockSel, ItemStack itemstack, ref string failureCode)
     {
         BlockFacing oppositeFace = blockSel.Face.Opposite;
 
@@ -135,10 +135,10 @@ public class BlockBehaviorHorizontalAttachable(Block block) : BlockBehavior(bloc
         return false;
     }
 
-    bool CanBlockStay(IWorldAccessor world, BlockPos pos)
+    private bool CanBlockStay(IWorldAccessor world, BlockPos pos)
     {
         string[] parts = block.Code.Path.Split('-');
-        BlockFacing facing = BlockFacing.FromCode(parts[parts.Length - 1]);
+        BlockFacing facing = BlockFacing.FromCode(parts[^1]);
         Block attachingblock = world.BlockAccessor.GetBlock(pos.AddCopy(facing));
 
         Cuboidi attachmentArea = null;
@@ -158,7 +158,7 @@ public class BlockBehaviorHorizontalAttachable(Block block) : BlockBehavior(bloc
         handled = EnumHandling.PreventDefault;
 
         BlockFacing beforeFacing = BlockFacing.FromCode(block.LastCodePart());
-        int rotatedIndex = GameMath.Mod(beforeFacing.HorizontalAngleIndex - angle / 90, 4);
+        int rotatedIndex = GameMath.Mod(beforeFacing.HorizontalAngleIndex - (angle / 90), 4);
         BlockFacing nowFacing = BlockFacing.HORIZONTALS_ANGLEORDER[rotatedIndex];
 
         return block.CodeWithParts(nowFacing.Code);
@@ -169,10 +169,6 @@ public class BlockBehaviorHorizontalAttachable(Block block) : BlockBehavior(bloc
         handling = EnumHandling.PreventDefault;
 
         BlockFacing facing = BlockFacing.FromCode(block.LastCodePart());
-        if (facing.Axis == axis)
-        {
-            return block.CodeWithParts(facing.Opposite.Code);
-        }
-        return block.Code;
+        return facing.Axis == axis ? block.CodeWithParts(facing.Opposite.Code) : block.Code;
     }
 }

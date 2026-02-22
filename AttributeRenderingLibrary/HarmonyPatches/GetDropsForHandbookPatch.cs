@@ -30,7 +30,7 @@ public static class GetDropsForHandbookPatch
                     resolvedDrops.Add(dstack);
                 }
             }
-            __result = resolvedDrops.ToArray();
+            __result = [.. resolvedDrops];
             return;
         }
 

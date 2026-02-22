@@ -85,13 +85,13 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         if (blockSel != null)
         {
             // Don't dress one-self if looking at a display or mannequin
-            var block = byEntity.World.BlockAccessor.GetBlock(blockSel.Position);
-            var pos = blockSel.Position;
+            Block block = byEntity.World.BlockAccessor.GetBlock(blockSel.Position);
+            BlockPos pos = blockSel.Position;
             if (block.GetBehavior<BlockBehaviorMultiblock>()?.ControllerPositionRel is { } relPos)
             {
                 pos = pos.AddCopy(relPos);
             }
-            var be = byEntity.World.BlockAccessor.GetBlockEntity(pos);
+            BlockEntity be = byEntity.World.BlockAccessor.GetBlockEntity(pos);
             if (be?.Behaviors.Any(bh => bh is BEBehaviorMannequin or BEBehaviorDisplay) == true) return;
         }
 
@@ -131,14 +131,9 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         EnumCharacterDressType dressType = GetDressType(inSlot);
         if (clientApi.Settings.Bool["extendedDebugInfo"])
         {
-            if (dressType == EnumCharacterDressType.Unknown)
-            {
-                dsc.AppendLine(Lang.Get("Cloth Category: Unknown"));
-            }
-            else
-            {
-                dsc.AppendLine(Lang.Get("Cloth Category: {0}", Lang.Get("clothcategory-" + dressType.ToString().ToLowerInvariant())));
-            }
+            _ = dressType == EnumCharacterDressType.Unknown
+                ? dsc.AppendLine(Lang.Get("Cloth Category: Unknown"))
+                : dsc.AppendLine(Lang.Get("Cloth Category: {0}", Lang.Get("clothcategory-" + dressType.ToString().ToLowerInvariant())));
         }
 
         ProtectionModifiers protectionModifiers = GetProtectionModifiers(inSlot);
@@ -154,7 +149,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
                 dsc.AppendLine(Lang.Get("Percent protection: {0}%", (int)(100 * protectionModifiers.RelativeProtection)));
             }
 
-            dsc.AppendLine(Lang.Get("Protection tier: {0}", (int)(protectionModifiers.ProtectionTier)));
+            dsc.AppendLine(Lang.Get("Protection tier: {0}", protectionModifiers.ProtectionTier));
         }
 
         StatModifiers statModifiers = GetStatModifiers(inSlot);
@@ -195,7 +190,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
         if (GetDressType(inSlot) == EnumCharacterDressType.Head)
         {
-            var rainProt = collObj.Attributes["rainProtectionPerc"].AsFloat(0);
+            float rainProt = collObj.Attributes["rainProtectionPerc"].AsFloat(0);
             if (rainProt > 0)
             {
                 dsc.AppendLine(Lang.Get("Protection from rain: {0}%", (int)(rainProt * 100)));
@@ -216,50 +211,25 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
         if (maxWarmth != 0)
         {
-            if (!(inSlot is ItemSlotCreative))
+            if (inSlot is not ItemSlotCreative)
             {
                 ensureConditionExists(inSlot);
                 float condition = inSlot.Itemstack.Attributes.GetFloat("condition", 1);
-                string condStr;
-
-                if (condition > 0.5)
+                string condStr = condition switch
                 {
-                    condStr = Lang.Get("clothingcondition-good", (int)(condition * 100));
-                }
-                else if (condition > 0.4)
-                {
-                    condStr = Lang.Get("clothingcondition-worn", (int)(condition * 100));
-                }
-                else if (condition > 0.3)
-                {
-                    condStr = Lang.Get("clothingcondition-heavilyworn", (int)(condition * 100));
-                }
-                else if (condition > 0.2)
-                {
-                    condStr = Lang.Get("clothingcondition-tattered", (int)(condition * 100));
-                }
-                else if (condition > 0.1)
-                {
-                    condStr = Lang.Get("clothingcondition-heavilytattered", (int)(condition * 100));
-                }
-                else
-                {
-                    condStr = Lang.Get("clothingcondition-terrible", (int)(condition * 100));
-                }
+                    > 0.5f => Lang.Get("clothingcondition-good", (int)(condition * 100)),
+                    > 0.4f => Lang.Get("clothingcondition-worn", (int)(condition * 100)),
+                    > 0.3f => Lang.Get("clothingcondition-heavilyworn", (int)(condition * 100)),
+                    > 0.2f => Lang.Get("clothingcondition-tattered", (int)(condition * 100)),
+                    > 0.1f => Lang.Get("clothingcondition-heavilytattered", (int)(condition * 100)),
+                    _ => Lang.Get("clothingcondition-terrible", (int)(condition * 100))
+                };
 
                 dsc.Append(Lang.Get("Condition:") + " ");
                 float warmth = GetWarmth(inSlot);
-
                 string color = ColorUtil.Int2Hex(GuiStyle.DamageColorGradient[(int)Math.Min(99, condition * 200)]);
-
-                if (warmth < 0.05)
-                {
-                    dsc.AppendLine("<font color=\"" + color + "\">" + condStr + "</font>, <font color=\"#ff8484\">" + Lang.Get("+{0:0.#}°C", warmth) + "</font>");
-                }
-                else
-                {
-                    dsc.AppendLine("<font color=\"" + color + "\">" + condStr + "</font>, <font color=\"#84ff84\">" + Lang.Get("+{0:0.#}°C", warmth) + "</font>");
-                }
+                string warmthColor = warmth < 0.05 ? "#ff8484" : "#84ff84";
+                dsc.AppendLine($"<font color=\"{color}\">{condStr}</font>, <font color=\"{warmthColor}\">{Lang.Get("+{0:0.#}°C", warmth)}</font>");
             }
 
             dsc.AppendLine();
@@ -270,7 +240,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
     }
-    
+
     public override bool RequiresTransitionableTicking(IWorldAccessor world, ItemStack itemstack, ref EnumHandling handling)
     {
         handling = EnumHandling.PreventSubsequent;
@@ -288,7 +258,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
             {
                 if (slot is ItemSlotTrade)
                 {
-                    slot.Itemstack.Attributes.SetFloat("condition", (float)coreApi.World.Rand.NextDouble() * 0.25f + 0.75f);
+                    slot.Itemstack.Attributes.SetFloat("condition", ((float)coreApi.World.Rand.NextDouble() * 0.25f) + 0.75f);
                 }
                 else
                 {
@@ -300,9 +270,9 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         }
     }
 
-    public override void OnCreatedByCrafting(ItemSlot[] inSlots, ItemSlot outputSlot, IRecipeBase byRecipe, ref EnumHandling bhHandling)
+    public override void OnCreatedByCrafting(ItemSlot[] inSlots, ItemSlot outputSlot, IRecipeBase byRecipe, ref EnumHandling handling)
     {
-        base.OnCreatedByCrafting(inSlots, outputSlot, byRecipe, ref bhHandling);
+        base.OnCreatedByCrafting(inSlots, outputSlot, byRecipe, ref handling);
 
         // Prevent derp in the handbook
         if (outputSlot is DummySlot) return;
@@ -312,24 +282,24 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
         if (byRecipe.Name.Path.Contains("repair"))
         {
-            CalculateRepairValue(inSlots, outputSlot, out float repairValue, out int matCostPerMatType);
+            CalculateRepairValue(inSlots, outputSlot, out float repairValue, out _);
 
             int curDur = outputSlot.Itemstack.Collectible.GetRemainingDurability(outputSlot.Itemstack);
             int maxDur = collObj.GetMaxDurability(outputSlot.Itemstack);
 
-            outputSlot.Itemstack.Collectible.SetDurability(outputSlot.Itemstack, Math.Min(maxDur, (int)(curDur + maxDur * repairValue)));
-            bhHandling = EnumHandling.Handled;
+            outputSlot.Itemstack.Collectible.SetDurability(outputSlot.Itemstack, Math.Min(maxDur, (int)(curDur + (maxDur * repairValue))));
+            handling = EnumHandling.Handled;
         }
     }
 
-    public override bool ConsumeCraftingIngredients(ItemSlot[] inSlots, ItemSlot outputSlot, IRecipeBase recipe, ref EnumHandling bhHandling)
+    public override bool ConsumeCraftingIngredients(ItemSlot[] inSlots, ItemSlot outputSlot, IRecipeBase recipe, ref EnumHandling handling)
     {
         // Consume as much materials in the input grid as needed
         if (recipe.Name.Path.Contains("repair"))
         {
-            CalculateRepairValue(inSlots, outputSlot, out float repairValue, out int matCostPerMatType);
+            CalculateRepairValue(inSlots, outputSlot, out _, out int matCostPerMatType);
 
-            foreach (var islot in inSlots)
+            foreach (ItemSlot islot in inSlots)
             {
                 if (islot.Empty) continue;
 
@@ -338,7 +308,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
                 islot.TakeOut(matCostPerMatType);
             }
 
-            bhHandling = EnumHandling.PreventSubsequent;
+            handling = EnumHandling.PreventSubsequent;
             return true;
         }
 
@@ -347,8 +317,8 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
     public virtual void CalculateRepairValue(ItemSlot[] inSlots, ItemSlot outputSlot, out float repairValue, out int matCostPerMatType)
     {
-        var origMatCount = GetOrigMatCount(inSlots, outputSlot);
-        var armorSlot = inSlots.FirstOrDefault(slot => slot.Itemstack?.Collectible.GetCollectibleInterface<IWearable>() != null);
+        int origMatCount = GetOrigMatCount(inSlots, outputSlot);
+        ItemSlot armorSlot = inSlots.FirstOrDefault(slot => slot.Itemstack?.Collectible.GetCollectibleInterface<IWearable>() != null);
         int curDur = outputSlot.Itemstack.Collectible.GetRemainingDurability(armorSlot.Itemstack);
         int maxDur = collObj.GetMaxDurability(outputSlot.Itemstack);
 
@@ -359,11 +329,11 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         // Divide missing durability by repair per item = items needed for full repair
         int fullRepairMatCount = (int)Math.Max(1, Math.Round((maxDur - curDur) / repairDurabilityPerItem));
         // Limit repair value to smallest stack size of all repair mats
-        var minMatStackSize = GetInputRepairCount(inSlots);
+        int minMatStackSize = GetInputRepairCount(inSlots);
         // Divide the cost amongst all mats
-        var matTypeCount = GetRepairMatTypeCount(inSlots);
+        int matTypeCount = GetRepairMatTypeCount(inSlots);
 
-        var availableRepairMatCount = Math.Min(fullRepairMatCount, minMatStackSize * matTypeCount);
+        int availableRepairMatCount = Math.Min(fullRepairMatCount, minMatStackSize * matTypeCount);
         matCostPerMatType = Math.Min(fullRepairMatCount, minMatStackSize);
 
         // Repairing costs half as many materials as newly creating it
@@ -372,14 +342,14 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
     protected virtual int GetRepairMatTypeCount(ItemSlot[] slots)
     {
-        List<ItemStack> stackTypes = new List<ItemStack>();
-        foreach (var slot in slots)
+        List<ItemStack> stackTypes = [];
+        foreach (ItemSlot slot in slots)
         {
             if (slot.Empty) continue;
             bool found = false;
             if (slot.Itemstack.Collectible.GetCollectibleInterface<IWearable>() != null) continue;
 
-            foreach (var stack in stackTypes)
+            foreach (ItemStack stack in stackTypes)
             {
                 if (slot.Itemstack.Satisfies(stack))
                 {
@@ -399,11 +369,11 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
     public virtual int GetInputRepairCount(ItemSlot[] inputSlots)
     {
-        Vintagestory.API.Datastructures.OrderedDictionary<int, int> matcounts = new();
-        foreach (var slot in inputSlots)
+        Vintagestory.API.Datastructures.OrderedDictionary<int, int> matcounts = [];
+        foreach (ItemSlot slot in inputSlots)
         {
             if (slot.Empty || slot.Itemstack.Collectible.GetCollectibleInterface<IWearable>() != null) continue;
-            var hash = slot.Itemstack.GetHashCode();
+            int hash = slot.Itemstack.GetHashCode();
             matcounts.TryGetValue(hash, out int cnt);
             matcounts[hash] = cnt + slot.StackSize;
         }
@@ -412,22 +382,22 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
     public virtual int GetOrigMatCount(ItemSlot[] inputSlots, ItemSlot outputSlot)
     {
-        var stack = outputSlot.Itemstack;
-        var matStack = inputSlots.FirstOrDefault(slot => !slot.Empty && slot.Itemstack.Collectible != collObj).Itemstack;
+        ItemStack stack = outputSlot.Itemstack;
+        ItemStack matStack = inputSlots.FirstOrDefault(slot => !slot.Empty && slot.Itemstack.Collectible != collObj).Itemstack;
 
-        var origMatCount = 0;
+        int origMatCount = 0;
 
-        foreach (var recipe in coreApi.World.GridRecipes)
+        foreach (GridRecipe recipe in coreApi.World.GridRecipes)
         {
             if ((recipe.RecipeOutput.ResolvedItemStack?.Satisfies(stack) ?? false) && !recipe.Name.Path.Contains("repair"))
             {
-                foreach (var ingred in recipe.ResolvedIngredients)
+                foreach (CraftingRecipeIngredient ingred in recipe.ResolvedIngredients)
                 {
                     if (ingred == null) continue;
 
                     if (ingred.RecipeAttributes?["repairMat"].Exists == true)
                     {
-                        var jstack = ingred.RecipeAttributes["repairMat"].AsObject<JsonItemStack>();
+                        JsonItemStack jstack = ingred.RecipeAttributes["repairMat"].AsObject<JsonItemStack>();
                         jstack.Resolve(coreApi.World, string.Format("recipe '{0}' repair mat", recipe.Name));
                         if (jstack.ResolvedItemstack != null)
                         {
@@ -467,7 +437,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         return null;
     }
 
-    public override void OnDamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, ref int amount, ref EnumHandling bhHandling)
+    public override void OnDamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, ref int amount, ref EnumHandling handling)
     {
         if (collObj.Variant["construction"] == "improvised")
         {
@@ -493,7 +463,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
         itemslot.Itemstack.Collectible.SetDurability(itemslot.Itemstack, Math.Max(0, leftDurability - amount));
         itemslot.MarkDirty();
-        bhHandling = EnumHandling.Handled;
+        handling = EnumHandling.Handled;
     }
 
     public override WorldInteraction[] GetHeldInteractionHelp(ItemSlot inSlot, ref EnumHandling handling)
@@ -581,23 +551,13 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         return dressType is EnumCharacterDressType.ArmorBody or EnumCharacterDressType.ArmorHead or EnumCharacterDressType.ArmorLegs;
     }
 
-    public virtual EnumCharacterDressType GetDressType(ItemSlot slot)
-    {
-        if (!slot.Itemstack.FindByVariant(DressTypeByType, out EnumCharacterDressType dressType))
-        {
-            return EnumCharacterDressType.Unknown;
-        }
-        return dressType;
-    }
+    public virtual EnumCharacterDressType GetDressType(ItemSlot slot) => !slot.Itemstack.FindByVariant(DressTypeByType, out var dressType)
+            ? EnumCharacterDressType.Unknown
+            : dressType;
 
-    public virtual StatModifiers GetStatModifiers(ItemSlot slot)
-    {
-        if (!slot.Itemstack.FindByVariant(StatModifersByType, out StatModifiers statModifiers))
-        {
-            return null;
-        }
-        return statModifiers;
-    }
+    public virtual StatModifiers GetStatModifiers(ItemSlot slot) => !slot.Itemstack.FindByVariant(StatModifersByType, out var statModifiers)
+            ? null
+            : statModifiers;
 
     public virtual ProtectionModifiers GetProtectionModifiers(ItemSlot slot)
     {
@@ -610,14 +570,9 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         return protectionModifiers;
     }
 
-    public virtual ProtectionModifiers GetDefaultModifiers(ItemSlot slot)
-    {
-        if (!slot.Itemstack.FindByVariant(DefaultModifiersByType, out ProtectionModifiers defaultModifiers))
-        {
-            return null;
-        }
-        return defaultModifiers;
-    }
+    public virtual ProtectionModifiers GetDefaultModifiers(ItemSlot slot) => !slot.Itemstack.FindByVariant(DefaultModifiersByType, out var defaultModifiers)
+            ? null
+            : defaultModifiers;
 
     public virtual AssetLocation[] GetFootStepSounds(ItemSlot slot)
     {
@@ -636,7 +591,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
             if (soundloc.EndsWith('*'))
             {
                 loc.Path = loc.Path.TrimEnd('*');
-                FootStepSounds = coreApi.Assets.GetLocations(loc.Path, loc.Domain).ToArray();
+                FootStepSounds = [.. coreApi.Assets.GetLocations(loc.Path, loc.Domain)];
             }
             else
             {
@@ -646,13 +601,8 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         return FootStepSounds;
     }
 
-    public virtual float GetMaxWarmth(ItemSlot inslot)
-    {
-        if (!inslot.Itemstack.FindByVariant(MaxWarmthByType, out float maxWarmth))
-        {
-            return inslot.Itemstack.ItemAttributes?["warmth"].AsFloat(0) ?? 0;
-        }
-        return maxWarmth;
-    }
+    public virtual float GetMaxWarmth(ItemSlot inslot) => !inslot.Itemstack.FindByVariant(MaxWarmthByType, out float maxWarmth)
+            ? inslot.Itemstack.ItemAttributes?["warmth"].AsFloat(0) ?? 0
+            : maxWarmth;
     #endregion
 }

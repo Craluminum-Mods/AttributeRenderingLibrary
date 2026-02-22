@@ -7,7 +7,7 @@ namespace AttributeRenderingLibrary;
 
 public class Core : ModSystem
 {
-    private Harmony HarmonyInstance => new Harmony(Mod.Info.ModID);
+    private Harmony HarmonyInstance => new(Mod.Info.ModID);
 
     public static ICoreAPI Api;
 

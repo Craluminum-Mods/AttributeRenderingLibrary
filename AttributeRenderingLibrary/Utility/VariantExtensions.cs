@@ -143,7 +143,7 @@ public static class VariantExtensions
 
     public static void AppendTranslatedText(this Variants variants, StringBuilder sb, List<object> entries)
     {
-        foreach (var entry in entries)
+        foreach (object entry in entries)
         {
             if (entry is string)
             {
@@ -151,17 +151,17 @@ public static class VariantExtensions
             }
             else if (entry is JArray array && array.Any())
             {
-                object[] args = array.Skip(1).Select(arg =>
+                object[] args = [.. array.Skip(1).Select(arg =>
                 {
-                    if (arg.Type == JTokenType.String)
+                    return arg.Type switch
                     {
-                        return (object)variants.ReplacePlaceholders(arg.ToString());
-                    }
-                    return (object)arg;
-                }).ToArray();
+                        JTokenType.String => variants.ReplacePlaceholders(arg.ToString()),
+                        _ => (object)arg
+                    };
+                })];
 
                 string key = variants.ReplacePlaceholders(array[0].ToString());
-                sb.Append(Lang.GetMatching(key, args).ToArray());
+                sb.Append([.. Lang.GetMatching(key, args)]);
             }
         }
     }
@@ -173,7 +173,7 @@ public static class VariantExtensions
             return "";
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         variants.AppendTranslatedText(sb, entries);
         return sb.ToString();
     }

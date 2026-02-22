@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.ServerMods;
-using Vintagestory.ServerMods.NoObf;
 
 namespace AttributeRenderingLibrary;
 
@@ -26,9 +21,9 @@ public class CollectibleBehaviorGenerateCreativeStacks : CollectibleBehavior
         if (properties != null)
         {
             AttributeVariantGroups = properties["variantgroups"].AsObject<RegistryObjectVariantGroup[]>(defaultValue: null);
-            CreativeInventory = properties["creativeinventory"].AsObject<Dictionary<string, string[]>>(defaultValue: new());
-            AllowedCombinations = properties["allowedvariants"].AsObject<List<string>>(defaultValue: new());
-            SkipCombinations = properties["skipvariants"].AsObject<List<string>>(defaultValue: new());
+            CreativeInventory = properties["creativeinventory"].AsObject<Dictionary<string, string[]>>(defaultValue: []);
+            AllowedCombinations = properties["allowedvariants"].AsObject<List<string>>(defaultValue: []);
+            SkipCombinations = properties["skipvariants"].AsObject<List<string>>(defaultValue: []);
         }
     }
 }

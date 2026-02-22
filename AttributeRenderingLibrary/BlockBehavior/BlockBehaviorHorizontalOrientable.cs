@@ -9,9 +9,9 @@ namespace AttributeRenderingLibrary;
 /// </summary>
 public class BlockBehaviorHorizontalOrientable : BlockBehavior
 {
-    string dropBlockFace = "north";
-    string variantCode = "horizontalorientation";
-    JsonItemStack drop = null;
+    private string dropBlockFace = "north";
+    private readonly string variantCode = "horizontalorientation";
+    private JsonItemStack drop = null;
 
     public BlockBehaviorHorizontalOrientable(Block block) : base(block)
     {
@@ -62,11 +62,7 @@ public class BlockBehaviorHorizontalOrientable : BlockBehavior
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref float dropQuantityMultiplier, ref EnumHandling handled)
     {
         handled = EnumHandling.PreventSubsequent;
-        if (drop?.ResolvedItemstack != null)
-        {
-            return [drop?.ResolvedItemstack.Clone()];
-        }
-        return [OnPickBlock(world, pos, ref handled)];
+        return drop?.ResolvedItemstack != null ? [drop?.ResolvedItemstack.Clone()] : [OnPickBlock(world, pos, ref handled)];
     }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handled)
@@ -83,7 +79,7 @@ public class BlockBehaviorHorizontalOrientable : BlockBehavior
             return null;
         }
 
-        ItemStack stack = new ItemStack(world.BlockAccessor.GetBlock(block.CodeWithVariant(variantCode, dropBlockFace)));
+        ItemStack stack = new(world.BlockAccessor.GetBlock(block.CodeWithVariant(variantCode, dropBlockFace)));
         beBehavior.Variants.ToStack(stack);
         return stack;
     }
@@ -93,7 +89,7 @@ public class BlockBehaviorHorizontalOrientable : BlockBehavior
         handled = EnumHandling.PreventDefault;
 
         BlockFacing beforeFacing = BlockFacing.FromCode(block.Variant[variantCode]);
-        int rotatedIndex = GameMath.Mod(beforeFacing.HorizontalAngleIndex - angle / 90, 4);
+        int rotatedIndex = GameMath.Mod(beforeFacing.HorizontalAngleIndex - (angle / 90), 4);
         BlockFacing nowFacing = BlockFacing.HORIZONTALS_ANGLEORDER[rotatedIndex];
 
         return block.CodeWithVariant(variantCode, nowFacing.Code);
@@ -104,10 +100,6 @@ public class BlockBehaviorHorizontalOrientable : BlockBehavior
         handling = EnumHandling.PreventDefault;
 
         BlockFacing facing = BlockFacing.FromCode(block.Variant[variantCode]);
-        if (facing.Axis == axis)
-        {
-            return block.CodeWithVariant(variantCode, facing.Opposite.Code);
-        }
-        return block.Code;
+        return facing.Axis == axis ? block.CodeWithVariant(variantCode, facing.Opposite.Code) : block.Code;
     }
 }

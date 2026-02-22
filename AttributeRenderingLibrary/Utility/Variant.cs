@@ -8,11 +8,11 @@ public class Variant(string key, string value)
     public static Variant? FromString(string keyVal)
     {
         string[] list = keyVal?.Split('-', 2);
-        if (list is not { Length: 2 })
+        return list switch
         {
-            return null;
-        }
-        return new Variant(list[0], list[1]);
+            { Length: 2 } => new Variant(list[0], list[1]),
+            _ => null
+        };
     }
 
     public override string ToString() => $"{Key}-{Value}";

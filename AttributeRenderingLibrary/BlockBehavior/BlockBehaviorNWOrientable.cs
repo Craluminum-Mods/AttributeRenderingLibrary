@@ -8,7 +8,7 @@ namespace AttributeRenderingLibrary;
 /// </summary>
 public class BlockBehaviorNWOrientable : BlockBehavior
 {
-    string variantCode = "orientation";
+    private readonly string variantCode = "orientation";
 
     public BlockBehaviorNWOrientable(Block block) : base(block)
     {
@@ -23,7 +23,7 @@ public class BlockBehaviorNWOrientable : BlockBehavior
         handling = EnumHandling.PreventDefault;
         BlockFacing[] horVer = Block.SuggestedHVOrientation(byPlayer, blockSel);
         string code = "ns";
-        if (horVer[0].Index == 1 || horVer[0].Index == 3) code = "we";
+        if (horVer[0].Index is 1 or 3) code = "we";
         Block orientedBlock = world.BlockAccessor.GetBlock(block.CodeWithVariant(variantCode, code));
 
         if (orientedBlock.CanPlaceBlock(world, byPlayer, blockSel, ref failureCode))
@@ -49,7 +49,7 @@ public class BlockBehaviorNWOrientable : BlockBehavior
             return null;
         }
 
-        ItemStack stack = new ItemStack(world.BlockAccessor.GetBlock(block.CodeWithVariant(variantCode, "ns")));
+        ItemStack stack = new(world.BlockAccessor.GetBlock(block.CodeWithVariant(variantCode, "ns")));
         beBehavior.Variants.ToStack(stack);
         return stack;
     }
@@ -59,7 +59,7 @@ public class BlockBehaviorNWOrientable : BlockBehavior
         handled = EnumHandling.PreventDefault;
 
         string[] angles = { "ns", "we" };
-        var index = GameMath.Mod(angle / 90, 4);
+        int index = GameMath.Mod(angle / 90, 4);
         if (block.Variant[variantCode] == "we") index++;
         return block.CodeWithVariant(variantCode, angles[index % 2]);
     }

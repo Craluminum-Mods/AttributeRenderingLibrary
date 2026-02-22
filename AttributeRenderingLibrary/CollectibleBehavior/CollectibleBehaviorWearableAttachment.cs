@@ -40,7 +40,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         return slotType == "shelf" && IsFoldable(slot.Itemstack)
             ? genFoldedMesh(slot, targetAtlas, forBlockPos)
             : genFullBodyMesh(slot, targetAtlas);
-        }
+    }
 
     public virtual bool IsFoldable(ItemStack itemstack)
     {
@@ -53,7 +53,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
         DisplayableAttributes displayableProps = slot.Itemstack.Collectible.GetCollectibleInterface<IDisplayableProps>()?.GetDisplayableProps(slot, "shelf");
         displayableProps ??= slot.Itemstack.ItemAttributes["displayable"]["shelf"].AsObject<DisplayableAttributes>();
-        
+
         return displayableProps == null ? mesh : GetOrCreateMesh(slot, targetAtlas, overrideShape: displayableProps.Shape);
     }
 

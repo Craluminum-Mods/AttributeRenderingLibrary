@@ -16,10 +16,10 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
     public class VariantLoader
     {
         private ICoreServerAPI serverApi;
-        private List<CollectibleObject> collectiblesToGenerate = new();
+        private List<CollectibleObject> collectiblesToGenerate = [];
         private ConcurrentQueue<CollectibleAndStackGenerationBehavior> collectibleGenerationQueue = new();
         private ConcurrentQueue<CollectibleAndStacks> finishedStacks = new();
-        private Dictionary<AssetLocation, VariantEntry[]> worldProperties = new();
+        private Dictionary<AssetLocation, VariantEntry[]> worldProperties = [];
 
         private long tickListenerId = -1;
 
@@ -73,7 +73,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         {
             if (!HaveWorkerThreadsFinished || activeThreadCounter > 0)
             {
-                LoggerUtil.Warn(serverApi, this,"Error composing attribute variants; Can only run one generation at a time; Some worker threads are still active");
+                LoggerUtil.Warn(serverApi, this, "Error composing attribute variants; Can only run one generation at a time; Some worker threads are still active");
                 return;
             }
             HaveWorkerThreadsFinished = false;
@@ -144,8 +144,8 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         {
             int ticks = 0;
             CollectibleAndStacks entry;
-            List<CreativeTabAndStackList> creativeTabs = new();
-            List<JsonItemStack> tabStacks = new();
+            List<CreativeTabAndStackList> creativeTabs = [];
+            List<JsonItemStack> tabStacks = [];
 
             while (ticks < MAX_STACKS_PER_TICK && finishedStacks.TryDequeue(out entry))
             {
@@ -195,8 +195,8 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         public void AddFinishedStacksToInventorySynchronous()
         {
             CollectibleAndStacks entry;
-            List<CreativeTabAndStackList> creativeTabs = new();
-            List<JsonItemStack> tabStacks = new();
+            List<CreativeTabAndStackList> creativeTabs = [];
+            List<JsonItemStack> tabStacks = [];
 
             while (finishedStacks.TryDequeue(out entry))
             {
@@ -269,7 +269,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
                 // If all variants in a group match, the stack should be added to the tab
                 if (matchingVariants == subMatchers.Count)
                 {
-                    return true; 
+                    return true;
                 }
             }
 
@@ -286,7 +286,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
             string[] matchGroups = matcher.Split("::");
             string[] groupEntry;
 
-            Dictionary<string, string> matchersByCode = new();
+            Dictionary<string, string> matchersByCode = [];
 
             foreach (var group in matchGroups)
             {
@@ -318,7 +318,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
             foreach (var collectible in serverApi.World.Collectibles)
             {
                 behavior = collectible.GetBehavior<CollectibleBehaviorGenerateCreativeStacks>();
-                if (behavior is { CreativeInventory: { Count: > 0 } })
+                if (behavior is { CreativeInventory.Count: > 0 })
                 {
                     collectibleGenerationQueue.Enqueue(new CollectibleAndStackGenerationBehavior
                     {
@@ -346,7 +346,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
             worldProperties.Clear();
 
-            Dictionary<int, AssetLocation> locations = new();
+            Dictionary<int, AssetLocation> locations = [];
 
             CollectibleBehaviorGenerateCreativeStacks behavior;
             foreach (var entry in collectibleGenerationQueue)
@@ -358,7 +358,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
             }
 
             StandardWorldProperty worldProperty;
-            List<VariantEntry> variants = new();
+            List<VariantEntry> variants = [];
             AssetLocation modLocation;
 
             foreach (var location in locations.Values)
@@ -438,7 +438,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
 
             while (collectibleGenerationQueue.TryDequeue(out operand) && !forceStopWorkers)
             {
-                variantGroups = new();
+                variantGroups = [];
                 CollectVariantGroupsForInstance(operand.CollectibleBehavior, variantGroups);
 #if DEBUG
                 LoggerUtil.Debug(serverApi, this, $"found {variantGroups.Count} variant groups for collectible {operand.CollectibleObject.Code}");
@@ -498,7 +498,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         /// <returns>A list of all valid attribute permutations as <c>JsonObject</c></returns>
         private List<JsonObject> ComposeVariantAttributes(Dictionary<string, CombineState> variants, List<string> skipCombinations, List<string> allowedCombinations)
         {
-            List<JsonObject> attributes = new();
+            List<JsonObject> attributes = [];
             var skipMatchers = GetAllSubMatchers(skipCombinations);
             var allowMatchers = GetAllSubMatchers(allowedCombinations);
 
@@ -533,7 +533,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         /// <returns></returns>
         private List<Dictionary<string, string>> GetAllSubMatchers(List<string> matchers)
         {
-            List<Dictionary<string, string>> output = new();
+            List<Dictionary<string, string>> output = [];
 
             foreach (var entry in matchers)
             {
@@ -610,8 +610,8 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
             {
                 state = group.States[i];
 
-                jattribute = new JObject();
-                jtemplate = new JObject();
+                jattribute = [];
+                jtemplate = [];
                 jattribute[group.Code] = JToken.FromObject(state);
                 jtemplate[ATTRIBUTE_TYPE_KEY] = jattribute;
 
@@ -651,23 +651,25 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
             {
                 if (group.Value.Combine != EnumCombination.Multiply) continue;
 
-                remainingLength = remainingLength / group.Value.States.Length;
+                remainingLength /= group.Value.States.Length;
 
                 for (int i = 0; i < totalLength; i++)
                 {
                     if (initialize)
                     {
-                        template = new JObject();
-                        template[ATTRIBUTE_TYPE_KEY] = new JObject();
+                        template = new JObject
+                        {
+                            [ATTRIBUTE_TYPE_KEY] = new JObject()
+                        };
                         multiplyVariants[i] = new JsonObject(template);
                     }
 
                     stateIndex = (i % chunkSize) / remainingLength;
                     multiplyVariants[i].Token[ATTRIBUTE_TYPE_KEY][group.Value.Code] = JToken.FromObject(group.Value.States[stateIndex]);
                 }
-                
+
                 initialize = false;
-                chunkSize = chunkSize / group.Value.States.Length;
+                chunkSize /= group.Value.States.Length;
             }
 
             // TODO:
@@ -718,7 +720,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         private void CollectVariantGroupsForInstance(CollectibleBehaviorGenerateCreativeStacks stackBehavior, Dictionary<string, CombineState> variantGroups)
         {
             VariantEntry[] worldVariants;
-            HashSet<string> uniqueVariantCodes = new();
+            HashSet<string> uniqueVariantCodes = [];
             variantGroups.Clear();
 
             foreach (var variantGroup in stackBehavior.AttributeVariantGroups)

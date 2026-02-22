@@ -26,51 +26,31 @@ public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : Collec
 
     public virtual void LoadTags(JsonObject properties)
     {
-        var unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
+        Dictionary<string, List<string>> unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
         if (unresolvedTags == null) return;
 
         StorageTagsByType = [];
 
         foreach ((string type, List<string> tags) in unresolvedTags)
         {
-            TagRegistryError tagRegistryError = Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
+            Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
             StorageTagsByType.Add(type, resolvedTags);
         }
     }
 
-    public override TagSet GetStorageTags(ItemStack bagstack)
-    {
-        if (!bagstack.FindByVariant(StorageTagsByType, out TagSet storageTags) || storageTags.IsEmpty)
-        {
-            return base.GetStorageTags(bagstack);
-        }
-        return storageTags;
-    }
+    public override TagSet GetStorageTags(ItemStack bagstack) => !bagstack.FindByVariant(StorageTagsByType, out TagSet storageTags)
+            ? base.GetStorageTags(bagstack)
+            : storageTags;
 
-    public override int GetQuantitySlots(ItemStack bagstack)
-    {
-        if (!bagstack.FindByVariant(QuantitySlotsByType, out int quantitySlots))
-        {
-            return base.GetQuantitySlots(bagstack);
-        }
-        return quantitySlots;
-    }
+    public override int GetQuantitySlots(ItemStack bagstack) => !bagstack.FindByVariant(QuantitySlotsByType, out int quantitySlots)
+            ? base.GetQuantitySlots(bagstack)
+            : quantitySlots;
 
-    public override string GetSlotBgColor(ItemStack bagstack)
-    {
-        if (!bagstack.FindByVariant(SlotBgColorByType, out string slotBgColor, out Variants variants))
-        {
-            return base.GetSlotBgColor(bagstack);
-        }
-        return variants.ReplacePlaceholders(slotBgColor);
-    }
+    public override string GetSlotBgColor(ItemStack bagstack) => !bagstack.FindByVariant(SlotBgColorByType, out string slotBgColor, out Variants variants)
+            ? base.GetSlotBgColor(bagstack)
+            : variants.ReplacePlaceholders(slotBgColor);
 
-    public override EnumItemStorageFlags GetStorageFlags(ItemStack bagstack)
-    {
-        if (!bagstack.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
-        {
-            return base.GetStorageFlags(bagstack);
-        }
-        return storageFlags;
-    } 
+    public override EnumItemStorageFlags GetStorageFlags(ItemStack bagstack) => !bagstack.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags)
+            ? base.GetStorageFlags(bagstack)
+            : storageFlags;
 }

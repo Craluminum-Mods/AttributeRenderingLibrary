@@ -25,8 +25,8 @@ public class ShapeOverlayHelper
         shape.SubclassForStepParenting(overlayPrefix);
         Dictionary<string, AssetLocation> prefixedTextureCodes = shape.Textures;
         shape.Textures = new Dictionary<string, AssetLocation>(prefixedTextureCodes.Count);
-        
-        foreach (var entry in prefixedTextureCodes)
+
+        foreach (KeyValuePair<string, AssetLocation> entry in prefixedTextureCodes)
         {
             shape.Textures[overlayPrefix + entry.Key] = entry.Value;
         }
@@ -70,7 +70,7 @@ public class ShapeOverlayHelper
     {
         if (!variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> variantTextures)) return;
 
-        foreach((string textureCode, CompositeTexture texture) in variantTextures)
+        foreach ((string textureCode, CompositeTexture texture) in variantTextures)
         {
             CompositeTexture ctex = texture.Clone();
             ctex = variants.ReplacePlaceholders(ctex);
