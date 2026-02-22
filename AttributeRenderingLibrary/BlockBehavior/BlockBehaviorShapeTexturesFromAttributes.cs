@@ -37,6 +37,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
     public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
     public Dictionary<string, int> RequiredMiningTierByType { get; protected set; }
+    public Dictionary<string, EnumBlockMaterial> BlockMaterialByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
     public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
@@ -153,6 +154,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
         DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
         RequiredMiningTierByType = properties["requiredMiningTier"].AsObject<Dictionary<string, int>>();
+        BlockMaterialByType = properties["blockMaterial"].AsObject<Dictionary<string, EnumBlockMaterial>>();
         LoadAndResolveCollisionAndSelectionBoxes(properties);
     }
 
@@ -824,6 +826,30 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         if (beBehavior.Variants.FindByVariant(RequiredMiningTierByType, out result))
         {
             handling = EnumHandling.PreventSubsequent;
+        }
+        return result;
+    }
+
+    public virtual EnumBlockMaterial GetBlockMaterial(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack, ref EnumHandling handling)
+    {
+        EnumBlockMaterial result = EnumBlockMaterial.Stone;
+        handling = EnumHandling.PassThrough;
+
+        if (pos != null && blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        {
+            if (beBehavior.Variants.FindByVariant(BlockMaterialByType, out result))
+            {
+            handling = EnumHandling.PreventSubsequent;
+                return result;
+            }
+        }
+        else
+        {
+            if (stack.FindByVariant(BlockMaterialByType, out result))
+            {
+                handling = EnumHandling.PreventSubsequent;
+                return result;
+            }
         }
         return result;
     }

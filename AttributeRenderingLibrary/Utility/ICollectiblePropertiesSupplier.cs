@@ -46,4 +46,6 @@ public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
 public interface IBlockPropertiesSupplier : IPropertiesSupplier
 {
     public int GetRequiredMiningTier(IWorldAccessor world, BlockPos pos, ref EnumHandling handling);
+
+    public EnumBlockMaterial GetBlockMaterial(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack, ref EnumHandling handling);
 }
