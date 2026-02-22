@@ -139,6 +139,7 @@ public static class HarmonyReflectionExtensions
     /// <typeparam name="T">The return type, expected back from the method.</typeparam>
     /// <param name="instance">The instance to call the method from.</param>
     /// <param name="method">The name of the method to call.</param>
+    /// <param name="typeArgs"></param>
     /// <param name="args">The arguments to pass to the method.</param>
     /// <returns>The return value of the reflected method call.</returns>
     public static T CallMethodWithTypeArgs<T>(this object instance, string method, Type[] typeArgs, params object[] args)

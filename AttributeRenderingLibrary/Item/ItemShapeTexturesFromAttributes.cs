@@ -31,11 +31,11 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, int> ToolTierByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
-    public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
-    public Dictionary<string, FoodNutritionProperties> NutritionPropsType { get; protected set; }
-    public Dictionary<string, GrindingProperties> GrindingPropsType { get; protected set; }
-    public Dictionary<string, CrushingProperties> CrushingPropsType { get; protected set; }
-    public Dictionary<string, TransitionableProperties[]> TransitionablePropsType { get; protected set; }
+    public Dictionary<string, CombustibleProperties> CombustiblePropsByType { get; protected set; }
+    public Dictionary<string, FoodNutritionProperties> NutritionPropsByType { get; protected set; }
+    public Dictionary<string, GrindingProperties> GrindingPropsByType { get; protected set; }
+    public Dictionary<string, CrushingProperties> CrushingPropsByType { get; protected set; }
+    public Dictionary<string, TransitionableProperties[]> TransitionablePropsByType { get; protected set; }
     public Dictionary<string, JuiceableProperties> JuiceablePropsByType { get; protected set; }
     public Dictionary<string, DistillationProps> DistillationPropsByType { get; protected set; }
     #endregion
@@ -110,11 +110,11 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
-        CombustiblePropsType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
-        NutritionPropsType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
-        GrindingPropsType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
-        CrushingPropsType = Attributes["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
-        TransitionablePropsType = Attributes["transitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
+        CombustiblePropsByType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
+        NutritionPropsByType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
+        GrindingPropsByType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
+        CrushingPropsByType = Attributes["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
+        TransitionablePropsByType = Attributes["transitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
         JuiceablePropsByType = Attributes["juiceableProperties"].AsObject<Dictionary<string, JuiceableProperties>>();
         DistillationPropsByType = Attributes["distillationProps"].AsObject<Dictionary<string, DistillationProps>>();
 
@@ -376,7 +376,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos)
     {
-        if (!stack.FindByVariant(CombustiblePropsType, out CombustibleProperties props, out Variants variants) || props == null)
+        if (!stack.FindByVariant(CombustiblePropsByType, out CombustibleProperties props, out Variants variants) || props == null)
         {
             return base.GetCombustibleProperties(world, stack, pos);
         }
@@ -398,7 +398,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity)
     {
-        if (!stack.FindByVariant(NutritionPropsType, out FoodNutritionProperties props, out Variants variants) || props == null)
+        if (!stack.FindByVariant(NutritionPropsByType, out FoodNutritionProperties props, out Variants variants) || props == null)
         {
             return base.GetNutritionProperties(world, stack, forEntity);
         }
@@ -420,7 +420,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack)
     {
-        if (!stack.FindByVariant(GrindingPropsType, out GrindingProperties props, out Variants variants) || props == null)
+        if (!stack.FindByVariant(GrindingPropsByType, out GrindingProperties props, out Variants variants) || props == null)
         {
             return base.GetGrindingProperties(world, stack);
         }
@@ -442,7 +442,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack)
     {
-        if (!stack.FindByVariant(CrushingPropsType, out CrushingProperties props, out Variants variants) || props == null)
+        if (!stack.FindByVariant(CrushingPropsByType, out CrushingProperties props, out Variants variants) || props == null)
         {
             return base.GetCrushingProperties(world, stack);
         }
@@ -464,7 +464,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity)
     {
-        if (!stack.FindByVariant(TransitionablePropsType, out TransitionableProperties[] allTypedProps, out Variants variants) || allTypedProps == null)
+        if (!stack.FindByVariant(TransitionablePropsByType, out TransitionableProperties[] allTypedProps, out Variants variants) || allTypedProps == null)
         {
             return base.GetTransitionableProperties(world, stack, forEntity);
         }

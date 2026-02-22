@@ -1,15 +1,9 @@
 ﻿namespace AttributeRenderingLibrary;
 
-public class Variant
+public class Variant(string key, string value)
 {
-    public string Key { get; protected set; }
-    public string Value { get; protected set; }
-
-    public Variant(string key, string value)
-    {
-        Key = key;
-        Value = value;
-    }
+    public string Key { get; protected set; } = key;
+    public string Value { get; protected set; } = value;
 
     public static Variant? FromString(string keyVal)
     {
@@ -21,8 +15,5 @@ public class Variant
         return new Variant(list[0], list[1]);
     }
 
-    public override string ToString()
-    {
-        return $"{Key}-{Value}";
-    }
+    public override string ToString() => $"{Key}-{Value}";
 }

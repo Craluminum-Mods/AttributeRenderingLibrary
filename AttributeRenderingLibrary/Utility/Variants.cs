@@ -1,5 +1,4 @@
-﻿using HarmonyLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,14 +16,14 @@ public class Variants
 {
     public const string RootAttributeName = "types";
 
-    protected SortedDictionary<string, string> Elements { get; set; } = new();
+    protected SortedDictionary<string, string> Elements { get; set; } = [];
 
     public int Count => Elements.Count;
     public bool Any => Elements.Count != 0;
 
     public List<string> GetAsStringArray()
     {
-        return Elements.Select(x => $"{x.Key}-{x.Value}").ToList();
+        return [.. Elements.Select(x => $"{x.Key}-{x.Value}")];
     }
 
     public string Get(string key)
@@ -39,7 +38,7 @@ public class Variants
             Elements[key] = value;
             return;
         }
-        Elements.TryAdd(key, value);
+        _ = Elements.TryAdd(key, value);
     }
 
     public void Set(params Variant[] newVariants)
@@ -98,7 +97,7 @@ public class Variants
 
     public static Variants FromTreeAttribute(ITreeAttribute rootTree)
     {
-        Variants variants = new Variants();
+        Variants variants = new();
         if (!rootTree.HasAttribute(RootAttributeName))
         {
             return variants;
@@ -217,19 +216,16 @@ public class Variants
 
     public override string ToString()
     {
-        StringBuilder result = new StringBuilder();
+        StringBuilder result = new();
         if (Elements is { Count: > 0 })
         {
-            result.Append(string.Join('-', Elements.Select(x => $"{x.Key}-{x.Value}")));
+            _ = result.Append(string.Join('-', GetAsStringArray()));
         }
         return result.ToString();
     }
 
     public Variants Clone()
     {
-        return new Variants()
-        {
-            Elements = Elements
-        };
+        return new() { Elements = Elements };
     }
 }

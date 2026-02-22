@@ -31,11 +31,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, int> ToolTierByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
-    public Dictionary<string, CombustibleProperties> CombustiblePropsType { get; protected set; }
-    public Dictionary<string, FoodNutritionProperties> NutritionPropsType { get; protected set; }
-    public Dictionary<string, GrindingProperties> GrindingPropsType { get; protected set; }
-    public Dictionary<string, CrushingProperties> CrushingPropsType { get; protected set; }
-    public Dictionary<string, TransitionableProperties[]> TransitionablePropsType { get; protected set; }
+    public Dictionary<string, CombustibleProperties> CombustiblePropsByType { get; protected set; }
+    public Dictionary<string, FoodNutritionProperties> NutritionPropsByType { get; protected set; }
+    public Dictionary<string, GrindingProperties> GrindingPropsByType { get; protected set; }
+    public Dictionary<string, CrushingProperties> CrushingPropsByType { get; protected set; }
+    public Dictionary<string, TransitionableProperties[]> TransitionablePropsByType { get; protected set; }
     public Dictionary<string, JuiceableProperties> JuiceablePropsByType { get; protected set; }
     public Dictionary<string, DistillationProps> DistillationPropsByType { get; protected set; }
     #endregion
@@ -117,11 +117,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
-        CombustiblePropsType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
-        NutritionPropsType = properties["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
-        GrindingPropsType = properties["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
-        CrushingPropsType = properties["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
-        TransitionablePropsType = properties["transitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
+        CombustiblePropsByType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
+        NutritionPropsByType = properties["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
+        GrindingPropsByType = properties["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
+        CrushingPropsByType = properties["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
+        TransitionablePropsByType = properties["transitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
         JuiceablePropsByType = properties["juiceableProperties"].AsObject<Dictionary<string, JuiceableProperties>>();
         DistillationPropsByType = properties["distillationProps"].AsObject<Dictionary<string, DistillationProps>>();
 
@@ -590,7 +590,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         CombustibleProperties result = null;
         handling = EnumHandling.PassThrough;
 
-        if (!stack.FindByVariant(CombustiblePropsType, out result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(CombustiblePropsByType, out result, out Variants variants) || result == null)
         {
             return result;
         }
@@ -617,7 +617,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         FoodNutritionProperties result = null;
         handling = EnumHandling.PassThrough;
 
-        if (!stack.FindByVariant(NutritionPropsType, out result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(NutritionPropsByType, out result, out Variants variants) || result == null)
         {
             return result;
         }
@@ -644,7 +644,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         GrindingProperties result = null;
         handling = EnumHandling.PassThrough;
 
-        if (!stack.FindByVariant(GrindingPropsType, out result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(GrindingPropsByType, out result, out Variants variants) || result == null)
         {
             return result;
         }
@@ -671,7 +671,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         CrushingProperties result = null;
         handling = EnumHandling.PassThrough;
 
-        if (!stack.FindByVariant(CrushingPropsType, out result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(CrushingPropsByType, out result, out Variants variants) || result == null)
         {
             return result;
         }
@@ -698,7 +698,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         TransitionableProperties[] result = null;
         handling = EnumHandling.PassThrough;
 
-        if (!stack.FindByVariant(TransitionablePropsType, out result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(TransitionablePropsByType, out result, out Variants variants) || result == null)
         {
             return result;
         }

@@ -493,6 +493,8 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
         /// Creates all possible combinations of attributes that are defined in the variants
         /// </summary>
         /// <param name="variants">The variant groups to use for generation</param>
+        /// <param name="skipCombinations"></param>
+        /// <param name="allowedCombinations"></param>
         /// <returns>A list of all valid attribute permutations as <c>JsonObject</c></returns>
         private List<JsonObject> ComposeVariantAttributes(Dictionary<string, CombineState> variants, List<string> skipCombinations, List<string> allowedCombinations)
         {

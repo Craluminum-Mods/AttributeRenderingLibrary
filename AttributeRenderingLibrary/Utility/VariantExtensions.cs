@@ -52,11 +52,7 @@ public static class VariantExtensions
     {
         result = default;
 
-        if (stack == null || inDictionary is not { Count: > 0 })
-        {
-            return false;
-        }
-        return FindByVariant(Variants.FromStack(stack), inDictionary, out result);
+        return stack != null && inDictionary is { Count: > 0 } && FindByVariant(Variants.FromStack(stack), inDictionary, out result);
     }
 
     /// <summary>
@@ -82,7 +78,6 @@ public static class VariantExtensions
     /// <typeparam name="T"></typeparam>
     /// <param name="variants"></param>
     /// <param name="inDictionary">List of keys, including keys with '::' separator used as AND operator </param>
-    /// <param name="result"></param>
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, IDictionary<string, T> inDictionary)
     {

@@ -12,8 +12,8 @@ namespace AttributeRenderingLibrary;
 
 public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : CollectibleBehaviorShapeTexturesFromAttributes(collObj)
 {
-    public Dictionary<string, bool> isFoldableByType { get; protected set; }
-    public Dictionary<string, bool> visibleDamageEffectByType { get; protected set; }
+    public Dictionary<string, bool> IsFoldableByType { get; protected set; }
+    public Dictionary<string, bool> VisibleDamageEffectByType { get; protected set; }
 
     public override void OnUnloaded(ICoreAPI api)
     {
@@ -30,23 +30,21 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
         if (properties == null) return;
 
-        isFoldableByType = properties["isFoldable"].AsObject<Dictionary<string, bool>>();
-        visibleDamageEffectByType = properties["visibleDamageEffect"].AsObject<Dictionary<string, bool>>();
+        IsFoldableByType = properties["isFoldable"].AsObject<Dictionary<string, bool>>();
+        VisibleDamageEffectByType = properties["visibleDamageEffect"].AsObject<Dictionary<string, bool>>();
     }
 
     public override MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos forBlockPos)
     {
         string slotType = (slot as ItemSlotDisplay)?.DisplayCategory ?? "default";
-        if (slotType == "shelf" && IsFoldable(slot.Itemstack))
-        {
-            return genFoldedMesh(slot, targetAtlas, forBlockPos);
+        return slotType == "shelf" && IsFoldable(slot.Itemstack)
+            ? genFoldedMesh(slot, targetAtlas, forBlockPos)
+            : genFullBodyMesh(slot, targetAtlas);
         }
-        return genFullBodyMesh(slot, targetAtlas);
-    }
 
     public virtual bool IsFoldable(ItemStack itemstack)
     {
-        return itemstack.FindByVariant(isFoldableByType, out bool isFoldable) && isFoldable;
+        return itemstack.FindByVariant(IsFoldableByType, out bool isFoldable) && isFoldable;
     }
 
     public virtual MeshData genFoldedMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos forBlockPos)
@@ -56,9 +54,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         DisplayableAttributes displayableProps = slot.Itemstack.Collectible.GetCollectibleInterface<IDisplayableProps>()?.GetDisplayableProps(slot, "shelf");
         displayableProps ??= slot.Itemstack.ItemAttributes["displayable"]["shelf"].AsObject<DisplayableAttributes>();
         
-        if (displayableProps == null) return mesh;
-
-        return GetOrCreateMesh(slot, targetAtlas, overrideShape: displayableProps.Shape);
+        return displayableProps == null ? mesh : GetOrCreateMesh(slot, targetAtlas, overrideShape: displayableProps.Shape);
     }
 
     public override string GetMeshCacheKey(ItemSlot slot)
@@ -85,9 +81,9 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
         renderinfo.NormalShaded = true;
 
-        if ((itemstack.FindByVariant(visibleDamageEffectByType, out bool visibleDamageEffect) && visibleDamageEffect) || collObj.Attributes.IsTrue("visibleDamageEffect"))
+        if ((itemstack.FindByVariant(VisibleDamageEffectByType, out bool visibleDamageEffect) && visibleDamageEffect) || (collObj.Attributes is { Count: > 0 } && collObj.Attributes.IsTrue("visibleDamageEffect")))
         {
-            renderinfo.DamageEffect = Math.Max(0, 1 - (float)collObj.GetRemainingDurability(itemstack) / collObj.GetMaxDurability(itemstack) * 1.1f);
+            renderinfo.DamageEffect = Math.Max(0, 1 - ((float)collObj.GetRemainingDurability(itemstack) / collObj.GetMaxDurability(itemstack) * 1.1f));
         }
     }
 
@@ -136,7 +132,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
         if (rcshape.Overlays is { Length: > 0 })
         {
-            foreach (var overlay in rcshape.Overlays)
+            foreach (CompositeShape overlay in rcshape.Overlays)
             {
                 Shape oshape = Shape.TryGet(clientApi, overlay.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json"));
                 if (oshape == null)
@@ -149,7 +145,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
             }
         }
 
-        UniversalShapeTextureSource stexSource = new UniversalShapeTextureSource(clientApi, targetAtlas, shape, rcshape.Base.ToString());
+        UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;
         string overlayPrefix = "";
 
