@@ -39,6 +39,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
     public Dictionary<string, int> RequiredMiningTierByType { get; protected set; }
     public Dictionary<string, EnumBlockMaterial> BlockMaterialByType { get; protected set; }
+    public Dictionary<string, float[]> LiquidBarrierOnSidesByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
     public Dictionary<string, CombustibleProperties> CombustiblePropsByType { get; protected set; }
@@ -157,6 +158,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
         RequiredMiningTierByType = properties["requiredMiningTier"].AsObject<Dictionary<string, int>>();
         BlockMaterialByType = properties["blockMaterial"].AsObject<Dictionary<string, EnumBlockMaterial>>();
+        LiquidBarrierOnSidesByType = properties["liquidBarrierOnSides"].AsObject<Dictionary<string, float[]>>();
         LoadAndResolveCollisionAndSelectionBoxes(properties);
 
         // it is necessary to add empty attributes for juiceableProperties and distillationProps, otherwise they may not properly show up in handbook
@@ -507,6 +509,39 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             return cuboids;
         }
         return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
+    }
+
+    public override float GetLiquidBarrierHeightOnSide(BlockFacing face, BlockPos pos, ref EnumHandling handled)
+    {
+        float[] lbos = GetLiquidBarrierOnSides(pos);
+        if (lbos != null)
+        {
+            float[] liquidBarrierHeightonSide = new float[6];
+
+            for (int i = 0; i < 6; i++) liquidBarrierHeightonSide[i] = block.SideIsSolid(pos, BlockFacing.ALLFACES[i].Index) ? 1f : 0f;
+
+            for (int i = 0; lbos != null && i < lbos.Length; i++) liquidBarrierHeightonSide[i] = lbos[i];
+
+            handled = EnumHandling.PreventSubsequent;
+            return liquidBarrierHeightonSide[face.Index];
+        }
+        return base.GetLiquidBarrierHeightOnSide(face, pos, ref handled);
+    }
+
+    public virtual float[] GetLiquidBarrierOnSides(BlockPos pos)
+    {
+        if (LiquidBarrierOnSidesByType is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        if (coreApi.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior
+            && beBehavior.Variants != null
+            && beBehavior.Variants.FindByVariant(LiquidBarrierOnSidesByType, out float[] liquidBarrierOnSides))
+        {
+            return liquidBarrierOnSides;
+        }
+        return null;
     }
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
