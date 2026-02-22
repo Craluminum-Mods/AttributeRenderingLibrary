@@ -5,6 +5,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\$(Configuration)\Mods\mod</OutputPath>
     <Configurations>Debug;Release</Configurations>
+	<Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
