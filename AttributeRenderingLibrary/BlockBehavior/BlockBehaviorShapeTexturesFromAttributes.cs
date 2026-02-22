@@ -869,9 +869,22 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         CombustibleProperties result = null;
         handling = EnumHandling.PassThrough;
 
-        if (!stack.FindByVariant(CombustiblePropsType, out result, out Variants variants) || result == null)
+        Variants variants;
+
+        if (pos != null && world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        {
+            if (!beBehavior.Variants.FindByVariant(CombustiblePropsType, out result) || result == null)
+            {
+                return result;
+            }
+            variants = beBehavior.Variants;
+        }
+        else
+        {
+            if (!stack.FindByVariant(CombustiblePropsType, out result, out variants) || result == null)
         {
             return result;
+        }
         }
 
         if (result.SmeltedStack == null)
