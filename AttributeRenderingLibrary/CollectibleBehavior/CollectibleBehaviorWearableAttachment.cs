@@ -100,7 +100,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         AssetLocation shapePathForLogging = props.Client.Shape.Base;
         Shape newShape;
 
-        if (AttachedShapeBySlotCodeByType == null || AttachedShapeBySlotCodeByType.Count <= 0)
+        if (AttachedShapeBySlotCodeByType is not { Count: > 0 })
         {
             // No need to step parent anything if its just a texture on the seraph
             newShape = entityShape;
@@ -134,7 +134,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
         newShape.StepParentShape(shape, rcshape.Base.ToShortString(), shapePathForLogging.ToShortString(), clientApi.Logger, (key, code) => { });
 
-        if (rcshape.Overlays != null)
+        if (rcshape.Overlays is { Length: > 0 })
         {
             foreach (var overlay in rcshape.Overlays)
             {
@@ -153,7 +153,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;
         string overlayPrefix = "";
 
-        if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
+        if (rcshape.Overlays is { Length: > 0 })
         {
             overlayPrefix = GetMeshCacheKey(slot);
             prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);

@@ -9,7 +9,7 @@ public static class CollectibleObject_GetCrushingProperties_Patch
     [HarmonyPostfix]
     public static void Postfix(CollectibleObject __instance, ref CrushingProperties __result, IWorldAccessor world, ItemStack itemstack)
     {
-        if (__instance?.GetCollectibleInterface<IPropertiesSupplier>() is not IPropertiesSupplier propertiesSupplier) return;
+        if (__instance?.GetCollectibleInterface<IPropertiesSupplier>() is not { } propertiesSupplier) return;
 
         EnumHandling handling = EnumHandling.PassThrough;
         CrushingProperties value = propertiesSupplier.GetCrushingProperties(world, itemstack, ref handling);

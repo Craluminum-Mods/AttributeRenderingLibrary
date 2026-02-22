@@ -9,7 +9,7 @@ public static class CollectibleObject_GetDamagedBy_Patch
     [HarmonyPostfix]
     public static void Postfix(CollectibleObject __instance, ref EnumItemDamageSource[] __result, ItemSlot slot)
     {
-        if (__instance?.GetCollectibleInterface<IPropertiesSupplier>() is not IPropertiesSupplier propertiesSupplier) return;
+        if (__instance?.GetCollectibleInterface<IPropertiesSupplier>() is not { } propertiesSupplier) return;
 
         EnumHandling handling = EnumHandling.PassThrough;
         EnumItemDamageSource[] value = propertiesSupplier.GetDamagedBy(slot, ref handling);

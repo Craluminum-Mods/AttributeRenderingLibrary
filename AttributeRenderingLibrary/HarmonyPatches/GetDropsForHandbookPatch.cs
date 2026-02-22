@@ -11,7 +11,7 @@ public static class GetDropsForHandbookPatch
     [HarmonyPostfix]
     public static void Postfix(Block __instance, ref BlockDropItemStack[] __result, ItemStack handbookStack, IPlayer forPlayer)
     {
-        if (handbookStack?.Collectible?.GetCollectibleInterface<IBlockShapeTexturesFromAttributes>() is not IBlockShapeTexturesFromAttributes shapeTexturesFromAttributes)
+        if (handbookStack?.Collectible?.GetCollectibleInterface<IBlockShapeTexturesFromAttributes>() is not { } shapeTexturesFromAttributes)
         {
             return;
         }

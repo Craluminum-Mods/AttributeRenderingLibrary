@@ -10,7 +10,7 @@ public static class Block_GetRequiredMiningTier_Patch
     [HarmonyPostfix]
     public static void Postfix(Block __instance, ref int __result, IWorldAccessor world, BlockPos pos)
     {
-        if (__instance?.GetCollectibleInterface<IBlockPropertiesSupplier>() is not IBlockPropertiesSupplier propertiesSupplier) return;
+        if (__instance?.GetInterface<IBlockPropertiesSupplier>(world, pos) is not { } propertiesSupplier) return;
 
         EnumHandling handling = EnumHandling.PassThrough;
         int value = propertiesSupplier.GetRequiredMiningTier(world, pos, ref handling);

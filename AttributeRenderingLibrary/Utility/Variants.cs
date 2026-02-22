@@ -44,7 +44,7 @@ public class Variants
 
     public void Set(params Variant[] newVariants)
     {
-        if (newVariants == null || newVariants.Length == 0)
+        if (newVariants is not { Length: > 0 })
         {
             return;
         }
@@ -57,7 +57,7 @@ public class Variants
 
     public void Set(Dictionary<string, string> newVariants)
     {
-        if (newVariants == null || newVariants.Count == 0)
+        if (newVariants is not { Count: > 0 })
         {
             return;
         }
@@ -70,7 +70,7 @@ public class Variants
 
     public void RemoveKeys(params string[] keys)
     {
-        if (keys == null || keys.Length == 0)
+        if (keys is not { Length: > 0 })
         {
             return;
         }
@@ -87,7 +87,7 @@ public class Variants
     {
         foreach ((string key, string value) in otherVariants.Elements)
         {
-            if (ignoreKeys != null && ignoreKeys.Contains(key))
+            if (ignoreKeys is { Length: > 0 } && ignoreKeys.Contains(key))
             {
                 continue;
             }
@@ -172,7 +172,7 @@ public class Variants
     {
         cshape.Base = ReplacePlaceholders(cshape.Base);
 
-        if (cshape.Overlays != null && cshape.Overlays.Length > 0)
+        if (cshape.Overlays is { Length: > 0 })
         {
             for (int i = 0; i < cshape.Overlays.Length; i++)
             {
@@ -218,7 +218,7 @@ public class Variants
     public override string ToString()
     {
         StringBuilder result = new StringBuilder();
-        if (Elements.Count != 0)
+        if (Elements is { Count: > 0 })
         {
             result.Append(string.Join('-', Elements.Select(x => $"{x.Key}-{x.Value}")));
         }

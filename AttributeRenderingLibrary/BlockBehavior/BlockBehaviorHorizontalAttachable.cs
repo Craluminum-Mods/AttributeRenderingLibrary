@@ -88,7 +88,7 @@ public class BlockBehaviorHorizontalAttachable(Block block) : BlockBehavior(bloc
     {
         handled = EnumHandling.PreventSubsequent;
 
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not { } beBehavior)
         {
             handled = EnumHandling.PassThrough;
             return null;

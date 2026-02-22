@@ -10,7 +10,7 @@ public static class CollectibleObject_GetTags_Patch
     [HarmonyPostfix]
     public static void Postfix(CollectibleObject __instance, ref TagSet __result, ItemStack stack)
     {
-        if (__instance?.GetCollectibleInterface<IPropertiesSupplier>() is not IPropertiesSupplier propertiesSupplier) return;
+        if (__instance?.GetCollectibleInterface<IPropertiesSupplier>() is not { } propertiesSupplier) return;
 
         EnumHandling handling = EnumHandling.PassThrough;
         TagSet value = propertiesSupplier.GetTags(stack, ref handling);

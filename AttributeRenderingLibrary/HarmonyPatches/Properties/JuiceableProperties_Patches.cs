@@ -11,7 +11,7 @@ public static class JuiceableProperties_Patches
     [HarmonyPatch(typeof(CollectibleBehaviorHandbookTextAndExtraInfo), nameof(CollectibleBehaviorHandbookTextAndExtraInfo.getjuiceableProps))]
     public static void Postfix_1(CollectibleBehaviorHandbookTextAndExtraInfo __instance, ref JuiceableProperties __result, ItemStack stack)
     {
-        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not ICollectiblePropertiesSupplier propertiesSupplier) return;
+        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return;
 
         EnumHandling handling = EnumHandling.PassThrough;
         JuiceableProperties value = propertiesSupplier.GetJuiceableProperties(stack, ref handling);
@@ -26,7 +26,7 @@ public static class JuiceableProperties_Patches
     [HarmonyPatch(typeof(BlockEntityFruitPress), nameof(BlockEntityFruitPress.getJuiceableProps))]
     public static void Postfix_2(BlockEntityFruitPress __instance, ref JuiceableProperties __result, ItemStack stack)
     {
-        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not ICollectiblePropertiesSupplier propertiesSupplier) return;
+        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return;
 
         EnumHandling handling = EnumHandling.PassThrough;
         JuiceableProperties value = propertiesSupplier.GetJuiceableProperties(stack, ref handling);

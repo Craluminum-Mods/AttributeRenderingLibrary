@@ -12,8 +12,8 @@ public static class CustomTransformPatch
     [HarmonyPrefix]
     public static bool Prefix(BlockEntityDisplay __instance, ItemStack stack, ref MeshData mesh)
     {
-        if (stack.Collectible?.GetCollectibleInterface<IContainedTransform>() is not IContainedTransform containedTransform
-            || containedTransform.GetTransform(__instance, __instance.AttributeTransformCode, stack) is not ModelTransform transform)
+        if (stack.Collectible?.GetCollectibleInterface<IContainedTransform>() is not { } containedTransform
+            || containedTransform.GetTransform(__instance, __instance.AttributeTransformCode, stack) is not { } transform)
         {
             return true;
         }

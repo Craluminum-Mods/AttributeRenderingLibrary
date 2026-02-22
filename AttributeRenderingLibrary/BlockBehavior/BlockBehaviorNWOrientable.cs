@@ -43,7 +43,7 @@ public class BlockBehaviorNWOrientable : BlockBehavior
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handled)
     {
         handled = EnumHandling.PreventSubsequent;
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not BlockEntityBehaviorShapeTexturesFromAttributes beBehavior)
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not { } beBehavior)
         {
             handled = EnumHandling.PassThrough;
             return null;

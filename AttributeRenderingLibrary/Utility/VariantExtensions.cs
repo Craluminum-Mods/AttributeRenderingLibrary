@@ -23,7 +23,7 @@ public static class VariantExtensions
         Core.Api?.World.FrameProfiler.Enter("AttributeRenderingLibrary.FindByVariant");
         result = default;
 
-        if (variants == null || inDictionary == null || inDictionary.Count == 0)
+        if (variants == null || inDictionary is not { Count: > 0 })
         {
             Core.Api?.World.FrameProfiler.Leave();
             return false;
@@ -52,7 +52,7 @@ public static class VariantExtensions
     {
         result = default;
 
-        if (stack == null || inDictionary == null || inDictionary.Count == 0)
+        if (stack == null || inDictionary is not { Count: > 0 })
         {
             return false;
         }
@@ -67,7 +67,7 @@ public static class VariantExtensions
     {
         result = default;
 
-        if (stack == null || inDictionary == null || inDictionary.Count == 0)
+        if (stack == null || inDictionary is not { Count: > 0 })
         {
             variants = new();
             return false;
@@ -87,7 +87,7 @@ public static class VariantExtensions
     public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, IDictionary<string, T> inDictionary)
     {
         Core.Api?.World.FrameProfiler.Enter("AttributeRenderingLibrary.FindAllByVariant");
-        if (variants == null || inDictionary == null || inDictionary.Count == 0)
+        if (variants == null || inDictionary is not { Count: > 0 })
         {
             Core.Api?.World.FrameProfiler.Leave();
             yield break;
@@ -173,7 +173,7 @@ public static class VariantExtensions
 
     public static string GetName(this Variants variants, List<object> entries)
     {
-        if (!variants.Any || entries == null || !entries.Any())
+        if (!variants.Any || entries is not { Count: > 0 })
         {
             return "";
         }
@@ -185,7 +185,7 @@ public static class VariantExtensions
 
     public static void GetDescription(this Variants variants, StringBuilder sb, List<object> entries)
     {
-        if (!variants.Any || entries == null || !entries.Any())
+        if (!variants.Any || entries is not { Count: > 0 })
         {
             return;
         }

@@ -13,8 +13,8 @@ public class Variant
 
     public static Variant? FromString(string keyVal)
     {
-        string[]? list = keyVal?.Split('-', 2);
-        if (list?.Length != 2)
+        string[] list = keyVal?.Split('-', 2);
+        if (list is not { Length: 2 })
         {
             return null;
         }

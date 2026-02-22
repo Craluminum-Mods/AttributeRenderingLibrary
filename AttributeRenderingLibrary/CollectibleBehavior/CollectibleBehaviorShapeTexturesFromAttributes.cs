@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -92,7 +93,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual void LoadTypes(JsonObject properties)
     {
-        if (properties == null) return;
+        if (properties is not { Count: > 0 }) return;
 
         LoadTags(properties);
 
@@ -137,12 +138,24 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
         DisableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
         KeepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
+
+        // it is necessary to add empty attributes for juiceableProperties and distillationProps, otherwise they may not properly show up in handbook
+        if (JuiceablePropsByType is { Count: > 0 } && (collObj.Attributes == null || !collObj.Attributes.KeyExists("juiceableProperties")))
+        {
+            collObj.EnsureAttributesNotNull();
+            collObj.Attributes.Token["juiceableProperties"] = JToken.FromObject(new JuiceableProperties());
+        }
+        if (DistillationPropsByType is { Count: > 0 } && (collObj.Attributes == null || !collObj.Attributes.KeyExists("distillationProps")))
+        {
+            collObj.EnsureAttributesNotNull();
+            collObj.Attributes.Token["distillationProps"] = JToken.FromObject(new DistillationProps());
+        }
     }
 
     public virtual void LoadTags(JsonObject properties)
     {
         var unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
-        if (unresolvedTags == null) return;
+        if (unresolvedTags is not { Count: > 0 }) return;
 
         TagsByType = [];
 
@@ -182,7 +195,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;
         string overlayPrefix = "";
 
-        if (rcshape.Overlays != null && rcshape.Overlays.Length > 0)
+        if (rcshape.Overlays is { Length: > 0 })
         {
             overlayPrefix = GetMeshCacheKey(slot);
             prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
@@ -279,7 +292,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
     {
-        if (!itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
+        if (!itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
         {
             return;
         }
@@ -289,7 +302,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
-        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
         {
             return;
         }
@@ -402,7 +415,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     #region IContainedCustomName
     public virtual string GetContainedInfo(ItemSlot inSlot)
     {
-        if (!inSlot.Itemstack.FindByVariant(ContainedDescriptionByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(ContainedDescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
         {
             return inSlot.Itemstack.GetName();
         }
@@ -414,7 +427,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual string GetContainedName(ItemSlot inSlot, int quantity)
     {
-        if (!inSlot.Itemstack.FindByVariant(ContainedNameByType, out List<object> langKeys, out Variants variants) || langKeys == null || langKeys.Count == 0)
+        if (!inSlot.Itemstack.FindByVariant(ContainedNameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
         {
             return inSlot.Itemstack.GetName();
         }
@@ -434,7 +447,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType = [];
 
-        if (stack.Collectible.GetCollectibleInterface<IShapeTexturesFromAttributes>() is IShapeTexturesFromAttributes STFA)
+        if (stack.Collectible.GetCollectibleInterface<IShapeTexturesFromAttributes>() is { } STFA)
         {
             texturesByType = STFA.texturesByType;
         }
@@ -460,7 +473,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual CompositeShape GetAttachedShape(ItemStack stack, string slotCode)
     {
-        if (!stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode, out Variants variants) || attachedShapeBySlotCode == null || attachedShapeBySlotCode.Count == 0)
+        if (!stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode, out Variants variants) || attachedShapeBySlotCode is not { Count: > 0 })
         {
             return iattr?.GetAttachedShape(stack, slotCode);
         }
@@ -470,7 +483,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             if (WildcardUtil.Match(_slotCode, slotCode))
             {
                 CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-                if (rcshape.Overlays == null || rcshape.Overlays.Length == 0)
+                if (rcshape.Overlays is not { Length: > 0 })
                 {
                     return rcshape;
                 }

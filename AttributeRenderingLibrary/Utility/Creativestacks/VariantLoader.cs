@@ -318,7 +318,7 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
             foreach (var collectible in serverApi.World.Collectibles)
             {
                 behavior = collectible.GetBehavior<CollectibleBehaviorGenerateCreativeStacks>();
-                if (behavior != null && behavior.CreativeInventory.Count > 0)
+                if (behavior is { CreativeInventory: { Count: > 0 } })
                 {
                     collectibleGenerationQueue.Enqueue(new CollectibleAndStackGenerationBehavior
                     {
@@ -723,9 +723,8 @@ namespace AttributeRenderingLibrary.Utility.Creativestacks
             {
                 uniqueVariantCodes.Clear();
 
-                if (variantGroup.States != null && variantGroup.States.Length > 0)
+                if (variantGroup.States is { Length: > 0 })
                 {
-
                     uniqueVariantCodes.AddRange(variantGroup.States);
                 }
 

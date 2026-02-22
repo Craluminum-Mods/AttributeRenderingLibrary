@@ -605,14 +605,8 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         {
             return null;
         }
-        if (protectionModifiers != null && protectionModifiers.PerTierFlatDamageReductionLoss == null)
-        {
-            protectionModifiers.PerTierFlatDamageReductionLoss = GetDefaultModifiers(slot)?.PerTierFlatDamageReductionLoss;
-        }
-        if (protectionModifiers != null && protectionModifiers.PerTierRelativeProtectionLoss == null)
-        {
-            protectionModifiers.PerTierRelativeProtectionLoss = GetDefaultModifiers(slot)?.PerTierRelativeProtectionLoss;
-        }
+        protectionModifiers?.PerTierFlatDamageReductionLoss ??= GetDefaultModifiers(slot)?.PerTierFlatDamageReductionLoss;
+        protectionModifiers?.PerTierRelativeProtectionLoss ??= GetDefaultModifiers(slot)?.PerTierRelativeProtectionLoss;
         return protectionModifiers;
     }
 
@@ -646,10 +640,9 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
             }
             else
             {
-                FootStepSounds = new AssetLocation[] { loc };
+                FootStepSounds = [loc];
             }
         }
-
         return FootStepSounds;
     }
 

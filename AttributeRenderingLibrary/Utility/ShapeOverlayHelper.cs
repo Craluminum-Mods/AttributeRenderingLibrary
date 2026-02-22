@@ -80,7 +80,7 @@ public class ShapeOverlayHelper
                 ctex.Base.Domain = "game";
             }
             ctex.Bake(clientApi.Assets);
-            if (prefixedTextureCodes != null && prefixedTextureCodes.ContainsKey(textureCode))
+            if (prefixedTextureCodes is { Count: > 0 } && prefixedTextureCodes.ContainsKey(textureCode))
             {
                 textureSource.textures[overlayPrefix + textureCode] = ctex;
             }

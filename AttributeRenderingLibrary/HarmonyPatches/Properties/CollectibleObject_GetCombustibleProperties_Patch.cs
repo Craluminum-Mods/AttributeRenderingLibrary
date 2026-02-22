@@ -10,7 +10,7 @@ public static class CollectibleObject_GetCombustibleProperties_Patch
     [HarmonyPostfix]
     public static void Postfix(CollectibleObject __instance, ref CombustibleProperties __result, IWorldAccessor world, ItemStack itemstack, BlockPos pos)
     {
-        if (__instance?.GetCollectibleInterface<IPropertiesSupplier>() is not IPropertiesSupplier propertiesSupplier) return;
+        if (__instance?.GetCollectibleInterface<IPropertiesSupplier>() is not { } propertiesSupplier) return;
 
         EnumHandling handling = EnumHandling.PassThrough;
         CombustibleProperties value = propertiesSupplier.GetCombustibleProperties(world, itemstack, pos, ref handling);
