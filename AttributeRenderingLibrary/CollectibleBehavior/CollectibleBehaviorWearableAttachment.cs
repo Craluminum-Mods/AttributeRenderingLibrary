@@ -120,13 +120,13 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         ucshape ??= slot.Itemstack.Item.Shape;
 
 
-        if (ucshape == null) return mesh;
+        if (ucshape == null) RenderExtensions.GetUnknownItemModelData(clientApi);
 
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
         Shape shape = Shape.TryGet(coreApi, rcshape.Base);
-        if (shape == null) return mesh;
+        if (shape == null) RenderExtensions.GetUnknownItemModelData(clientApi);
 
         newShape.StepParentShape(shape, rcshape.Base.ToShortString(), shapePathForLogging.ToShortString(), clientApi.Logger, (key, code) => { });
 

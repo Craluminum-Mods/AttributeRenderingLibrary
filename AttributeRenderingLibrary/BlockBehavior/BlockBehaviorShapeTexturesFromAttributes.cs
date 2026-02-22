@@ -233,13 +233,13 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         ucshape ??= block.ShapeInventory;
         ucshape ??= block.Shape;
 
-        if (ucshape == null) return mesh;
+        if (ucshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
         Shape shape = Shape.TryGet(coreApi, rcshape.Base);
-        if (shape == null) return mesh;
+        if (shape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, clientApi.BlockTextureAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;
@@ -291,13 +291,13 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                 variants.FindByVariant(shapeByType, out ucshape);
                 ucshape ??= block.Shape;
             }
-            if (ucshape == null) return mesh;
+            if (ucshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
             CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
             rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
             Shape shape = Shape.TryGet(coreApi, rcshape.Base);
-            if (shape == null) return mesh;
+            if (shape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
             UniversalShapeTextureSource stexSource = new(clientApi, clientApi.BlockTextureAtlas, shape, rcshape.Base.ToString());
             Dictionary<string, AssetLocation> prefixedTextureCodes = null;

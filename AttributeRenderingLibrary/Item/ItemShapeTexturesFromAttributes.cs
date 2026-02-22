@@ -169,13 +169,13 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             variants.FindByVariant(shapeByType, out ucshape);
             ucshape ??= Shape;
         }
-        if (ucshape == null) return mesh;
+        if (ucshape == null) RenderExtensions.GetUnknownItemModelData(clientApi);
 
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
         Shape shape = Vintagestory.API.Common.Shape.TryGet(api, rcshape.Base);
-        if (shape == null) return mesh;
+        if (shape == null) RenderExtensions.GetUnknownItemModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;

@@ -1,12 +1,17 @@
 ﻿using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.Client.NoObf;
 
 namespace AttributeRenderingLibrary;
 
 public static class RenderExtensions
 {
     public static MeshData GenEmptyMesh() => new MeshData(32, 32).WithXyzFaces().WithRenderpasses().WithColorMaps();
+
+    public static MeshData GetUnknownItemModelData(ICoreClientAPI capi) => (capi?.World as ClientMain)?.TesselatorManager.unknownItemModelData ?? GenEmptyMesh();
+
+    public static MeshData GetUnknownBlockModelData(ICoreClientAPI capi) => (capi?.World as ClientMain)?.TesselatorManager.unknownBlockModelData ?? GenEmptyMesh();
 
     public static RenderSkillItemDelegate RenderItemStack(this ItemStack stack, ICoreClientAPI capi, bool showStackSize = false)
     {

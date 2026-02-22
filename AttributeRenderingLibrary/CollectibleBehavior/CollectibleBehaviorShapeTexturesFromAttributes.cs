@@ -180,13 +180,13 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             variants.FindByVariant(shapeByType, out ucshape);
             ucshape ??= slot.Itemstack.Item.Shape;
         }
-        if (ucshape == null) return mesh;
+        if (ucshape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
 
         CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
         rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
 
         Shape shape = Shape.TryGet(coreApi, rcshape.Base);
-        if (shape == null) return mesh;
+        if (shape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;
