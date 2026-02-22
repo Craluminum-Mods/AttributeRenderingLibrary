@@ -22,6 +22,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedNameByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
+    public Dictionary<string, byte[]> LightHsvByType { get; protected set; }
     public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
     public Dictionary<string, int> DurabilityByType { get; protected set; }
     public Dictionary<string, float> AttackPowerByType { get; protected set; }
@@ -121,6 +122,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         DescriptionByType = properties["description"].AsObject<Dictionary<string, List<object>>>();
         ContainedNameByType = properties["containedName"].AsObject<Dictionary<string, List<object>>>();
         ContainedDescriptionByType = properties["containedDescription"].AsObject<Dictionary<string, List<object>>>();
+        LightHsvByType = properties["lightHsv"].AsObject<Dictionary<string, byte[]>>();
         StorageFlagsByType = properties["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
         DurabilityByType = properties["durability"].AsObject<Dictionary<string, int>>();
         AttackPowerByType = properties["attackPower"].AsObject<Dictionary<string, float>>();
@@ -801,6 +803,28 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return result;
     }
 
+    public virtual byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack, ref EnumHandling handling)
+    {
+        byte[] result;
+        if (pos != null && blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
+        {
+            if (beBehavior.Variants.FindByVariant(LightHsvByType, out result))
+            {
+                handling = EnumHandling.PreventSubsequent;
+                return result;
+            }
+        }
+        else
+        {
+            if (stack.FindByVariant(LightHsvByType, out result))
+            {
+                handling = EnumHandling.PreventSubsequent;
+                return result;
+            }
+        }
+        return result;
+    }
+
     public virtual int GetRequiredMiningTier(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
     {
         int result = 0;
@@ -979,7 +1003,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return clonedProps;
     }
 
-    public TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
+    public virtual TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
     {
         if (!stack.FindByVariant(TransitionablePropsByType, out TransitionableProperties[] result, out Variants variants) || result == null)
         {

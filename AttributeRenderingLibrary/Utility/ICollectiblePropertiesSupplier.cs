@@ -35,6 +35,12 @@ public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
         return new();
     }
 
+    byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return [];
+    }
+
     EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling)
     {
         handling = EnumHandling.PassThrough;

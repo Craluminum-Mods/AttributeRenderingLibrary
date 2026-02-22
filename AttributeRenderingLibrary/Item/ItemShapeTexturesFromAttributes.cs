@@ -21,6 +21,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedNameByType { get; protected set; }
     public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
+    public Dictionary<string, byte[]> LightHsvByType { get; protected set; }
     public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
     public Dictionary<string, int> DurabilityByType { get; protected set; }
     public Dictionary<string, float> AttackPowerByType { get; protected set; }
@@ -102,6 +103,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         DescriptionByType = Attributes["description"].AsObject<Dictionary<string, List<object>>>();
         ContainedNameByType = Attributes["containedName"].AsObject<Dictionary<string, List<object>>>();
         ContainedDescriptionByType = Attributes["containedDescription"].AsObject<Dictionary<string, List<object>>>();
+        LightHsvByType = Attributes["lightHsv"].AsObject<Dictionary<string, byte[]>>();
         StorageFlagsByType = Attributes["storageFlags"].AsObject<Dictionary<string, EnumItemStorageFlags>>();
         DurabilityByType = Attributes["durability"].AsObject<Dictionary<string, int>>();
         AttackPowerByType = Attributes["attackPower"].AsObject<Dictionary<string, float>>();
@@ -291,6 +293,10 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         variants.GetDescription(dsc, langKeys);
         variants.GetDebugDescription(dsc, withDebugInfo);
     }
+
+    public override byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack) => !stack.FindByVariant(LightHsvByType, out var lightHsv)
+            ? base.GetLightHsv(blockAccessor, pos, stack)
+            : lightHsv;
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack) => !itemstack.FindByVariant(StorageFlagsByType, out var storageFlags)
             ? base.GetStorageFlags(itemstack)
