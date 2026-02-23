@@ -153,16 +153,9 @@ public class Variants
 
     public AssetLocation ReplacePlaceholders(AssetLocation location)
     {
-        if (location.Domain != "game")
-        {
+        if (location is not { Path: not null }) return location!;
+
             location.Path = ReplacePlaceholders(location.Path);
-            return location;
-        }
-        location = new AssetLocation(ReplacePlaceholders(location.Path));
-        if (!location.HasDomain())
-        {
-            location.Domain = "game";
-        }
 
         return location;
     }
