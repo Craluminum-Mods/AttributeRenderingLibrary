@@ -135,6 +135,8 @@ public class Variants
 
     public string ReplacePlaceholders(string input)
     {
+        if (input is not { Length: > 0 }) return input!;
+
         foreach ((string key, string value) in Elements)
         {
             input = input.Replace($"{{{key}}}", value);
@@ -144,6 +146,8 @@ public class Variants
 
     public string[] ReplacePlaceholders(string[] input)
     {
+        if (input is not { Length: > 0 }) return input!;
+
         for (int i = 0; i < input.Length; i++)
         {
             input[i] = ReplacePlaceholders(input[i]);
@@ -173,6 +177,8 @@ public class Variants
     /// <returns>The same <see cref="CompositeShape"/> instance with replaced placeholders.</returns>
     public CompositeShape ReplacePlaceholders(CompositeShape cshape)
     {
+        if (cshape is not { Base: not null }) return cshape!;
+
         cshape.Base = ReplacePlaceholders(cshape.Base);
 
         if (cshape.Overlays is { Length: > 0 })
@@ -212,6 +218,8 @@ public class Variants
     /// <returns>The same <see cref="CompositeTexture"/> instance with replaced placeholders.</returns>
     public CompositeTexture ReplacePlaceholders(CompositeTexture ctex)
     {
+        if (ctex is not { Base: not null }) return ctex!;
+
         foreach ((string key, string value) in Elements)
         {
             ctex.FillPlaceholder($"{{{key}}}", value);
@@ -227,6 +235,8 @@ public class Variants
     /// <returns>The same <see cref="JsonItemStack"/> instance with replaced placeholders.</returns>
     public JsonItemStack ReplacePlaceholders(JsonItemStack jstack)
     {
+        if (jstack is not { Code: not null }) return jstack!;
+
         foreach ((string key, string value) in Elements)
         {
             jstack.FillPlaceHolder(key, value);
@@ -242,6 +252,8 @@ public class Variants
     /// <returns>The same <see cref="BlockDropItemStack"/> instance with replaced placeholders.</returns>
     public BlockDropItemStack ReplacePlaceholders(BlockDropItemStack bdstack)
     {
+        if (bdstack is not { Code: not null }) return bdstack!;
+
         bdstack.Code = ReplacePlaceholders(bdstack.Code);
 
         if (bdstack.Attributes != null)
