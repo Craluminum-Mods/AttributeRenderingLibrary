@@ -35,6 +35,7 @@ public class Core : ModSystem
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.ShapeTexturesFromAttributes", typeof(CollectibleBehaviorShapeTexturesFromAttributes));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.ContainedTransform", typeof(CollectibleBehaviorContainedTransform));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.HeldBagTyped", typeof(CollectibleBehaviorHeldBagTyped));
+        api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.DisplayableProps", typeof(AttributeRenderingLibrary.CollectibleBehaviorDisplayableProps));
 
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.WearableAttachment", typeof(AttributeRenderingLibrary.CollectibleBehaviorWearableAttachment));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.Wearable", typeof(AttributeRenderingLibrary.CollectibleBehaviorWearable));

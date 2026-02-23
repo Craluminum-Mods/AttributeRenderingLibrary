@@ -17,6 +17,8 @@ public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : Collec
     {
         base.Initialize(properties);
 
+        if (properties is not { Count: > 0 }) return;
+
         LoadTags(properties);
 
         QuantitySlotsByType = properties["quantitySlots"].AsObject<Dictionary<string, int>>();
