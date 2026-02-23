@@ -7,7 +7,7 @@ namespace AttributeRenderingLibrary;
 
 public class CollectibleBehaviorDisplayableProps(CollectibleObject collObj) : CollectibleBehavior(collObj), IDisplayableProps
 {
-    public Dictionary<string, Dictionary<string, DisplayableAttributes>> DisplayablePropsByCodeByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, DisplayableAttributes>>? DisplayablePropsByCodeByType { get; protected set; }
 
     public override void Initialize(JsonObject properties)
     {
@@ -20,7 +20,7 @@ public class CollectibleBehaviorDisplayableProps(CollectibleObject collObj) : Co
 
     public DisplayableAttributes? GetDisplayableProps(ItemSlot inSlot, string displayType)
     {
-        if (!inSlot.Itemstack.FindByVariant(DisplayablePropsByCodeByType, out Dictionary<string, DisplayableAttributes> propsByCode, out Variants variants) || propsByCode is not { Count: > 0})
+        if (!inSlot.Itemstack!.FindByVariant(DisplayablePropsByCodeByType!, out Dictionary<string, DisplayableAttributes> propsByCode, out Variants variants) || propsByCode is not { Count: > 0})
         {
             return null;
         }
