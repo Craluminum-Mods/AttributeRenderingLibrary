@@ -115,8 +115,11 @@ public class Variants
     public void ToTreeAttribute(ITreeAttribute rootTree)
     {
         rootTree.RemoveAttribute(RootAttributeName);
+
+        if (Elements is not { Count: > 0 }) return;
+
         ITreeAttribute typesTree = rootTree.GetOrAddTreeAttribute(RootAttributeName);
-        foreach ((string key, string val) in Elements)
+        foreach (var (key, val) in Elements)
         {
             typesTree.SetString(key, val);
         }
