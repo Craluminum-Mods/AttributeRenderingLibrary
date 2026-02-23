@@ -84,12 +84,9 @@ public class Variants
 
     public void MergeVariants(Variants otherVariants, params string[] ignoreKeys)
     {
-        foreach ((string key, string value) in otherVariants.Elements)
+        foreach (var (key, value) in otherVariants.Elements)
         {
-            if (ignoreKeys is { Length: > 0 } && ignoreKeys.Contains(key))
-            {
-                continue;
-            }
+            if (ignoreKeys?.Contains(key) == true) continue;
 
             Set(key, value);
         }
