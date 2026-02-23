@@ -151,15 +151,26 @@ public class Variants
         return input;
     }
 
+    /// <summary>
+    /// Mutates the provided <see cref="AssetLocation"/> by replacing placeholders in its Path.
+    /// <para><br/>WARNING: This modifies the original reference. If shared, it changes globally.</para>
+    /// </summary>
+    /// <returns>The same <see cref="AssetLocation"/> instance with a replaced path.</returns>
     public AssetLocation ReplacePlaceholders(AssetLocation location)
     {
         if (location is not { Path: not null }) return location!;
 
-            location.Path = ReplacePlaceholders(location.Path);
+        location.Path = ReplacePlaceholders(location.Path);
 
         return location;
     }
 
+    /// <summary>
+    /// Mutates the provided <see cref="CompositeShape"/> by replacing placeholders in its Base, Overlays, Alternates, IgnoreElements and SelectiveElements.
+    /// <para><br/>WARNING: This modifies the original reference. If the shape is shared (e.g., from a Block Type),
+    /// it will be changed globally.</para>
+    /// </summary>
+    /// <returns>The same <see cref="CompositeShape"/> instance with replaced placeholders.</returns>
     public CompositeShape ReplacePlaceholders(CompositeShape cshape)
     {
         cshape.Base = ReplacePlaceholders(cshape.Base);
@@ -193,6 +204,12 @@ public class Variants
         return cshape;
     }
 
+    /// <summary>
+    /// Mutates the provided <see cref="CompositeTexture"/> by replacing placeholders in Base.Path, BlendedOverlays, Alternates and Tiles.
+    /// <para><br/>WARNING: This modifies the original texture definition. If this texture is part of 
+    /// a shared block or item type, the change will apply globally.</para>
+    /// </summary>
+    /// <returns>The same <see cref="CompositeTexture"/> instance with replaced placeholders.</returns>
     public CompositeTexture ReplacePlaceholders(CompositeTexture ctex)
     {
         foreach ((string key, string value) in Elements)
@@ -202,6 +219,12 @@ public class Variants
         return ctex;
     }
 
+    /// <summary>
+    /// Mutates the provided <see cref="JsonItemStack"/>, replacing placeholders in its Code and Attributes.
+    /// <para><br/>WARNING: Modifies the original reference. This can lead to unexpected behavior if 
+    /// the stack is shared across multiple instances.</para>
+    /// </summary>
+    /// <returns>The same <see cref="JsonItemStack"/> instance with replaced placeholders.</returns>
     public JsonItemStack ReplacePlaceholders(JsonItemStack jstack)
     {
         foreach ((string key, string value) in Elements)
@@ -211,6 +234,12 @@ public class Variants
         return jstack;
     }
 
+    /// <summary>
+    /// Mutates the provided <see cref="BlockDropItemStack"/>, replacing placeholders in its Code and Attributes.
+    /// <para><br/>WARNING: Modifies the original reference. This can lead to unexpected behavior if 
+    /// the stack is shared across multiple instances.</para>
+    /// </summary>
+    /// <returns>The same <see cref="BlockDropItemStack"/> instance with replaced placeholders.</returns>
     public BlockDropItemStack ReplacePlaceholders(BlockDropItemStack bdstack)
     {
         bdstack.Code = ReplacePlaceholders(bdstack.Code);
