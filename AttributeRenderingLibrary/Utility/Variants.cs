@@ -28,7 +28,7 @@ public class Variants
 
     public string Get(string key)
     {
-        return Elements.GetValueOrDefault(key);
+        return Elements.GetValueOrDefault(key)!;
     }
 
     public void Set(string key, string value)
@@ -170,6 +170,24 @@ public class Variants
             {
                 cshape.Overlays[i].Base = ReplacePlaceholders(cshape.Overlays[i].Base);
             }
+        }
+
+        if (cshape.Alternates is { Length: > 0 })
+        {
+            for (int i = 0; i < cshape.Alternates.Length; i++)
+            {
+                cshape.Alternates[i].Base = ReplacePlaceholders(cshape.Alternates[i].Base);
+            }
+        }
+
+        if (cshape.IgnoreElements is { Length: > 0 })
+        {
+            cshape.IgnoreElements = ReplacePlaceholders(cshape.IgnoreElements);
+        }
+
+        if (cshape.SelectiveElements is { Length: > 0 })
+        {
+            cshape.SelectiveElements = ReplacePlaceholders(cshape.SelectiveElements);
         }
 
         return cshape;
