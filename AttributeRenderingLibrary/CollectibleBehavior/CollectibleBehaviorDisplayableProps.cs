@@ -5,7 +5,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class CollectibleBehaviorDisplayableProps(CollectibleObject collObj) : CollectibleBehaviorTypedDisplayableProps(collObj), IDisplayableProps
+public class CollectibleBehaviorDisplayableProps(CollectibleObject collObj) : CollectibleBehavior(collObj), IDisplayableProps
 {
     public Dictionary<string, Dictionary<string, DisplayableAttributes>> DisplayablePropsByCodeByType { get; protected set; }
 
