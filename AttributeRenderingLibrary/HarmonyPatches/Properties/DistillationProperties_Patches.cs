@@ -7,11 +7,11 @@ namespace AttributeRenderingLibrary.HarmonyPatches.Properties;
 [HarmonyPatch]
 public static class DistillationProperties_Patches
 {
-    [HarmonyPostfix]
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(CollectibleBehaviorHandbookTextAndExtraInfo), nameof(CollectibleBehaviorHandbookTextAndExtraInfo.getDistillationProps))]
-    public static void Postfix_1(CollectibleBehaviorHandbookTextAndExtraInfo __instance, ref DistillationProps __result, ItemStack stack)
+    public static bool Prefix_1(CollectibleBehaviorHandbookTextAndExtraInfo __instance, ref DistillationProps __result, ItemStack stack)
     {
-        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return;
+        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return true;
 
         EnumHandling handling = EnumHandling.PassThrough;
         DistillationProps value = propertiesSupplier.GetDistillationProperties(stack, ref handling);
@@ -19,14 +19,16 @@ public static class DistillationProperties_Patches
         if (handling is EnumHandling.PreventSubsequent or EnumHandling.PreventDefault)
         {
             __result = value;
+            return false;
         }
+        return true;
     }
 
-    [HarmonyPostfix]
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(BlockEntityBoiler), nameof(BlockEntityBoiler.DistProps), MethodType.Getter)]
-    public static void Postfix_2(BlockEntityBoiler __instance, ref DistillationProps __result)
+    public static bool Prefix_2(BlockEntityBoiler __instance, ref DistillationProps __result)
     {
-        if (__instance.InputStack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return;
+        if (__instance.InputStack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return true;
 
         EnumHandling handling = EnumHandling.PassThrough;
         DistillationProps value = propertiesSupplier.GetDistillationProperties(__instance.InputStack, ref handling);
@@ -34,6 +36,8 @@ public static class DistillationProperties_Patches
         if (handling is EnumHandling.PreventSubsequent or EnumHandling.PreventDefault)
         {
             __result = value;
+            return false;
         }
+        return true;
     }
 }

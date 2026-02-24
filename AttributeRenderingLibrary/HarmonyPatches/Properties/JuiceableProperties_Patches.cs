@@ -7,11 +7,11 @@ namespace AttributeRenderingLibrary.HarmonyPatches.Properties;
 [HarmonyPatch]
 public static class JuiceableProperties_Patches
 {
-    [HarmonyPostfix]
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(CollectibleBehaviorHandbookTextAndExtraInfo), nameof(CollectibleBehaviorHandbookTextAndExtraInfo.getjuiceableProps))]
-    public static void Postfix_1(CollectibleBehaviorHandbookTextAndExtraInfo __instance, ref JuiceableProperties __result, ItemStack stack)
+    public static bool Prefix_1(CollectibleBehaviorHandbookTextAndExtraInfo __instance, ref JuiceableProperties __result, ItemStack stack)
     {
-        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return;
+        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return true;
 
         EnumHandling handling = EnumHandling.PassThrough;
         JuiceableProperties value = propertiesSupplier.GetJuiceableProperties(stack, ref handling);
@@ -19,14 +19,16 @@ public static class JuiceableProperties_Patches
         if (handling is EnumHandling.PreventSubsequent or EnumHandling.PreventDefault)
         {
             __result = value;
+            return false;
         }
+        return true;
     }
 
-    [HarmonyPostfix]
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(BlockEntityFruitPress), nameof(BlockEntityFruitPress.getJuiceableProps))]
-    public static void Postfix_2(BlockEntityFruitPress __instance, ref JuiceableProperties __result, ItemStack stack)
+    public static bool Prefix_2(BlockEntityFruitPress __instance, ref JuiceableProperties __result, ItemStack stack)
     {
-        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return;
+        if (stack?.Collectible?.GetCollectibleInterface<ICollectiblePropertiesSupplier>() is not { } propertiesSupplier) return true;
 
         EnumHandling handling = EnumHandling.PassThrough;
         JuiceableProperties value = propertiesSupplier.GetJuiceableProperties(stack, ref handling);
@@ -34,6 +36,8 @@ public static class JuiceableProperties_Patches
         if (handling is EnumHandling.PreventSubsequent or EnumHandling.PreventDefault)
         {
             __result = value;
+            return false;
         }
+        return true;
     }
 }
