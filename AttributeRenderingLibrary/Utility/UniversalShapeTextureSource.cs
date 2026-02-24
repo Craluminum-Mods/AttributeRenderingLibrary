@@ -44,7 +44,7 @@ public class UniversalShapeTextureSource : ITexPositionSource
         {
             TextureAtlasPosition texPos;
 
-            if (textures.TryGetValue(textureCode, out CompositeTexture ctex))
+            if (textures.TryGetValue(textureCode, out CompositeTexture ctex) || textures.TryGetValue("all", out ctex))
             {
                 targetAtlas.GetOrInsertTexture(ctex, out _, out texPos);
             }
