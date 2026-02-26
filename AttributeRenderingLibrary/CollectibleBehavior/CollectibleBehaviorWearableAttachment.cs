@@ -116,17 +116,10 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         }
 
         Variants variants = Variants.FromStack(slot.Itemstack);
-        variants.FindByVariant(shapeByType, out CompositeShape ucshape);
-        ucshape ??= slot.Itemstack.Item.Shape;
 
+        Shape? shape = GetShape(slot, variants, overrideShape: null, out CompositeShape? rcshape);
 
-        if (ucshape == null) RenderExtensions.GetUnknownItemModelData(clientApi);
-
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        Shape shape = Shape.TryGet(coreApi, rcshape.Base);
-        if (shape == null) RenderExtensions.GetUnknownItemModelData(clientApi);
+        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
         newShape.StepParentShape(shape, rcshape.Base.ToShortString(), shapePathForLogging.ToShortString(), clientApi.Logger, (key, code) => { });
 
