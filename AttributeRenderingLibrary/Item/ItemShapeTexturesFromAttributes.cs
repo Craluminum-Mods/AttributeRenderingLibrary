@@ -167,7 +167,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         Shape? shape = GetShape(slot, variants, overrideShape, out CompositeShape? rcshape);
 
-        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
+        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;

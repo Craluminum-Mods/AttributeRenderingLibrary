@@ -119,7 +119,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
         Shape? shape = GetShape(slot, variants, overrideShape: null, out CompositeShape? rcshape);
 
-        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
+        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
 
         newShape.StepParentShape(shape, rcshape.Base.ToShortString(), shapePathForLogging.ToShortString(), clientApi.Logger, (key, code) => { });
 

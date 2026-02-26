@@ -178,7 +178,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         Shape? shape = GetShape(slot, variants, overrideShape, out CompositeShape? rcshape);
 
-        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
+        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;
@@ -546,22 +546,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack, ref EnumHandling handling)
     {
-        byte[] result;
-        if (pos != null && blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
+        if (stack.FindByVariant(LightHsvByType, out byte[] result))
         {
-            if (beBehavior.Variants.FindByVariant(LightHsvByType, out result))
-            {
-                handling = EnumHandling.PreventSubsequent;
-                return result;
-            }
-        }
-        else
-        {
-            if (stack.FindByVariant(LightHsvByType, out result))
-            {
-                handling = EnumHandling.PreventSubsequent;
-                return result;
-            }
+            handling = EnumHandling.PreventSubsequent;
         }
         return result;
     }
