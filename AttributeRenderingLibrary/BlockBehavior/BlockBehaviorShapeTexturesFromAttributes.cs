@@ -227,23 +227,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         Variants variants = Variants.FromStack(slot.Itemstack);
 
-        CompositeShape ucshape = overrideShape;
-        if (ucshape == null)
-            variants.FindByVariant(shapeInventoryByType, out ucshape);
+        Shape? shape = GetInventoryShape(slot, variants, overrideShape, out CompositeShape? rcshape);
 
-        if (ucshape == null)
-            variants.FindByVariant(shapeByType, out ucshape);
-
-        ucshape ??= block.ShapeInventory;
-        ucshape ??= block.Shape;
-
-        if (ucshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
-
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        Shape shape = Shape.TryGet(coreApi, rcshape.Base);
-        if (shape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
+        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, clientApi.BlockTextureAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation> prefixedTextureCodes = null;
@@ -289,19 +275,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         {
             mesh = RenderExtensions.GenEmptyMesh();
 
-            CompositeShape ucshape = overrideShape;
-            if (ucshape == null)
-            {
-                variants.FindByVariant(shapeByType, out ucshape);
-                ucshape ??= block.Shape;
-            }
-            if (ucshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
+            Shape? shape = GetShape(slot: null, atBlockPos, variants, overrideShape, out CompositeShape? rcshape);
 
-            CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-            rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-            Shape shape = Shape.TryGet(coreApi, rcshape.Base);
-            if (shape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
+            if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
             UniversalShapeTextureSource stexSource = new(clientApi, clientApi.BlockTextureAtlas, shape, rcshape.Base.ToString());
             Dictionary<string, AssetLocation> prefixedTextureCodes = null;
@@ -337,6 +313,54 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             }
         }
         return mesh;
+    }
+
+    public virtual Shape? GetShape(ItemSlot? slot, BlockPos? pos, Variants variants, CompositeShape? overrideShape, out CompositeShape? originalShape)
+    {
+        CompositeShape? ucshape = overrideShape;
+
+        if (ucshape == null)
+        {
+            variants.FindByVariant(shapeByType, out ucshape);
+            ucshape ??= block.Shape;
+        }
+        if (ucshape == null)
+        {
+            originalShape = ucshape;
+            return null;
+        }
+
+        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
+        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
+
+        originalShape = rcshape;
+        return Vintagestory.API.Common.Shape.TryGet(coreApi, rcshape.Base);
+    }
+
+    public virtual Shape? GetInventoryShape(ItemSlot slot, Variants variants, CompositeShape? overrideShape, out CompositeShape? originalShape)
+    {
+        CompositeShape? ucshape = overrideShape;
+
+        if (ucshape == null)
+            variants.FindByVariant(shapeInventoryByType, out ucshape);
+
+        if (ucshape == null)
+            variants.FindByVariant(shapeByType, out ucshape);
+
+        ucshape ??= block.ShapeInventory;
+        ucshape ??= block.Shape;
+
+        if (ucshape == null)
+        {
+            originalShape = ucshape;
+            return null;
+        }
+
+        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
+        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
+
+        originalShape = rcshape;
+        return Vintagestory.API.Common.Shape.TryGet(coreApi, rcshape.Base);
     }
 
     public virtual string[] GetShapeIgnoreElements(Variants variants, CompositeShape cshape)
