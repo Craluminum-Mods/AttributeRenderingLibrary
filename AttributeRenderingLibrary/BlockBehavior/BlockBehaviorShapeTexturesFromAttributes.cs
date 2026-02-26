@@ -367,9 +367,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         if (ShapeIgnoreElementsByType is { Count: > 0 })
         {
-            if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] selectiveElements) && selectiveElements != null)
+            if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] elements) && elements != null)
             {
-                return cshape.IgnoreElements.Append(selectiveElements);
+                return variants.ReplacePlaceholders(elements).Append(cshape.IgnoreElements);
             }
         }
 
@@ -378,7 +378,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             List<string> result = cshape.IgnoreElements is null ? new() : new(cshape.IgnoreElements);
             foreach (string[] subset in variants.FindAllByVariant(ShapeIgnoreElementsCombineByType))
             {
-                result.AddRange(subset);
+                result.AddRange(variants.ReplacePlaceholders(subset));
             }
             return [.. result];
         }
@@ -390,18 +390,18 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         if (ShapeSelectiveElementsByType is { Count: > 0 })
         {
-            if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] selectiveElements) && selectiveElements != null)
+            if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] elements) && elements != null)
             {
-                return cshape.SelectiveElements.Append(selectiveElements);
+                return variants.ReplacePlaceholders(elements).Append(cshape.SelectiveElements);
             }
         }
 
         if (ShapeSelectiveElementsCombineByType is { Count: > 0 })
         {
             List<string> result = cshape.SelectiveElements is null ? new() : new(cshape.SelectiveElements);
-            foreach (string[] subset in variants.FindAllByVariant(ShapeSelectiveElementsCombineByType))
+            foreach (string[] elements in variants.FindAllByVariant(ShapeSelectiveElementsCombineByType))
             {
-                result.AddRange(subset);
+                result.AddRange(variants.ReplacePlaceholders(elements));
             }
             return [.. result];
         }
