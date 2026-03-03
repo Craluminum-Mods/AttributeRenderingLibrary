@@ -1,4 +1,5 @@
-﻿using AttributeRenderingLibrary.Utility.Creativestacks;
+﻿using AttributeRenderingLibrary.HarmonyPatches;
+using AttributeRenderingLibrary.Utility.Creativestacks;
 using HarmonyLib;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -15,7 +16,10 @@ public class Core : ModSystem
     {
         Api = api;
 
-        HarmonyInstance.PatchAllUncategorized();
+        if (!Harmony.HasAnyPatches(HarmonyInstance.Id))
+        {
+            HarmonyInstance.PatchAllUncategorized();
+        }
 
         if (api.Side.IsServer())
         {
