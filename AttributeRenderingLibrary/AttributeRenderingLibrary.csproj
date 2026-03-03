@@ -49,6 +49,10 @@
       <HintPath>$(VINTAGE_STORY)/Lib/Microsoft.Data.Sqlite.dll</HintPath>
       <Private>False</Private>
     </Reference>
+	  <Reference Include="Mono.Cecil">
+		  <HintPath>$(VINTAGE_STORY)/Lib/Mono.Cecil.dll</HintPath>
+		  <Private>False</Private>
+	  </Reference>
   </ItemGroup>
 
   <ItemGroup>

@@ -19,6 +19,7 @@ public class Core : ModSystem
         if (!Harmony.HasAnyPatches(HarmonyInstance.Id))
         {
             HarmonyInstance.PatchAllUncategorized();
+            AttributeRedirectionPatches.Apply(HarmonyInstance, Mod.Logger);
         }
 
         if (api.Side.IsServer())
