@@ -1,5 +1,4 @@
-﻿using AttributeRenderingLibrary.HarmonyPatches;
-using AttributeRenderingLibrary.Utility.Creativestacks;
+﻿using AttributeRenderingLibrary.Utility.Creativestacks;
 using HarmonyLib;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -62,11 +61,9 @@ public class Core : ModSystem
 
     public override void AssetsFinalize(ICoreAPI api)
     {
-        base.AssetsFinalize(api);
-
-        if (api.Side.IsServer())
+        if (api is ICoreServerAPI sapi)
         {
-            CreateCreativeStacks(api as ICoreServerAPI);
+            CreateCreativeStacks(sapi);
         }
     }
 
