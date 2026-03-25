@@ -94,26 +94,16 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         EntityProperties props = clientApi.World.GetEntityType(new AssetLocation("player"));
         Shape entityShape = props.Client.LoadedShape.Clone();
         AssetLocation shapePathForLogging = props.Client.Shape.Base;
-        Shape newShape;
-
-        if (AttachedShapeBySlotCodeByType is not { Count: > 0 })
+        Shape newShape = new()
         {
-            // No need to step parent anything if its just a texture on the seraph
-            newShape = entityShape;
-        }
-        else
-        {
-            newShape = new Shape()
-            {
-                Elements = entityShape.CloneElements(),
-                Animations = entityShape.CloneAnimations(),
-                AnimationsByCrc32 = entityShape.AnimationsByCrc32,
-                JointsById = entityShape.JointsById,
-                TextureWidth = entityShape.TextureWidth,
-                TextureHeight = entityShape.TextureHeight,
-                Textures = null,
-            };
-        }
+            Elements = entityShape.CloneElements(),
+            Animations = entityShape.CloneAnimations(),
+            AnimationsByCrc32 = entityShape.AnimationsByCrc32,
+            JointsById = entityShape.JointsById,
+            TextureWidth = entityShape.TextureWidth,
+            TextureHeight = entityShape.TextureHeight,
+            Textures = null,
+        };
 
         Variants variants = Variants.FromStack(slot.Itemstack);
 

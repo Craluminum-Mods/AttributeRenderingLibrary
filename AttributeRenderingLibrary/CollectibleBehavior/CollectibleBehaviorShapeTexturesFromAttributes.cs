@@ -57,6 +57,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
     #endregion
     #region IAttachableToEntity
+    public Dictionary<string, CompositeShape> AttachedShapeByType { get; protected set; }
     public Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
     public Dictionary<string, string> CategoryCodeByType { get; protected set; }
     public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
@@ -136,6 +137,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         HeldTpUseAnimationByType = properties["heldTpUseAnimation"].AsObject<Dictionary<string, string>>();
         HeldTpHitAnimationByType = properties["heldTpHitAnimation"].AsObject<Dictionary<string, string>>();
 
+        AttachedShapeByType = properties["STFA_attachableToEntity"]?["attachedShape"].AsObject<Dictionary<string, CompositeShape>>();
         AttachedShapeBySlotCodeByType = properties["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>();
         CategoryCodeByType = properties["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
         DisableElementsByType = properties["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
@@ -483,34 +485,69 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual CompositeShape GetAttachedShape(ItemStack stack, string slotCode)
     {
-        if (!stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode, out Variants variants) || attachedShapeBySlotCode is not { Count: > 0 })
-        {
-            return iattr?.GetAttachedShape(stack, slotCode);
-        }
+        Variants variants = Variants.FromStack(stack);
 
-        foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
+        if (stack.FindByVariant(AttachedShapeByType, out CompositeShape attachedShape) && attachedShape != null)
         {
-            if (WildcardUtil.Match(_slotCode, slotCode))
+            CompositeShape rcshape = variants.ReplacePlaceholders(attachedShape.Clone());
+            if (rcshape.Overlays is not { Length: > 0 })
             {
-                CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-                if (rcshape.Overlays is not { Length: > 0 })
-                {
-                    return rcshape;
-                }
-
-                List<CompositeShape> overlays = [];
-                foreach (CompositeShape overlay in rcshape.Overlays)
-                {
-                    if (coreApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
-                    {
-                        overlays.Add(overlay);
-                    }
-                }
-                rcshape.Overlays = [.. overlays];
                 return rcshape;
             }
+
+            List<CompositeShape> overlays = [];
+            foreach (CompositeShape overlay in rcshape.Overlays)
+            {
+                if (coreApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
+                {
+                    overlays.Add(overlay);
+                }
+            }
+            rcshape.Overlays = [.. overlays];
+            return rcshape;
         }
-        return iattr?.GetAttachedShape(stack, slotCode);
+
+        if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
+        {
+            foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
+            {
+                if (WildcardUtil.Match(_slotCode, slotCode))
+                {
+                    CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
+                    if (rcshape.Overlays is not { Length: > 0 })
+                    {
+                        return rcshape;
+                    }
+
+                    List<CompositeShape> overlays = [];
+                    foreach (CompositeShape overlay in rcshape.Overlays)
+                    {
+                        if (coreApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
+                        {
+                            overlays.Add(overlay);
+                        }
+                    }
+                    rcshape.Overlays = [.. overlays];
+                    return rcshape;
+                }
+            }
+        }
+
+        _ = GetShape(new DummySlot(stack), variants, overrideShape: null, out CompositeShape? compositeShape);
+        if (compositeShape.Overlays is { Length: > 0 })
+        {
+            List<CompositeShape> _overlays = [];
+            foreach (CompositeShape overlay in compositeShape.Overlays)
+            {
+                if (coreApi.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
+                {
+                    _overlays.Add(overlay);
+                }
+            }
+            compositeShape.Overlays = [.. _overlays];
+            return compositeShape;
+        }
+        return compositeShape;
     }
 
     public virtual string GetCategoryCode(ItemStack stack)
