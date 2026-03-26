@@ -41,6 +41,7 @@ public class Core : ModSystem
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.DisplayableProps", typeof(AttributeRenderingLibrary.CollectibleBehaviorDisplayableProps));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.FoodTags", typeof(AttributeRenderingLibrary.CollectibleBehaviorFoodTags));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.HealingItem", typeof(AttributeRenderingLibrary.CollectibleBehaviorHealingItem));
+        api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.GroundStoredProcessable", typeof(AttributeRenderingLibrary.CollectibleBehaviorGroundStoredProcessable));
 
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.WearableAttachment", typeof(AttributeRenderingLibrary.CollectibleBehaviorWearableAttachment));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.Wearable", typeof(AttributeRenderingLibrary.CollectibleBehaviorWearable));
