@@ -14,59 +14,61 @@ namespace AttributeRenderingLibrary;
 public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : CollectibleBehavior(collObj), IShapeTexturesFromAttributes, IPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
     #region Collectible properties
-    public Dictionary<string, TagSet> TagsByType { get; protected set; }
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
-    public Dictionary<string, List<object>> NameByType { get; protected set; }
-    public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
-    public Dictionary<string, List<object>> ContainedNameByType { get; protected set; }
-    public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
-    public Dictionary<string, byte[]> LightHsvByType { get; protected set; }
-    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
-    public Dictionary<string, int> DurabilityByType { get; protected set; }
-    public Dictionary<string, float> AttackPowerByType { get; protected set; }
-    public Dictionary<string, float> AttackRangeByType { get; protected set; }
-    public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
-    public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
-    public Dictionary<string, EnumTool?> ToolByType { get; protected set; }
-    public Dictionary<string, int> ToolTierByType { get; protected set; }
+    public Dictionary<string, TagSet>? TagsByType { get; protected set; }
+    public Dictionary<string, CompositeShape>? shapeByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType { get; protected set; }
+    public Dictionary<string, List<object>>? NameByType { get; protected set; }
+    public Dictionary<string, List<object>>? DescriptionByType { get; protected set; }
+    public Dictionary<string, List<object>>? ContainedNameByType { get; protected set; }
+    public Dictionary<string, List<object>>? ContainedDescriptionByType { get; protected set; }
+    public Dictionary<string, byte[]>? LightHsvByType { get; protected set; }
+    public Dictionary<string, EnumItemStorageFlags>? StorageFlagsByType { get; protected set; }
+    public Dictionary<string, int>? DurabilityByType { get; protected set; }
+    public Dictionary<string, float>? AttackPowerByType { get; protected set; }
+    public Dictionary<string, float>? AttackRangeByType { get; protected set; }
+    public Dictionary<string, Dictionary<EnumBlockMaterial, float>>? MiningSpeedByType { get; protected set; }
+    public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
+    public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
+    public Dictionary<string, int>? ToolTierByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
-    public Dictionary<string, CombustibleProperties> CombustiblePropsByType { get; protected set; }
-    public Dictionary<string, FoodNutritionProperties> NutritionPropsByType { get; protected set; }
-    public Dictionary<string, GrindingProperties> GrindingPropsByType { get; protected set; }
-    public Dictionary<string, CrushingProperties> CrushingPropsByType { get; protected set; }
-    public Dictionary<string, TransitionableProperties[]> TransitionablePropsByType { get; protected set; }
-    public Dictionary<string, JuiceableProperties> JuiceablePropsByType { get; protected set; }
-    public Dictionary<string, DistillationProps> DistillationPropsByType { get; protected set; }
+    public Dictionary<string, CombustibleProperties>? CombustiblePropsByType { get; protected set; }
+    public Dictionary<string, FoodNutritionProperties>? NutritionPropsByType { get; protected set; }
+    public Dictionary<string, GrindingProperties>? GrindingPropsByType { get; protected set; }
+    public Dictionary<string, CrushingProperties>? CrushingPropsByType { get; protected set; }
+    public Dictionary<string, TransitionableProperties[]>? TransitionablePropsByType { get; protected set; }
+    public Dictionary<string, JuiceableProperties>? JuiceablePropsByType { get; protected set; }
+    public Dictionary<string, DistillationProps>? DistillationPropsByType { get; protected set; }
     #endregion
     #region Animations
-    public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldLeftReadyAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldRightReadyAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldLeftTpIdleAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldRightTpIdleAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldTpUseAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldTpHitAnimationByType { get; protected set; }
     #endregion
     #region Extra shape overrides
-    public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeIgnoreElementsCombineByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeSelectiveElementsByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
+    public Dictionary<string, string[]>? ShapeIgnoreElementsByType { get; protected set; }
+    public Dictionary<string, string[]>? ShapeIgnoreElementsCombineByType { get; protected set; }
+    public Dictionary<string, string[]>? ShapeSelectiveElementsByType { get; protected set; }
+    public Dictionary<string, string[]>? ShapeSelectiveElementsCombineByType { get; protected set; }
     #endregion
     #region IAttachableToEntity
-    public Dictionary<string, CompositeShape> AttachedShapeByType { get; protected set; }
-    public Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
-    public Dictionary<string, string> CategoryCodeByType { get; protected set; }
-    public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
-    public Dictionary<string, string[]> KeepElementsByType { get; protected set; }
-    public IAttachableToEntity iattr;
+    public Dictionary<string, CompositeShape>? AttachedShapeByType { get; protected set; }
+    public Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>? AttachedShapeBySlotCodeByType { get; protected set; }
+    public Dictionary<string, string>? CategoryCodeByType { get; protected set; }
+    public Dictionary<string, string[]>? DisableElementsByType { get; protected set; }
+    public Dictionary<string, string[]>? KeepElementsByType { get; protected set; }
+    public IAttachableToEntity? iattr;
     #endregion
 
+#nullable disable
     public ICoreClientAPI clientApi;
     public ICoreAPI coreApi;
+#nullable enable
 
     public override void OnLoaded(ICoreAPI api)
     {
@@ -82,7 +84,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override void OnUnloaded(ICoreAPI api)
     {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
+        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
         meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
         ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
     }
@@ -147,18 +149,18 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         if (JuiceablePropsByType is { Count: > 0 } && (collObj.Attributes == null || !collObj.Attributes.KeyExists("juiceableProperties")))
         {
             collObj.EnsureAttributesNotNull();
-            collObj.Attributes.Token["juiceableProperties"] = JToken.FromObject(new JuiceableProperties());
+            collObj.Attributes!.Token!["juiceableProperties"] = JToken.FromObject(new JuiceableProperties());
         }
         if (DistillationPropsByType is { Count: > 0 } && (collObj.Attributes == null || !collObj.Attributes.KeyExists("distillationProps")))
         {
             collObj.EnsureAttributesNotNull();
-            collObj.Attributes.Token["distillationProps"] = JToken.FromObject(new DistillationProps());
+            collObj.Attributes!.Token!["distillationProps"] = JToken.FromObject(new DistillationProps());
         }
     }
 
     public virtual void LoadTags(JsonObject properties)
     {
-        Dictionary<string, List<string>> unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
+        Dictionary<string, List<string>>? unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
         if (unresolvedTags is not { Count: > 0 }) return;
 
         TagsByType = [];
@@ -176,14 +178,14 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     {
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
-        Variants variants = Variants.FromStack(slot.Itemstack);
+        Variants variants = Variants.FromStack(slot.Itemstack!);
 
         Shape? shape = GetShape(slot, variants, overrideShape, out CompositeShape? rcshape);
 
         if (shape == null || rcshape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
-        Dictionary<string, AssetLocation> prefixedTextureCodes = null;
+        Dictionary<string, AssetLocation>? prefixedTextureCodes = null;
         string overlayPrefix = "";
 
         if (rcshape.Overlays is { Length: > 0 })
@@ -192,7 +194,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
         }
 
-        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack.Item.Textures)
+        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack!.Item.Textures)
         {
             stexSource.textures[textureCode] = texture;
         }
@@ -217,8 +219,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         CompositeShape? ucshape = overrideShape;
         if (ucshape == null)
         {
-            variants.FindByVariant(shapeByType, out ucshape);
-            ucshape ??= slot.Itemstack?.Item.Shape;
+            variants.FindByVariant(shapeByType!, out ucshape);
+            ucshape ??= slot!.Itemstack?.Item.Shape;
         }
         if (ucshape == null)
         {

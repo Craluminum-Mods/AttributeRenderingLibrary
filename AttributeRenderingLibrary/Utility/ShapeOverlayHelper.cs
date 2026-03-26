@@ -66,9 +66,9 @@ public class ShapeOverlayHelper
     /// <param name="texturesByType">The textures grouped by variant</param>
     /// <param name="prefixedTextureCodes">The texture codes that have been prefixed</param>
     /// <param name="overlayPrefix">The texture prefix to use for prefixed codes</param>
-    public static void BakeVariantTextures(ICoreClientAPI clientApi, UniversalShapeTextureSource textureSource, Variants variants, Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType, Dictionary<string, AssetLocation> prefixedTextureCodes = null, string overlayPrefix = "")
+    public static void BakeVariantTextures(ICoreClientAPI clientApi, UniversalShapeTextureSource textureSource, Variants variants, Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType, Dictionary<string, AssetLocation>? prefixedTextureCodes = null, string overlayPrefix = "")
     {
-        if (!variants.FindByVariant(texturesByType, out Dictionary<string, CompositeTexture> variantTextures)) return;
+        if (!variants.FindByVariant(texturesByType!, out Dictionary<string, CompositeTexture> variantTextures)) return;
 
         foreach ((string textureCode, CompositeTexture texture) in variantTextures)
         {

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,74 +16,76 @@ namespace AttributeRenderingLibrary;
 public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IBlockPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
     #region Collectible properties
-    public Dictionary<string, TagSet> TagsByType { get; protected set; }
-    public Dictionary<string, CompositeShape> shapeByType { get; protected set; }
-    public Dictionary<string, Dictionary<string, CompositeTexture>> texturesByType { get; protected set; }
-    public Dictionary<string, List<object>> NameByType { get; protected set; }
-    public Dictionary<string, List<object>> DescriptionByType { get; protected set; }
-    public Dictionary<string, List<object>> ContainedNameByType { get; protected set; }
-    public Dictionary<string, List<object>> ContainedDescriptionByType { get; protected set; }
-    public Dictionary<string, byte[]> LightHsvByType { get; protected set; }
-    public Dictionary<string, EnumItemStorageFlags> StorageFlagsByType { get; protected set; }
-    public Dictionary<string, int> DurabilityByType { get; protected set; }
-    public Dictionary<string, float> AttackPowerByType { get; protected set; }
-    public Dictionary<string, float> AttackRangeByType { get; protected set; }
-    public Dictionary<string, Dictionary<EnumBlockMaterial, float>> MiningSpeedByType { get; protected set; }
-    public Dictionary<string, EnumItemDamageSource[]> DamagedByByType { get; protected set; }
-    public Dictionary<string, EnumTool?> ToolByType { get; protected set; }
-    public Dictionary<string, int> ToolTierByType { get; protected set; }
+    public Dictionary<string, TagSet>? TagsByType { get; protected set; }
+    public Dictionary<string, CompositeShape>? shapeByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType { get; protected set; }
+    public Dictionary<string, List<object>>? NameByType { get; protected set; }
+    public Dictionary<string, List<object>>? DescriptionByType { get; protected set; }
+    public Dictionary<string, List<object>>? ContainedNameByType { get; protected set; }
+    public Dictionary<string, List<object>>? ContainedDescriptionByType { get; protected set; }
+    public Dictionary<string, byte[]>? LightHsvByType { get; protected set; }
+    public Dictionary<string, EnumItemStorageFlags>? StorageFlagsByType { get; protected set; }
+    public Dictionary<string, int>? DurabilityByType { get; protected set; }
+    public Dictionary<string, float>? AttackPowerByType { get; protected set; }
+    public Dictionary<string, float>? AttackRangeByType { get; protected set; }
+    public Dictionary<string, Dictionary<EnumBlockMaterial, float>>? MiningSpeedByType { get; protected set; }
+    public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
+    public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
+    public Dictionary<string, int>? ToolTierByType { get; protected set; }
     #endregion
     #region Block properties
-    public Dictionary<string, CompositeShape> shapeInventoryByType { get; protected set; }
-    public Dictionary<string, Cuboidf[]> CollisionBoxesByType { get; protected set; }
-    public Dictionary<string, Cuboidf[]> SelectionBoxesByType { get; protected set; }
-    public Dictionary<string, BlockDropItemStack[]> DropsByType { get; protected set; }
-    public Dictionary<string, int> RequiredMiningTierByType { get; protected set; }
-    public Dictionary<string, EnumBlockMaterial> BlockMaterialByType { get; protected set; }
-    public Dictionary<string, float[]> LiquidBarrierOnSidesByType { get; protected set; }
+    public Dictionary<string, CompositeShape>? shapeInventoryByType { get; protected set; }
+    public Dictionary<string, Cuboidf[]>? CollisionBoxesByType { get; protected set; }
+    public Dictionary<string, Cuboidf[]>? SelectionBoxesByType { get; protected set; }
+    public Dictionary<string, BlockDropItemStack[]>? DropsByType { get; protected set; }
+    public Dictionary<string, int>? RequiredMiningTierByType { get; protected set; }
+    public Dictionary<string, EnumBlockMaterial>? BlockMaterialByType { get; protected set; }
+    public Dictionary<string, float[]>? LiquidBarrierOnSidesByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
-    public Dictionary<string, CombustibleProperties> CombustiblePropsByType { get; protected set; }
-    public Dictionary<string, FoodNutritionProperties> NutritionPropsByType { get; protected set; }
-    public Dictionary<string, GrindingProperties> GrindingPropsByType { get; protected set; }
-    public Dictionary<string, CrushingProperties> CrushingPropsByType { get; protected set; }
-    public Dictionary<string, TransitionableProperties[]> TransitionablePropsByType { get; protected set; }
-    public Dictionary<string, JuiceableProperties> JuiceablePropsByType { get; protected set; }
-    public Dictionary<string, DistillationProps> DistillationPropsByType { get; protected set; }
+    public Dictionary<string, CombustibleProperties>? CombustiblePropsByType { get; protected set; }
+    public Dictionary<string, FoodNutritionProperties>? NutritionPropsByType { get; protected set; }
+    public Dictionary<string, GrindingProperties>? GrindingPropsByType { get; protected set; }
+    public Dictionary<string, CrushingProperties>? CrushingPropsByType { get; protected set; }
+    public Dictionary<string, TransitionableProperties[]>? TransitionablePropsByType { get; protected set; }
+    public Dictionary<string, JuiceableProperties>? JuiceablePropsByType { get; protected set; }
+    public Dictionary<string, DistillationProps>? DistillationPropsByType { get; protected set; }
     #endregion
     #region Animations
-    public Dictionary<string, string> HeldLeftReadyAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldRightReadyAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldLeftReadyAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldRightReadyAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldLeftTpIdleAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldRightTpIdleAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldLeftTpIdleAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldRightTpIdleAnimationByType { get; protected set; }
 
-    public Dictionary<string, string> HeldTpUseAnimationByType { get; protected set; }
-    public Dictionary<string, string> HeldTpHitAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldTpUseAnimationByType { get; protected set; }
+    public Dictionary<string, string>? HeldTpHitAnimationByType { get; protected set; }
     #endregion
     #region Extra shape overrides
-    public Dictionary<string, string[]> ShapeIgnoreElementsByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeIgnoreElementsCombineByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeSelectiveElementsByType { get; protected set; }
-    public Dictionary<string, string[]> ShapeSelectiveElementsCombineByType { get; protected set; }
+    public Dictionary<string, string[]>? ShapeIgnoreElementsByType { get; protected set; }
+    public Dictionary<string, string[]>? ShapeIgnoreElementsCombineByType { get; protected set; }
+    public Dictionary<string, string[]>? ShapeSelectiveElementsByType { get; protected set; }
+    public Dictionary<string, string[]>? ShapeSelectiveElementsCombineByType { get; protected set; }
     #endregion
     #region IAttachableToEntity
-    public Dictionary<string, CompositeShape> AttachedShapeByType { get; protected set; }
-    public Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>> AttachedShapeBySlotCodeByType { get; protected set; }
-    public Dictionary<string, string> CategoryCodeByType { get; protected set; }
-    public Dictionary<string, string[]> DisableElementsByType { get; protected set; }
-    public Dictionary<string, string[]> KeepElementsByType { get; protected set; }
-    public IAttachableToEntity iattr;
+    public Dictionary<string, CompositeShape>? AttachedShapeByType { get; protected set; }
+    public Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>? AttachedShapeBySlotCodeByType { get; protected set; }
+    public Dictionary<string, string>? CategoryCodeByType { get; protected set; }
+    public Dictionary<string, string[]>? DisableElementsByType { get; protected set; }
+    public Dictionary<string, string[]>? KeepElementsByType { get; protected set; }
+    public IAttachableToEntity? iattr;
     #endregion
 
+#nullable disable
     public ICoreClientAPI clientApi;
     public ICoreAPI coreApi;
+#nullable enable
 
     public override void OnLoaded(ICoreAPI api)
     {
         // blocks with this behavior cannot be chiseled
         block.Attributes ??= new JsonObject(new JObject());
-        block.Attributes.Token["canChisel"] = JToken.FromObject(false);
+        block.Attributes.Token!["canChisel"] = JToken.FromObject(false);
 
         clientApi = api as ICoreClientAPI;
         coreApi = api;
@@ -91,11 +94,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void OnUnloaded(ICoreAPI api)
     {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
+        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
         meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
         ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
 
-        Dictionary<string, MeshData> meshes = ObjectCacheUtil.TryGet<Dictionary<string, MeshData>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
+        Dictionary<string, MeshData>? meshes = ObjectCacheUtil.TryGet<Dictionary<string, MeshData>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
         meshes?.Foreach(mesh => mesh.Value?.Dispose());
         ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
     }
@@ -167,18 +170,18 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         if (JuiceablePropsByType is { Count: > 0 } && (collObj.Attributes == null || !collObj.Attributes.KeyExists("juiceableProperties")))
         {
             collObj.EnsureAttributesNotNull();
-            collObj.Attributes.Token["juiceableProperties"] = JToken.FromObject(new JuiceableProperties());
+            collObj.Attributes!.Token!["juiceableProperties"] = JToken.FromObject(new JuiceableProperties());
         }
         if (DistillationPropsByType is { Count: > 0 } && (collObj.Attributes == null || !collObj.Attributes.KeyExists("distillationProps")))
         {
             collObj.EnsureAttributesNotNull();
-            collObj.Attributes.Token["distillationProps"] = JToken.FromObject(new DistillationProps());
+            collObj.Attributes!.Token!["distillationProps"] = JToken.FromObject(new DistillationProps());
         }
     }
 
     public virtual void LoadTags(JsonObject properties)
     {
-        Dictionary<string, List<string>> unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
+        Dictionary<string, List<string>>? unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
         if (unresolvedTags is not { Count: > 0 }) return;
 
         TagsByType = [];
@@ -192,19 +195,22 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
     {
-        Dictionary<string, RotatableCube[]> rawCollisionsAndSelections = properties["collisionSelectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
-        Dictionary<string, RotatableCube[]> rawCollisions = properties["collisionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
-        Dictionary<string, RotatableCube[]> rawSelections = properties["selectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+        Dictionary<string, RotatableCube[]>? rawCollisionsAndSelections = properties["collisionSelectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+        Dictionary<string, RotatableCube[]>? rawCollisions = properties["collisionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
+        Dictionary<string, RotatableCube[]>? rawSelections = properties["selectionBoxes"]?.AsObject<Dictionary<string, RotatableCube[]>>();
 
         if (rawCollisionsAndSelections is { Count: > 0 })
         {
-            CollisionBoxesByType = rawCollisionsAndSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
-            SelectionBoxesByType = rawCollisionsAndSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            CollisionBoxesByType = rawCollisionsAndSelections.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            SelectionBoxesByType = rawCollisionsAndSelections.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
         }
         else
         {
-            CollisionBoxesByType = rawCollisions?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
-            SelectionBoxesByType = rawSelections?.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+            if (rawCollisions is { Count: > 0 })
+                CollisionBoxesByType = rawCollisions.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
+
+            if (rawSelections is { Count: > 0 })
+                SelectionBoxesByType = rawSelections.ToDictionary(x => x.Key, x => x.Value.ToCuboidf());
         }
     }
 
@@ -218,23 +224,41 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return true;
     }
 
+    /// <summary>
+    /// Alias of <see cref="GenGuiMesh(ItemSlot, CompositeShape)"/>
+    /// </summary>
+    /// <remarks>
+    /// Note: make sure to cache returned mesh.
+    /// </remarks>
+    /// <param name="slot">Slot that holds the block</param>
+    /// <returns>Mesh for block (when held, dropped or in gui slot)</returns>
+    [Obsolete("Use GenGuiMesh(ItemSlot, CompositeShape) instead")]
     public virtual MeshData GenGuiMesh(ItemSlot slot)
     {
         return GenGuiMesh(slot, overrideShape: null);
     }
 
-    public virtual MeshData GenGuiMesh(ItemSlot slot, CompositeShape overrideShape)
+    /// <summary>
+    /// Used to generate mesh for when block is held, dropped or in gui slot.
+    /// </summary>
+    /// <remarks>
+    /// Note: make sure to cache returned mesh.
+    /// </remarks>
+    /// <param name="slot">Slot that holds the block</param>
+    /// <param name="overrideShape">Optional custom shape to use instead of the default shape.</param>
+    /// <returns>Mesh for block (when held, dropped or in gui slot)</returns>
+    public virtual MeshData GenGuiMesh(ItemSlot slot, CompositeShape? overrideShape = null)
     {
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
-        Variants variants = Variants.FromStack(slot.Itemstack);
+        Variants variants = Variants.FromStack(slot.Itemstack!);
 
         Shape? shape = GetInventoryShape(slot, variants, overrideShape, out CompositeShape? rcshape);
 
         if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, clientApi.BlockTextureAtlas, shape, rcshape.Base.ToString());
-        Dictionary<string, AssetLocation> prefixedTextureCodes = null;
+        Dictionary<string, AssetLocation>? prefixedTextureCodes = null;
         string overlayPrefix = "";
 
         if (rcshape.Overlays is { Length: > 0 })
@@ -243,7 +267,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
         }
 
-        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack.Block.Textures)
+        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack!.Block.Textures)
         {
             stexSource.textures[textureCode] = texture;
         }
@@ -263,17 +287,37 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return mesh;
     }
 
+    /// <summary>
+    /// Alias of <see cref="GetOrCreateMesh(Variants, CompositeShape, BlockPos, string, ITexPositionSource)"/>
+    /// </summary>
+    /// <param name="variants">Types/variants of the block that are usually stored in BlockEntity or BlockEntityBehavior</param>
+    /// <param name="overrideTexturesource">Optional custom texture source, e.g. for decals. When provided, the result is not cached.</param>
+    /// <returns>Mesh for placed block</returns>
+    [Obsolete("Use GetOrCreateMesh(Variants, CompositeShape, BlockPos, string, ITexPositionSource) instead")]
     public virtual MeshData GetOrCreateMesh(Variants variants, ITexPositionSource overrideTexturesource = null)
     {
         return GetOrCreateMesh(variants: variants, overrideShape: null, atBlockPos: null, extraCacheKey: "", overrideTexturesource: overrideTexturesource);
     }
 
-    public virtual MeshData GetOrCreateMesh(Variants variants, CompositeShape overrideShape, BlockPos atBlockPos, string extraCacheKey, ITexPositionSource overrideTexturesource = null)
+    /// <summary>
+    /// Used to generate mesh for placed block, optionally with decal texture.
+    /// </summary>
+    /// <remarks>
+    /// Note: this method already caches returned mesh.<br/>
+    /// Make sure to use unique extra cache key when providing custom shape
+    /// </remarks>
+    /// <param name="variants">Types/variants of the block that are usually stored in BlockEntity or BlockEntityBehavior</param>
+    /// <param name="overrideShape">Optional custom shape to use instead of the default shape.</param>
+    /// <param name="extraCacheKey">Additional suffix for the mesh cache key, to differentiate meshes that share the same code and variants.</param>
+    /// <param name="atBlockPos">Block position. Use it to get block and/or block entity</param>
+    /// <param name="overrideTexturesource">Optional custom texture source, e.g. for decals. When provided, the result is not cached.</param>
+    /// <returns>Mesh for placed block</returns>
+    public virtual MeshData GetOrCreateMesh(Variants variants, CompositeShape? overrideShape, BlockPos atBlockPos, string extraCacheKey, ITexPositionSource overrideTexturesource = null)
     {
         Dictionary<string, MeshData> cMeshes = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes", () => new Dictionary<string, MeshData>());
 
-        string key = $"{block.Code}-{variants}-{extraCacheKey}";
-        if (overrideTexturesource != null || !cMeshes.TryGetValue(key, out MeshData mesh))
+        string key = string.IsNullOrEmpty(extraCacheKey) ? $"{block.Code}-{variants}" : $"{block.Code}-{variants}-{extraCacheKey}";
+        if (overrideTexturesource != null || !cMeshes.TryGetValue(key, out MeshData? mesh))
         {
             mesh = RenderExtensions.GenEmptyMesh();
 
@@ -282,7 +326,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
 
             UniversalShapeTextureSource stexSource = new(clientApi, clientApi.BlockTextureAtlas, shape, rcshape.Base.ToString());
-            Dictionary<string, AssetLocation> prefixedTextureCodes = null;
+            Dictionary<string, AssetLocation>? prefixedTextureCodes = null;
             string overlayPrefix = "";
 
             if (rcshape.Overlays is { Length: > 0 })
@@ -314,6 +358,58 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                 cMeshes[key] = mesh;
             }
         }
+        return mesh;
+    }
+
+    /// <summary>
+    /// Used to generate mesh for block stored in a visual container that uses <see cref="IContainedMeshSource"/> to generate mesh for each contained item.
+    /// </summary>
+    /// <remarks>
+    /// Note: make sure to cache returned mesh.<br/>
+    /// When <paramref name="overrideShape"/> is provided, <see cref="GetMeshCacheKey"/> by default will cache only the first generated mesh for the same variants.
+    /// </remarks>
+    /// <param name="slot">Container slot that holds current block</param>
+    /// <param name="targetAtlas">Texture atlas</param>
+    /// <param name="atBlockPos">Container position. Use it to get container block</param>
+    /// <param name="overrideShape">Optional custom shape to use instead of the default shape.</param>
+    /// <returns>Mesh for block stored in a visual container</returns>
+    public virtual MeshData GenContainedMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos, CompositeShape? overrideShape = null)
+    {
+        MeshData mesh = RenderExtensions.GenEmptyMesh();
+
+        Variants variants = Variants.FromStack(slot.Itemstack!);
+
+        Shape? shape = GetShape(slot, null, variants, overrideShape, out CompositeShape? rcshape);
+
+        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownBlockModelData(clientApi);
+
+        UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
+        Dictionary<string, AssetLocation>? prefixedTextureCodes = null;
+        string overlayPrefix = "";
+
+        if (rcshape.Overlays is { Length: > 0 })
+        {
+            overlayPrefix = GetMeshCacheKey(slot);
+            prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
+        }
+
+        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack!.Block.Textures)
+        {
+            stexSource.textures[textureCode] = texture;
+        }
+
+        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
+
+        TesselationMetaData meta = new()
+        {
+            QuantityElements = rcshape.QuantityElements,
+            SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
+            IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
+            TexSource = stexSource,
+            TypeForLogging = "ShapeTexturesFromAttributes block behavior"
+        };
+
+        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
         return mesh;
     }
 
@@ -738,7 +834,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return Vec3f.Zero;
     }
     #region IContainedMeshSource
-    public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos) => GenGuiMesh(slot);
+    public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos) => GenContainedMesh(slot, targetAtlas, atBlockPos);
 
     public virtual string GetMeshCacheKey(ItemSlot slot) => $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
     #endregion
