@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -107,37 +108,37 @@ public static class VariantExtensions
 
         Core.Api?.World.FrameProfiler.Leave();
     }
-    
+
     /// <summary>
     /// Same as FindByVariant, but returns a value instead of bool. Returns a default value when no match is found.
     /// </summary>
-    public static T GetByVariant<T>(this ItemStack stack, Dictionary<string, T>? inDictionary, T? defaultValue = default)
+    public static T? GetByVariant<T>(this ItemStack? stack, Dictionary<string, T>? inDictionary, T? defaultValue = default)
     {
-        return stack.FindByVariant(inDictionary!, out T result) ? result : defaultValue!;
+        return stack?.FindByVariant(inDictionary!, out var result) == true ? result : defaultValue;
+    }
+
+    /// <summary>
+    /// Same as FindByVariant, but returns a value instead of bool. Returns a default value using lazy evaluation.
+    /// </summary>
+    public static T? GetByVariant<T>(this ItemStack? stack, Dictionary<string, T>? inDictionary, Func<T> defaultValue)
+    {
+        return stack?.FindByVariant(inDictionary!, out var result) == true ? result : defaultValue();
     }
 
     /// <summary>
     /// Same as FindByVariant, but returns a value instead of bool. Returns a default value when no match is found.
     /// </summary>
-    public static T GetByVariant<T>(this ItemSlot slot, Dictionary<string, T>? inDictionary, T? defaultValue = default)
+    public static IEnumerable<T>? GetByVariant<T>(this ItemStack? stack, Dictionary<string, IEnumerable<T>>? inDictionary, IEnumerable<T>? defaultValue = default)
     {
-        return slot?.Itemstack?.FindByVariant(inDictionary!, out T result) == true ? result : defaultValue!;
+        return stack?.FindByVariant(inDictionary!, out var result) == true ? result : defaultValue;
     }
 
     /// <summary>
-    /// Same as FindByVariant, but returns a value instead of bool. Returns a default value when no match is found.
+    /// Same as FindByVariant, but returns a value instead of bool. Returns a default value using lazy evaluation.
     /// </summary>
-    public static IEnumerable<T> GetByVariant<T>(this ItemStack stack, Dictionary<string, IEnumerable<T>>? inDictionary, IEnumerable<T>? defaultValue = default)
+    public static IEnumerable<T>? GetByVariant<T>(this ItemStack? stack, Dictionary<string, IEnumerable<T>>? inDictionary, Func<IEnumerable<T>> defaultValue)
     {
-        return stack.FindByVariant(inDictionary!, out IEnumerable<T> result) ? result : defaultValue!;
-    }
-
-    /// <summary>
-    /// Same as FindByVariant, but returns a value instead of bool. Returns a default value when no match is found.
-    /// </summary>
-    public static IEnumerable<T> GetByVariant<T>(this ItemSlot slot, Dictionary<string, IEnumerable<T>>? inDictionary, IEnumerable<T>? defaultValue = default)
-    {
-        return slot?.Itemstack?.FindByVariant(inDictionary!, out IEnumerable<T> result) == true ? result : defaultValue!;
+        return stack?.FindByVariant(inDictionary!, out var result) == true ? result : defaultValue();
     }
 
     public static bool IsTrue(this Variants variants, Dictionary<string, bool> inDictionary)
