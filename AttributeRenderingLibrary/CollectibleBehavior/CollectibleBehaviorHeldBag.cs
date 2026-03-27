@@ -2,11 +2,10 @@
 using System.Linq;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class CollectibleBehaviorHeldBagTyped(CollectibleObject collObj) : CollectibleBehaviorHeldBag(collObj)
+public class CollectibleBehaviorHeldBag(CollectibleObject collObj) : Vintagestory.GameContent.CollectibleBehaviorHeldBag(collObj)
 {
     public Dictionary<string, int> QuantitySlotsByType { get; protected set; }
     public Dictionary<string, string> SlotBgColorByType { get; protected set; }

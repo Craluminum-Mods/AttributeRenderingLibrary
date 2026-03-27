@@ -11,7 +11,7 @@ namespace AttributeRenderingLibrary;
 /// Provides custom transformation for OnBeforeRender and collectibles stored inside a BlockEntityDisplay, 
 /// specifically for collectibles with Variants.
 /// </summary>
-public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : CollectibleBehavior(collObj), IContainedTransform
+public class CollectibleBehaviorCustomTransform(CollectibleObject collObj) : CollectibleBehavior(collObj), IContainedTransform
 {
     public Transforms? BasicTransforms { get; protected set; }
     public Dictionary<string, Dictionary<string, ModelTransform>>? ExtraTransforms { get; protected set; }
