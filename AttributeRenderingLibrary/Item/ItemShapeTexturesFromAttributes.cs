@@ -562,21 +562,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         if (stack.FindByVariant(AttachedShapeByType, out CompositeShape attachedShape) && attachedShape != null)
         {
             CompositeShape rcshape = variants.ReplacePlaceholders(attachedShape.Clone());
-            if (rcshape.Overlays is not { Length: > 0 })
-            {
-                return rcshape;
-            }
-
-            List<CompositeShape> overlays = [];
-            foreach (CompositeShape overlay in rcshape.Overlays)
-            {
-                if (api.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
-                {
-                    overlays.Add(overlay);
-                }
-            }
-            rcshape.Overlays = [.. overlays];
-            return rcshape;
+            return rcshape.RemoveNonExistingOverlays(api)!;
         }
 
         if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
@@ -586,40 +572,13 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
                 if (WildcardUtil.Match(_slotCode, slotCode))
                 {
                     CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-                    if (rcshape.Overlays is not { Length: > 0 })
-                    {
-                        return rcshape;
-                    }
-
-                    List<CompositeShape> overlays = [];
-                    foreach (CompositeShape overlay in rcshape.Overlays)
-                    {
-                        if (api.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
-                        {
-                            overlays.Add(overlay);
-                        }
-                    }
-                    rcshape.Overlays = [.. overlays];
-                    return rcshape;
+                    return rcshape.RemoveNonExistingOverlays(api)!;
                 }
             }
         }
 
-        _ = GetShape(new DummySlot(stack), variants, overrideShape: null, out CompositeShape? compositeShape);
-        if (compositeShape.Overlays is { Length: > 0 })
-        {
-            List<CompositeShape> _overlays = [];
-            foreach (CompositeShape overlay in compositeShape.Overlays)
-            {
-                if (api.Assets.Exists(overlay.Base.Clone().CopyWithPathPrefixAndAppendixOnce("shapes/", ".json")))
-                {
-                    _overlays.Add(overlay);
-                }
-            }
-            compositeShape.Overlays = [.. _overlays];
-            return compositeShape;
-        }
-        return compositeShape;
+        _ = GetShape(new DummySlot(stack), variants, null, out CompositeShape? compositeShape);
+        return compositeShape.RemoveNonExistingOverlays(api)!;
     }
 
     public virtual string GetCategoryCode(ItemStack stack) => !stack.FindByVariant(CategoryCodeByType, out string categoryCode)
