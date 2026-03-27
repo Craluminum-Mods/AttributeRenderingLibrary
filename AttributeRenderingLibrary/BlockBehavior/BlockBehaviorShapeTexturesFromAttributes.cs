@@ -35,6 +35,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     #endregion
     #region Block properties
     public Dictionary<string, CompositeShape>? shapeInventoryByType { get; protected set; }
+    public Dictionary<string, Dictionary<string, CompositeTexture>>? TexturesInventoryByType { get; protected set; }
     public Dictionary<string, Cuboidf[]>? CollisionBoxesByType { get; protected set; }
     public Dictionary<string, Cuboidf[]>? SelectionBoxesByType { get; protected set; }
     public Dictionary<string, BlockDropItemStack[]>? DropsByType { get; protected set; }
@@ -160,6 +161,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         KeepElementsByType = properties["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();
 
         shapeInventoryByType = properties["shapeInventory"].AsObject<Dictionary<string, CompositeShape>>();
+        TexturesInventoryByType = properties["texturesInventory"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
         DropsByType = properties["drops"].AsObject<Dictionary<string, BlockDropItemStack[]>>();
         RequiredMiningTierByType = properties["requiredMiningTier"].AsObject<Dictionary<string, int>>();
         BlockMaterialByType = properties["blockMaterial"].AsObject<Dictionary<string, EnumBlockMaterial>>();
@@ -272,7 +274,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             stexSource.textures[textureCode] = texture;
         }
 
-        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
+        bool foundInventoryTextures = slot.Itemstack.FindByVariant(TexturesInventoryByType!, out _);
+        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, foundInventoryTextures ? TexturesInventoryByType : texturesByType, prefixedTextureCodes, overlayPrefix);
 
         TesselationMetaData meta = new()
         {
