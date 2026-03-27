@@ -63,12 +63,19 @@ public static class VariantExtensions
     {
         result = default;
 
-        if (stack == null || inDictionary is not { Count: > 0 })
+        if (stack == null)
         {
             variants = new();
             return false;
         }
+
         variants = Variants.FromStack(stack);
+
+        if (inDictionary is not { Count: > 0 })
+        {
+            return false;
+        }
+
         return FindByVariant(variants, inDictionary, out result);
     }
 
