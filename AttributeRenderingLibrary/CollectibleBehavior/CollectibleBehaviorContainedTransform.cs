@@ -13,8 +13,8 @@ namespace AttributeRenderingLibrary;
 /// </summary>
 public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : CollectibleBehavior(collObj), IContainedTransform
 {
-    public Transforms BasicTransforms { get; protected set; }
-    public Dictionary<string, Dictionary<string, ModelTransform>> ExtraTransforms { get; protected set; }
+    public Transforms? BasicTransforms { get; protected set; }
+    public Dictionary<string, Dictionary<string, ModelTransform>>? ExtraTransforms { get; protected set; }
 
     public override void Initialize(JsonObject properties)
     {
@@ -23,14 +23,14 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
         ExtraTransforms = properties["extraTransforms"].AsObject<Dictionary<string, Dictionary<string, ModelTransform>>>()?.ToDictionary(x => x.Key.ToLowerInvariant(), x => x.Value);
     }
 
-    public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
+    public override void OnBeforeRender(ICoreClientAPI capi, ItemStack stack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        ApplyOnBeforeRenderTransform(target, itemstack, ref renderinfo.Transform);
+        ApplyOnBeforeRenderTransform(target, stack, ref renderinfo.Transform);
     }
 
     public void ApplyOnBeforeRenderTransform(EnumItemRenderTarget target, ItemStack stack, ref ModelTransform transform)
     {
-        Dictionary<string, ModelTransform> basicTransformsByType = target switch
+        Dictionary<string, ModelTransform>? transformsByType = target switch
         {
             EnumItemRenderTarget.Gui => BasicTransforms?.GuiTransform,
             EnumItemRenderTarget.HandTp => BasicTransforms?.TpHandTransform,
@@ -39,24 +39,21 @@ public class CollectibleBehaviorContainedTransform(CollectibleObject collObj) : 
             _ => null,
         };
 
-        if (stack.FindByVariant(basicTransformsByType, out ModelTransform newTransform) && newTransform != null)
+        ModelTransform? newTransform = stack.GetByVariant(transformsByType);
+        if (newTransform != null)
         {
-            newTransform = newTransform.EnsureDefaultValues();
-            transform = newTransform;
+            transform = newTransform.EnsureDefaultValues();
         }
     }
 
-    ModelTransform IContainedTransform.GetTransform(BlockEntityDisplay be, string attributeTransformCode, ItemStack stack)
+    ModelTransform? IContainedTransform.GetTransform(BlockEntityDisplay be, string attributeTransformCode, ItemStack stack)
     {
         attributeTransformCode = attributeTransformCode.ToLowerInvariant();
 
-        if (ExtraTransforms != null
-            && ExtraTransforms.Count > 0
-            && ExtraTransforms.TryGetValue(attributeTransformCode, out Dictionary<string, ModelTransform> transformsByType)
-            && stack.FindByVariant(transformsByType, out ModelTransform transform))
+        if (ExtraTransforms?.TryGetValue(attributeTransformCode, out Dictionary<string, ModelTransform>? transformsByType) == true
+            && stack.FindByVariant(transformsByType, out ModelTransform transform) && transform != null)
         {
-            transform = transform.EnsureDefaultValues();
-            return transform;
+            return transform.EnsureDefaultValues();
         }
         return null;
     }
