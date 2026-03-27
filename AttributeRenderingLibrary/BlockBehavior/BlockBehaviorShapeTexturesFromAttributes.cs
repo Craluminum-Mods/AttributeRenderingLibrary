@@ -228,7 +228,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     /// Alias of <see cref="GenGuiMesh(ItemSlot, CompositeShape)"/>
     /// </summary>
     /// <remarks>
-    /// Note: make sure to cache returned mesh.
+    /// It is recommended to cache the returned mesh in the ObjectCacheUtil for efficiency
     /// </remarks>
     /// <param name="slot">Slot that holds the block</param>
     /// <returns>Mesh for block (when held, dropped or in gui slot)</returns>
@@ -242,7 +242,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     /// Used to generate mesh for when block is held, dropped or in gui slot.
     /// </summary>
     /// <remarks>
-    /// Note: make sure to cache returned mesh.
+    /// It is recommended to cache the returned mesh in the ObjectCacheUtil for efficiency
     /// </remarks>
     /// <param name="slot">Slot that holds the block</param>
     /// <param name="overrideShape">Optional custom shape to use instead of the default shape.</param>
@@ -365,7 +365,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     /// Used to generate mesh for block stored in a visual container that uses <see cref="IContainedMeshSource"/> to generate mesh for each contained item.
     /// </summary>
     /// <remarks>
-    /// Note: make sure to cache returned mesh.<br/>
+    /// It is recommended to cache the returned mesh in the ObjectCacheUtil for efficiency<br/>
     /// When <paramref name="overrideShape"/> is provided, <see cref="GetMeshCacheKey"/> by default will cache only the first generated mesh for the same variants.
     /// </remarks>
     /// <param name="slot">Container slot that holds current block</param>
