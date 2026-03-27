@@ -577,6 +577,24 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             }
         }
 
+        if (iattr is AttributeAttachableToEntity attachableToEntity)
+        {
+            if (attachableToEntity.AttachedShape != null)
+            {
+                return attachableToEntity.AttachedShape;
+            }
+            if (attachableToEntity.AttachedShapeBySlotCode != null)
+            {
+                foreach (var val in attachableToEntity.AttachedShapeBySlotCode)
+                {
+                    if (WildcardUtil.Match(val.Key, slotCode))
+                    {
+                        return val.Value;
+                    }
+                }
+            }
+        }
+
         _ = GetShape(new DummySlot(stack), variants, null, out CompositeShape? compositeShape);
         return compositeShape.RemoveNonExistingOverlays(api)!;
     }
