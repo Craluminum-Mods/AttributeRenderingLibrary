@@ -910,7 +910,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             return rcshape.RemoveNonExistingOverlays(coreApi)!;
         }
 
-        if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
+        if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out var attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
         {
             foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
             {
@@ -944,20 +944,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return compositeShape.RemoveNonExistingOverlays(coreApi)!;
     }
 
-    public virtual string GetCategoryCode(ItemStack stack)
-    {
-        return !stack.FindByVariant(CategoryCodeByType, out string categoryCode) ? (iattr?.GetCategoryCode(stack)) : categoryCode;
-    }
+    public virtual string GetCategoryCode(ItemStack stack) => stack.GetByVariant(CategoryCodeByType!, () => iattr?.GetCategoryCode(stack))!;
 
-    public virtual string[] GetDisableElements(ItemStack stack)
-    {
-        return !stack.FindByVariant(DisableElementsByType, out string[] elems) ? (iattr?.GetDisableElements(stack)) : elems;
-    }
+    public virtual string[] GetDisableElements(ItemStack stack) => stack.GetByVariant(DisableElementsByType!, () => iattr?.GetDisableElements(stack))!;
 
-    public virtual string[] GetKeepElements(ItemStack stack)
-    {
-        return !stack.FindByVariant(KeepElementsByType, out string[] elems) ? (iattr?.GetKeepElements(stack)) : elems;
-    }
+    public virtual string[] GetKeepElements(ItemStack stack) => stack.GetByVariant(KeepElementsByType!, () => iattr?.GetKeepElements(stack))!;
 
     public virtual string GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
 

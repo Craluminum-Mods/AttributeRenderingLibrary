@@ -291,9 +291,14 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         base.OnBeforeRender(clientApi, itemstack, target, ref renderinfo);
     }
 
-    public override string GetHeldItemName(ItemStack itemStack) => !itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 }
-            ? base.GetHeldItemName(itemStack)
-            : variants.GetName(langKeys);
+    public override string GetHeldItemName(ItemStack itemStack)
+    {
+        if (!itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        {
+            return base.GetHeldItemName(itemStack);
+        }
+        return variants.GetName(langKeys);
+    }
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
@@ -307,41 +312,23 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         variants.GetDebugDescription(dsc, withDebugInfo);
     }
 
-    public override byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack) => !stack.FindByVariant(LightHsvByType, out var lightHsv)
-            ? base.GetLightHsv(blockAccessor, pos, stack)
-            : lightHsv;
+    public override byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack) => stack.GetByVariant(LightHsvByType, defaultValue: () => base.GetLightHsv(blockAccessor, pos, stack))!;
 
-    public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack) => !itemstack.FindByVariant(StorageFlagsByType, out var storageFlags)
-            ? base.GetStorageFlags(itemstack)
-            : storageFlags;
+    public override EnumItemStorageFlags GetStorageFlags(ItemStack stack) => stack.GetByVariant(StorageFlagsByType, defaultValue: () => base.GetStorageFlags(stack));
 
-    public override int GetMaxDurability(ItemStack itemstack) => !itemstack.FindByVariant(DurabilityByType, out int durability)
-            ? base.GetMaxDurability(itemstack)
-            : durability;
+    public override int GetMaxDurability(ItemStack stack) => stack.GetByVariant(DurabilityByType, defaultValue: () => base.GetMaxDurability(stack));
 
-    public override float GetAttackPower(ItemStack stack) => !stack.FindByVariant(AttackPowerByType, out float attackPower)
-            ? base.GetAttackPower(stack)
-            : attackPower;
+    public override float GetAttackPower(ItemStack stack) => stack.GetByVariant(AttackPowerByType, defaultValue: () => base.GetAttackPower(stack));
 
-    public override float GetAttackRange(IItemStack withItemStack) => !(withItemStack as ItemStack).FindByVariant(AttackRangeByType, out float attackRange)
-            ? base.GetAttackRange(withItemStack)
-            : attackRange;
+    public override float GetAttackRange(IItemStack stack) => (stack as ItemStack).GetByVariant(AttackRangeByType, defaultValue: () => base.GetAttackRange(stack));
 
-    public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot) => !slot.Itemstack.FindByVariant(MiningSpeedByType, out var miningSpeed)
-            ? base.GetMiningSpeeds(slot)
-            : miningSpeed;
+    public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot) => slot.Itemstack.GetByVariant(MiningSpeedByType, defaultValue: () => base.GetMiningSpeeds(slot))!;
 
-    public override EnumItemDamageSource[] GetDamagedBy(ItemSlot slot) => !slot.Itemstack.FindByVariant(DamagedByByType, out var damagedBy)
-            ? base.GetDamagedBy(slot)
-            : damagedBy;
+    public override EnumItemDamageSource[] GetDamagedBy(ItemSlot slot) => slot.Itemstack.GetByVariant(DamagedByByType!, defaultValue: () => base.GetDamagedBy(slot))!;
 
-    public override EnumTool? GetTool(ItemSlot slot) => !slot.Itemstack.FindByVariant(ToolByType, out var tool)
-            ? base.GetTool(slot)
-            : tool;
+    public override EnumTool? GetTool(ItemSlot slot) => slot.Itemstack.GetByVariant(ToolByType!, defaultValue: () => base.GetTool(slot));
 
-    public override int GetToolTier(ItemSlot slot) => !slot.Itemstack.FindByVariant(ToolTierByType, out int toolTier)
-            ? base.GetToolTier(slot)
-            : toolTier;
+    public override int GetToolTier(ItemSlot slot) => slot.Itemstack.GetByVariant(ToolTierByType!, defaultValue: () => base.GetToolTier(slot));
 
     public override CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos)
     {
@@ -462,29 +449,28 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return [.. allResolvedProps];
     }
 
-    public override string GetHeldReadyAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)
+    public override string? GetHeldReadyAnimation(ItemSlot slot, Entity byEntity, EnumHand hand)
     {
-        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
-        return !activeHotbarSlot.Itemstack.FindByVariant(animCodesByType, out string animCode)
-            ? base.GetHeldReadyAnimation(activeHotbarSlot, forEntity, hand)
-            : animCode;
+        var animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
+        return slot.Itemstack.GetByVariant(animCodesByType, defaultValue: () => base.GetHeldReadyAnimation(slot, byEntity, hand));
     }
 
-    public override string GetHeldTpIdleAnimation(ItemSlot activeHotbarSlot, Entity forEntity, EnumHand hand)
+    public override string? GetHeldTpIdleAnimation(ItemSlot slot, Entity byEntity, EnumHand hand)
     {
-        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
-        return !activeHotbarSlot.Itemstack.FindByVariant(animCodesByType, out string animCode)
-            ? base.GetHeldTpIdleAnimation(activeHotbarSlot, forEntity, hand)
-            : animCode;
+        var animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
+        return slot.Itemstack.GetByVariant(animCodesByType, defaultValue: () => base.GetHeldTpIdleAnimation(slot, byEntity, hand));
     }
 
-    public override string GetHeldTpUseAnimation(ItemSlot activeHotbarSlot, Entity forEntity) => !activeHotbarSlot.Itemstack.FindByVariant(HeldTpUseAnimationByType, out string animCode)
-            ? base.GetHeldTpUseAnimation(activeHotbarSlot, forEntity)
-            : animCode;
+    public override string? GetHeldTpUseAnimation(ItemSlot slot, Entity byEntity)
+    {
+        return slot.Itemstack.GetByVariant(HeldTpUseAnimationByType, defaultValue: () => base.GetHeldTpUseAnimation(slot, byEntity));
+    }
 
-    public override string GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity) => !slot.Itemstack.FindByVariant(HeldTpHitAnimationByType, out string animCode)
-            ? base.GetHeldTpHitAnimation(slot, byEntity)
-            : animCode;
+    public override string? GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity)
+    {
+        return slot.Itemstack.GetByVariant(HeldTpHitAnimationByType, defaultValue: () => base.GetHeldTpHitAnimation(slot, byEntity));
+    }
+
     #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
@@ -565,7 +551,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return rcshape.RemoveNonExistingOverlays(api)!;
         }
 
-        if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out System.Collections.Generic.OrderedDictionary<string, CompositeShape> attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
+        if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out var attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
         {
             foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
             {
@@ -599,17 +585,11 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return compositeShape.RemoveNonExistingOverlays(api)!;
     }
 
-    public virtual string GetCategoryCode(ItemStack stack) => !stack.FindByVariant(CategoryCodeByType, out string categoryCode)
-            ? (iattr?.GetCategoryCode(stack))
-            : categoryCode;
+    public virtual string GetCategoryCode(ItemStack stack) => stack.GetByVariant(CategoryCodeByType!, defaultValue: () => iattr?.GetCategoryCode(stack))!;
 
-    public virtual string[] GetDisableElements(ItemStack stack) => !stack.FindByVariant(DisableElementsByType, out string[] elems)
-            ? (iattr?.GetDisableElements(stack))
-            : elems;
+    public virtual string[] GetDisableElements(ItemStack stack) => stack.GetByVariant(DisableElementsByType!, defaultValue: () => iattr?.GetDisableElements(stack))!;
 
-    public virtual string[] GetKeepElements(ItemStack stack) => !stack.FindByVariant(KeepElementsByType, out string[] elems)
-            ? (iattr?.GetKeepElements(stack))
-            : elems;
+    public virtual string[] GetKeepElements(ItemStack stack) => stack.GetByVariant(KeepElementsByType!, defaultValue: () => iattr?.GetKeepElements(stack))!;
 
     public virtual string GetTexturePrefixCode(ItemStack stack) => GetMeshCacheKey(new DummySlot(stack));
 

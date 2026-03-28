@@ -122,19 +122,19 @@ public class CollectibleBehaviorHealingItem(CollectibleObject collObj) : Collect
         });
     }
 
-    public virtual float GetHealth(ItemSlot slot) => slot.GetByVariant(HealthByType, DefaultValues.Health);
-    public virtual float GetApplicationTimeSec(ItemSlot slot) => slot.GetByVariant(ApplicationTimeSecByType, DefaultValues.ApplicationTimeSec);
-    public virtual float GetMaxApplicationTimeSec(ItemSlot slot) => slot.GetByVariant(MaxApplicationTimeSecByType, DefaultValues.MaxApplicationTimeSec);
-    public virtual int GetTicks(ItemSlot slot) => slot.GetByVariant(TicksByType, DefaultValues.Ticks);
-    public virtual float GetEffectDurationSec(ItemSlot slot) => slot.GetByVariant(EffectDurationSecByType, DefaultValues.EffectDurationSec);
-    public virtual bool CancelInAir(ItemSlot slot) => slot.GetByVariant(CancelInAirByType, DefaultValues.CancelInAir);
-    public virtual bool CancelWhileSwimming(ItemSlot slot) => slot.GetByVariant(CancelWhileSwimmingByType, DefaultValues.CancelWhileSwimming);
-    public virtual AssetLocation? GetSound(ItemSlot slot) => slot.GetByVariant(SoundByType, DefaultValues.Sound);
-    public virtual AssetLocation? GetAppliedSound(ItemSlot slot) => slot.GetByVariant(AppliedSoundByType, DefaultValues.AppliedSound);
-    public virtual float GetSoundRange(ItemSlot slot) => slot.GetByVariant(SoundRangeByType, DefaultValues.SoundRange);
-    public virtual bool CanRevive(ItemSlot slot) => slot.GetByVariant(CanReviveByType, DefaultValues.CanRevive);
-    public virtual bool AffectedByArmor(ItemSlot slot) => slot.GetByVariant(AffectedByArmorByType, DefaultValues.AffectedByArmor);
-    public virtual float GetDelayToCancelSec(ItemSlot slot) => slot.GetByVariant(DelayToCancelSecByType, DefaultValues.DelayToCancelSec);
+    public virtual float GetHealth(ItemSlot slot) => slot.Itemstack.GetByVariant(HealthByType, DefaultValues.Health);
+    public virtual float GetApplicationTimeSec(ItemSlot slot) => slot.Itemstack.GetByVariant(ApplicationTimeSecByType, DefaultValues.ApplicationTimeSec);
+    public virtual float GetMaxApplicationTimeSec(ItemSlot slot) => slot.Itemstack.GetByVariant(MaxApplicationTimeSecByType, DefaultValues.MaxApplicationTimeSec);
+    public virtual int GetTicks(ItemSlot slot) => slot.Itemstack.GetByVariant(TicksByType, DefaultValues.Ticks);
+    public virtual float GetEffectDurationSec(ItemSlot slot) => slot.Itemstack.GetByVariant(EffectDurationSecByType, DefaultValues.EffectDurationSec);
+    public virtual bool CancelInAir(ItemSlot slot) => slot.Itemstack.GetByVariant(CancelInAirByType, DefaultValues.CancelInAir);
+    public virtual bool CancelWhileSwimming(ItemSlot slot) => slot.Itemstack.GetByVariant(CancelWhileSwimmingByType, DefaultValues.CancelWhileSwimming);
+    public virtual AssetLocation? GetSound(ItemSlot slot) => slot.Itemstack.GetByVariant(SoundByType, DefaultValues.Sound);
+    public virtual AssetLocation? GetAppliedSound(ItemSlot slot) => slot.Itemstack.GetByVariant(AppliedSoundByType, DefaultValues.AppliedSound);
+    public virtual float GetSoundRange(ItemSlot slot) => slot.Itemstack.GetByVariant(SoundRangeByType, DefaultValues.SoundRange);
+    public virtual bool CanRevive(ItemSlot slot) => slot.Itemstack.GetByVariant(CanReviveByType, DefaultValues.CanRevive);
+    public virtual bool AffectedByArmor(ItemSlot slot) => slot.Itemstack.GetByVariant(AffectedByArmorByType, DefaultValues.AffectedByArmor);
+    public virtual float GetDelayToCancelSec(ItemSlot slot) => slot.Itemstack.GetByVariant(DelayToCancelSecByType, DefaultValues.DelayToCancelSec);
 
     public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handHandling, ref EnumHandling handling)
     {

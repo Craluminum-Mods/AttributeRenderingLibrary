@@ -77,14 +77,14 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
         }
     }
 
-    public virtual float GetProcessTime(ItemSlot slot) => slot.GetByVariant(ProcessTimeByType, DefaultValues.ProcessTime);
-    public virtual AssetLocation? GetProcessingSound(ItemSlot slot) => slot.GetByVariant(ProcessingSoundByType, DefaultValues.ProcessingSound);
-    public virtual string? GetProcessingAnimationCode(ItemSlot slot) => slot.GetByVariant(ProcessingAnimationCodeByType, DefaultValues.ProcessingAnimationCode);
-    public virtual string? GetInteractionHelpCode(ItemSlot slot) => slot.GetByVariant(InteractionHelpCodeByType, DefaultValues.InteractionHelpCode);
-    public virtual string? GetHandbookProcessIntoTitle(ItemSlot slot) => slot.GetByVariant(HandbookProcessIntoTitleByType, DefaultValues.HandbookProcessIntoTitle);
-    public virtual string? GetHandbookCreatedByTitle(ItemSlot slot) => slot.GetByVariant(HandbookCreatedByTitleByType, DefaultValues.HandbookCreatedByTitle);
-    public virtual EnumTool? GetTool(ItemSlot slot) => slot.GetByVariant(ToolByType, DefaultValues.Tool);
-    public virtual int GetToolDamage(ItemSlot slot) => slot.GetByVariant(ToolDamageByType, DefaultValues.ToolDamage);
+    public virtual float GetProcessTime(ItemSlot slot) => slot.Itemstack.GetByVariant(ProcessTimeByType, DefaultValues.ProcessTime);
+    public virtual AssetLocation? GetProcessingSound(ItemSlot slot) => slot.Itemstack.GetByVariant(ProcessingSoundByType, DefaultValues.ProcessingSound);
+    public virtual string? GetProcessingAnimationCode(ItemSlot slot) => slot.Itemstack.GetByVariant(ProcessingAnimationCodeByType, DefaultValues.ProcessingAnimationCode);
+    public virtual string? GetInteractionHelpCode(ItemSlot slot) => slot.Itemstack.GetByVariant(InteractionHelpCodeByType, DefaultValues.InteractionHelpCode);
+    public virtual string? GetHandbookProcessIntoTitle(ItemSlot slot) => slot.Itemstack.GetByVariant(HandbookProcessIntoTitleByType, DefaultValues.HandbookProcessIntoTitle);
+    public virtual string? GetHandbookCreatedByTitle(ItemSlot slot) => slot.Itemstack.GetByVariant(HandbookCreatedByTitleByType, DefaultValues.HandbookCreatedByTitle);
+    public virtual EnumTool? GetTool(ItemSlot slot) => slot.Itemstack.GetByVariant(ToolByType, DefaultValues.Tool);
+    public virtual int GetToolDamage(ItemSlot slot) => slot.Itemstack.GetByVariant(ToolDamageByType, DefaultValues.ToolDamage);
 
     public virtual BlockDropItemStack[]? GetProcessedStacks(ItemSlot slot)
     {
