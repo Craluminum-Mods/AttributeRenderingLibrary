@@ -283,10 +283,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
             IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
             TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes block behavior"
+            TypeForLogging = "ShapeTexturesFromAttributes block behavior",
+            Rotation = rcshape.RotateXYZCopy
         };
 
         clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+        mesh = mesh
+            .Translate(-0.5f, -0.5f, -0.5f)
+            .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
+        .Translate(0.5f, 0.5f, 0.5f)
+        .Translate(rcshape.OffsetXYZCopy);
         return mesh;
     }
 
@@ -351,10 +357,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                 SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
                 IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
                 TexSource = stexSource,
-                TypeForLogging = "ShapeTexturesFromAttributes block behavior"
+                TypeForLogging = "ShapeTexturesFromAttributes block behavior",
+                // no need to set rotation, since placed block is already rotated by XYZ in BlockEntityBehavior.OnTesselation
             };
 
             clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+            mesh = mesh
+                .Translate(-0.5f, -0.5f, -0.5f)
+                .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
+            .Translate(0.5f, 0.5f, 0.5f)
+            .Translate(rcshape.OffsetXYZCopy);
 
             if (overrideTexturesource == null)
             {
@@ -409,17 +421,22 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
             IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
             TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes block behavior"
+            TypeForLogging = "ShapeTexturesFromAttributes block behavior",
+            Rotation = rcshape.RotateXYZCopy
         };
 
         clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+        mesh = mesh
+            .Translate(-0.5f, -0.5f, -0.5f)
+            .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
+        .Translate(0.5f, 0.5f, 0.5f)
+        .Translate(rcshape.OffsetXYZCopy);
         return mesh;
     }
 
     public virtual Shape? GetShape(ItemSlot? slot, BlockPos? pos, Variants variants, CompositeShape? overrideShape, out CompositeShape? originalShape)
     {
         CompositeShape? ucshape = overrideShape;
-
         if (ucshape == null)
         {
             variants.FindByVariant(shapeByType, out ucshape);
@@ -826,12 +843,15 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             beBehavior.Variants.FindByVariant(shapeByType, out CompositeShape shapeForRotation);
             shapeForRotation ??= block.Shape;
 
+            if (shapeForRotation != null)
+            {
             return new Vec3f
             {
-                X = (shapeForRotation?.rotateX ?? 0) * GameMath.DEG2RAD,
-                Y = (shapeForRotation?.rotateY ?? 0) * GameMath.DEG2RAD,
-                Z = (shapeForRotation?.rotateZ ?? 0) * GameMath.DEG2RAD
+                    X = shapeForRotation.rotateX * GameMath.DEG2RAD,
+                    Y = shapeForRotation.rotateY * GameMath.DEG2RAD,
+                    Z = shapeForRotation.rotateZ * GameMath.DEG2RAD
             };
+        }
         }
 
         return Vec3f.Zero;

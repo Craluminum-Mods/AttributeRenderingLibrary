@@ -184,7 +184,7 @@ public class CollectibleBehaviorHealingItem(CollectibleObject collObj) : Collect
 
         handling = EnumHandling.Handled;
 
-        float progress = secondsUsed / (GetApplicationTime(slot, byEntity)); // + (byEntity.World.Side == EnumAppSide.Client ? 0.3f : 0) - i am not sure for what purpose, we already make sure XXXStop() gets called server side. And it causes github bug #6719
+        float progress = secondsUsed / (GetApplicationTime(slot, byEntity));
         if (progressBarRender != null)
         {
             progressBarRender.Progress = progress;

@@ -146,7 +146,6 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
         clientApi.Tesselator.TesselateShapeWithJointIds("entity", newShape, out mesh, stexSource, new Vec3f(), quantityElements: rcshape.QuantityElements, selectiveElements: GetShapeSelectiveElements(slot.Itemstack, rcshape));
-
         return mesh;
     }
 }

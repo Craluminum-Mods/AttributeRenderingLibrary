@@ -207,10 +207,16 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             SelectiveElements = GetShapeSelectiveElements(slot.Itemstack, rcshape),
             IgnoreElements = GetShapeIgnoreElements(slot.Itemstack, rcshape),
             TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes item behavior"
+            TypeForLogging = "ShapeTexturesFromAttributes item behavior",
+            Rotation = rcshape.RotateXYZCopy
         };
 
         clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+        mesh = mesh
+            .Translate(-0.5f, -0.5f, -0.5f)
+            .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
+        .Translate(0.5f, 0.5f, 0.5f)
+        .Translate(rcshape.OffsetXYZCopy);
         return mesh;
     }
 
