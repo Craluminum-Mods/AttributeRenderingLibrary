@@ -69,10 +69,12 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public ICoreClientAPI clientApi;
     public ICoreAPI coreApi;
 #nullable enable
+    
+    public virtual string MeshRefCacheKey => $"ARL_{this}_MeshRefs";
 
     public override void OnLoaded(ICoreAPI api)
     {
-        if (collObj.Attributes != null && collObj.Attributes.IsTrue("wearableAttachment"))
+        if (collObj.Attributes != null && collObj.Attributes.IsTrue("wearableAttachment") && this is not AttributeRenderingLibrary.CollectibleBehaviorWearableAttachment)
         {
             LoggerUtil.Warn(api, this, $"'AttributeRenderingLibrary.ShapeTexturesFromAttributes' behavior no longer supports wearables properly. Please, replace it with 'AttributeRenderingLibrary.Wearable' behavior for {collObj.Code} instead");
         }
@@ -80,14 +82,29 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         clientApi = api as ICoreClientAPI;
         coreApi = api;
         iattr = IAttachableToEntity.FromAttributes(collObj);
+
+        if (clientApi != null)
+        {
+            clientApi.Event.ReloadShapes += Event_ReloadShapes;
+            clientApi.Event.ReloadTextures += Event_ReloadTextures;
+        }
     }
 
     public override void OnUnloaded(ICoreAPI api)
     {
-        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
-        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
+        DisposeOfMeshes(api);
     }
+
+    public virtual void Event_ReloadShapes() => DisposeOfMeshes(coreApi);
+    public virtual void Event_ReloadTextures() => DisposeOfMeshes(coreApi);
+
+    public virtual void DisposeOfMeshes(ICoreAPI api)
+    {
+        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, MeshRefCacheKey);
+        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
+        ObjectCacheUtil.Delete(api, MeshRefCacheKey);
+    }
+
 
     public override void Initialize(JsonObject properties)
     {
@@ -213,8 +230,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
         mesh = mesh
-            .Translate(-0.5f, -0.5f, -0.5f)
-            .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
+        .Translate(-0.5f, -0.5f, -0.5f)
+        .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
         .Translate(0.5f, 0.5f, 0.5f)
         .Translate(rcshape.OffsetXYZCopy);
         return mesh;
@@ -293,7 +310,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override void OnBeforeRender(ICoreClientAPI clientApi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
+        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, MeshRefCacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
 
         string key = GetMeshCacheKey(renderinfo.InSlot);
 

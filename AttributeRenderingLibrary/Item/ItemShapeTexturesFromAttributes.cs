@@ -65,6 +65,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public IAttachableToEntity? iattr;
     #endregion
 
+    public virtual string MeshRefCacheKey => $"ARL_{this}_MeshRefs";
+
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
@@ -76,14 +78,28 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         LoadTypes();
         iattr = IAttachableToEntity.FromAttributes(this);
+
+        if (api is ICoreClientAPI clientApi)
+        {
+            clientApi.Event.ReloadShapes += Event_ReloadShapes;
+            clientApi.Event.ReloadTextures += Event_ReloadTextures;
+        }
     }
 
     public override void OnUnloaded(ICoreAPI api)
     {
         base.OnUnloaded(api);
-        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_ItemShapeTexturesFromAttributes_MeshRefs");
+        DisposeOfMeshes(api);
+    }
+
+    public virtual void Event_ReloadShapes() => DisposeOfMeshes(api);
+    public virtual void Event_ReloadTextures() => DisposeOfMeshes(api);
+
+    public virtual void DisposeOfMeshes(ICoreAPI api)
+    {
+        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, MeshRefCacheKey);
         meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_ItemShapeTexturesFromAttributes_MeshRefs");
+        ObjectCacheUtil.Delete(api, MeshRefCacheKey);
     }
 
     public virtual void LoadTypes()
@@ -200,8 +216,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
         mesh = mesh
-            .Translate(-0.5f, -0.5f, -0.5f)
-            .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
+        .Translate(-0.5f, -0.5f, -0.5f)
+        .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
         .Translate(0.5f, 0.5f, 0.5f)
         .Translate(rcshape.OffsetXYZCopy);
         return mesh;
@@ -280,7 +296,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override void OnBeforeRender(ICoreClientAPI clientApi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_ItemShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
+        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, MeshRefCacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
 
         string key = GetMeshCacheKey(renderinfo.InSlot);
 
