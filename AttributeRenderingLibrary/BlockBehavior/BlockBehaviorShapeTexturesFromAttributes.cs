@@ -294,22 +294,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         bool foundInventoryTextures = slot.Itemstack.FindByVariant(TexturesInventoryByType!, out _);
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, foundInventoryTextures ? TexturesInventoryByType : texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        TesselationMetaData meta = new()
-        {
-            QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
-            IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
-            TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes block behavior",
-            Rotation = rcshape.RotateXYZCopy
-        };
+        rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
 
-        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
-        mesh = mesh
-        .Translate(-0.5f, -0.5f, -0.5f)
-        .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
-        .Translate(0.5f, 0.5f, 0.5f)
-        .Translate(rcshape.OffsetXYZCopy);
+        clientApi.Tesselator.TesselateShapeExt(
+            typeForLogging: $"{this} block behavior",
+            compositeShape: rcshape,
+            modeldata: out mesh,
+            texSource: stexSource,
+            quantityElements: rcshape.QuantityElements,
+            selectiveElements: GetShapeSelectiveElements(variants, rcshape));
+
         return mesh;
     }
 
@@ -368,22 +362,18 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
             ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-            TesselationMetaData meta = new()
-            {
-                QuantityElements = rcshape.QuantityElements,
-                SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
-                IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
-                TexSource = stexSource,
-                TypeForLogging = "ShapeTexturesFromAttributes block behavior",
-                // no need to set rotation, since placed block is already rotated by XYZ in BlockEntityBehavior.OnTesselation
-            };
+            // no need to rotate placed block before BlockEntityBehavior.OnTesselation
+            rcshape.rotateX = rcshape.rotateY = rcshape.rotateZ = 0;
 
-            clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
-            mesh = mesh
-            .Translate(-0.5f, -0.5f, -0.5f)
-            .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
-            .Translate(0.5f, 0.5f, 0.5f)
-            .Translate(rcshape.OffsetXYZCopy);
+            rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
+
+            clientApi.Tesselator.TesselateShapeExt(
+                typeForLogging: $"{this} block behavior",
+                compositeShape: rcshape,
+                modeldata: out mesh,
+                texSource: stexSource,
+                quantityElements: rcshape.QuantityElements,
+                selectiveElements: GetShapeSelectiveElements(variants, rcshape));
 
             if (overrideTexturesource == null)
             {
@@ -432,22 +422,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        TesselationMetaData meta = new()
-        {
-            QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
-            IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
-            TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes block behavior",
-            Rotation = rcshape.RotateXYZCopy
-        };
+        rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
 
-        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
-        mesh = mesh
-        .Translate(-0.5f, -0.5f, -0.5f)
-        .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
-        .Translate(0.5f, 0.5f, 0.5f)
-        .Translate(rcshape.OffsetXYZCopy);
+        clientApi.Tesselator.TesselateShapeExt(
+            typeForLogging: $"{this} block behavior",
+            compositeShape: rcshape,
+            modeldata: out mesh,
+            texSource: stexSource,
+            quantityElements: rcshape.QuantityElements,
+            selectiveElements: GetShapeSelectiveElements(variants, rcshape));
+
         return mesh;
     }
 
@@ -465,11 +449,12 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             return null;
         }
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        originalShape = rcshape;
-        return Vintagestory.API.Common.Shape.TryGet(coreApi, rcshape.Base);
+        originalShape = variants.ReplacePlaceholders(ucshape.Clone());
+        if (originalShape.CheckIfExists(coreApi, out Shape? shape))
+        {
+            return shape;
+        }
+        return null;
     }
 
     public virtual Shape? GetInventoryShape(ItemSlot slot, Variants variants, CompositeShape? overrideShape, out CompositeShape? originalShape)
@@ -491,11 +476,12 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             return null;
         }
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        originalShape = rcshape;
-        return Vintagestory.API.Common.Shape.TryGet(coreApi, rcshape.Base);
+        originalShape = variants.ReplacePlaceholders(ucshape.Clone());
+        if (originalShape.CheckIfExists(coreApi, out Shape? shape))
+        {
+            return shape;
+        }
+        return null;
     }
 
     public virtual string[] GetShapeIgnoreElements(Variants variants, CompositeShape cshape)

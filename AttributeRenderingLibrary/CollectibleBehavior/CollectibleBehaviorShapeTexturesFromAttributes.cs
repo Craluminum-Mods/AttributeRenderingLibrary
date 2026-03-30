@@ -199,7 +199,10 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         Shape? shape = GetShape(slot, variants, overrideShape, out CompositeShape? rcshape);
 
-        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
+        if (shape == null || rcshape == null)
+        {
+            return RenderExtensions.GetUnknownItemModelData(clientApi);
+        }
 
         UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation>? prefixedTextureCodes = null;
@@ -218,22 +221,16 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        TesselationMetaData meta = new()
-        {
-            QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = GetShapeSelectiveElements(slot.Itemstack, rcshape),
-            IgnoreElements = GetShapeIgnoreElements(slot.Itemstack, rcshape),
-            TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes item behavior",
-            Rotation = rcshape.RotateXYZCopy
-        };
+        rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
 
-        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
-        mesh = mesh
-        .Translate(-0.5f, -0.5f, -0.5f)
-        .Scale(rcshape.Scale, rcshape.Scale, rcshape.Scale)
-        .Translate(0.5f, 0.5f, 0.5f)
-        .Translate(rcshape.OffsetXYZCopy);
+        clientApi.Tesselator.TesselateShapeExt(
+            typeForLogging: $"{this} item behavior",
+            compositeShape: rcshape,
+            modeldata: out mesh,
+            texSource: stexSource,
+            quantityElements: rcshape.QuantityElements,
+            selectiveElements: GetShapeSelectiveElements(variants, rcshape));
+
         return mesh;
     }
 
@@ -251,18 +248,18 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             return null;
         }
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        originalShape = rcshape;
-        return Vintagestory.API.Common.Shape.TryGet(coreApi, rcshape.Base);
+        originalShape = variants.ReplacePlaceholders(ucshape.Clone());
+        if (originalShape.CheckIfExists(coreApi, out Shape? shape))
+        {
+            return shape;
+        }
+        return null;
     }
 
-    public virtual string[] GetShapeIgnoreElements(ItemStack itemStack, CompositeShape cshape)
+    public virtual string[] GetShapeIgnoreElements(Variants variants, CompositeShape cshape)
     {
         if (ShapeIgnoreElementsByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] elements) && elements != null)
             {
                 return variants.ReplacePlaceholders(elements).Append(cshape.IgnoreElements);
@@ -271,7 +268,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         if (ShapeIgnoreElementsCombineByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             List<string> result = cshape.IgnoreElements is null ? new() : new(cshape.IgnoreElements);
             foreach (string[] elements in variants.FindAllByVariant(ShapeIgnoreElementsCombineByType))
             {
@@ -283,11 +279,10 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return cshape.IgnoreElements;
     }
 
-    public virtual string[] GetShapeSelectiveElements(ItemStack itemStack, CompositeShape cshape)
+    public virtual string[] GetShapeSelectiveElements(Variants variants, CompositeShape cshape)
     {
         if (ShapeSelectiveElementsByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] elements) && elements != null)
             {
                 return variants.ReplacePlaceholders(elements).Append(cshape.SelectiveElements);
@@ -296,7 +291,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         if (ShapeSelectiveElementsCombineByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             List<string> result = cshape.SelectiveElements is null ? new() : new(cshape.SelectiveElements);
             foreach (string[] elements in variants.FindAllByVariant(ShapeSelectiveElementsCombineByType))
             {
