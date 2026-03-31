@@ -33,12 +33,7 @@ public class Variants
 
     public void Set(string key, string value)
     {
-        if (Elements.ContainsKey(key))
-        {
-            Elements[key] = value;
-            return;
-        }
-        _ = Elements.TryAdd(key, value);
+        Elements[key] = value;
     }
 
     public void Set(params Variant[] newVariants)
