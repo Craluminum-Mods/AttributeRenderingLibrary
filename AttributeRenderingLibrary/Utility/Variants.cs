@@ -26,15 +26,17 @@ public class Variants
         return [.. Elements.Select(x => $"{x.Key}-{x.Value}")];
     }
 
-    public string Get(string key)
+    public string? this[string key]
     {
-        return Elements.GetValueOrDefault(key)!;
+        get => Elements.GetValueOrDefault(key);
+        set => Elements[key] = value!;
     }
 
-    public void Set(string key, string value)
-    {
-        Elements[key] = value;
-    }
+    [Obsolete("Use the indexer instead")]
+    public string Get(string key) => this[key]!;
+
+    [Obsolete("Use the indexer instead")]
+    public void Set(string key, string value) => this[key] = value;
 
     public void Set(params Variant[] newVariants)
     {
@@ -45,7 +47,7 @@ public class Variants
 
         foreach (Variant variant in newVariants)
         {
-            Set(variant.Key, variant.Value);
+            this[variant.Key] = variant.Value;
         }
     }
 
@@ -58,7 +60,7 @@ public class Variants
 
         foreach ((string key, string value) in newVariants)
         {
-            Set(key, value);
+            this[key] =  value;
         }
     }
 
@@ -83,7 +85,7 @@ public class Variants
         {
             if (ignoreKeys?.Contains(key) == true) continue;
 
-            Set(key, value);
+            this[key] = value;
         }
     }
 
