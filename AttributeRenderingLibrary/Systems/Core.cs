@@ -83,6 +83,7 @@ public class Core : ModSystem
     public override void Dispose()
     {
         HarmonyInstance.UnpatchAll(HarmonyInstance.Id);
+        ARL_ObjectCacheUtil.ARL_ObjectCache.Clear();
     }
 
     public override void AssetsFinalize(ICoreAPI api)

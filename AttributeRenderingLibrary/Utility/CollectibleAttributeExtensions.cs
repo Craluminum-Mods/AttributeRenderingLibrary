@@ -8,81 +8,65 @@ namespace AttributeRenderingLibrary;
 
 public static class CollectibleAttributeExtensions
 {
-    public const string STFA_ATTRIBUTES_KEY = "STFA_attributes";
+    public const string ARL_ATTRIBUTES_KEY = "ARL_attributes";
 
-    public static JsonObject? GetTypedAttribute(JsonObject collectibleAttributes, string attributeKey, Variants variants)
+    public static JsonObject? GetTypedAttribute(JsonObject attributes, string attributeKey, ItemStack stack, Variants variants)
     {
-        if (collectibleAttributes.Token?[STFA_ATTRIBUTES_KEY]?[attributeKey] is not JObject { } attributeContainer) return null;
+        if (!variants.Any) return null;
 
-        Dictionary<string, JsonObject> lookup = attributeContainer.Properties()
-            .ToDictionary(p => p.Name, p => new JsonObject(p.Value));
+        string cacheKey = $"ARL_attributes|{attributeKey}|{stack.Collectible.Code}|{variants}";
 
-        if (variants.FindByVariant(lookup, out JsonObject? attribute))
+        return ARL_ObjectCacheUtil.GetOrCreate(cacheKey, () =>
         {
-            return variants.ReplacePlaceholders(attribute?.Clone());
-        }
-        return null;
+            if (attributes.Token?[ARL_ATTRIBUTES_KEY]?[attributeKey] is not JObject { } attributeContainer)
+            {
+                return null;
+            }
+
+            Dictionary<string, JsonObject> lookup = attributeContainer.Properties()
+                .ToDictionary(p => p.Name, p => new JsonObject(p.Value));
+
+            if (variants.FindByVariant(lookup, out JsonObject? attribute))
+            {
+                return variants.ReplacePlaceholders(attribute?.Clone());
+            }
+            return null;
+        });
     }
 
-    public static bool? IsTrue(JsonObject collectibleAttributes, string attributeKey, Variants variants)
+    public static JsonObject GetAttribute(JsonObject attributes, string attributeKey, IItemStack? stack)
     {
-        if (collectibleAttributes.Token?[STFA_ATTRIBUTES_KEY]?[attributeKey] is not JObject { } attributeContainer) return null;
-
-        Dictionary<string, bool> lookup = attributeContainer.Properties()
-            .ToDictionary(p => p.Name, p => (bool)p.Value);
-
-        return variants.IsTrue(lookup);
-    }
-
-    public static JsonObject GetAttribute(JsonObject collectibleAttributes, string attributeKey, IItemStack? stack)
-    {
-        if (stack is null || !collectibleAttributes.KeyExists(STFA_ATTRIBUTES_KEY) || attributeKey == STFA_ATTRIBUTES_KEY)
+        if (stack is null || !attributes.KeyExists(ARL_ATTRIBUTES_KEY) || attributeKey == ARL_ATTRIBUTES_KEY)
         {
-            return collectibleAttributes[attributeKey];
+            return attributes[attributeKey];
         }
 
         Variants variants = Variants.FromStack((ItemStack)stack);
-        if (!variants.Any)
-        {
-            return collectibleAttributes[attributeKey];
-        }
-
-        JsonObject? typedAttribute = GetTypedAttribute(collectibleAttributes, attributeKey, variants);
-        return typedAttribute ?? collectibleAttributes[attributeKey];
+        JsonObject? attribute = GetTypedAttribute(attributes, attributeKey, (ItemStack)stack, variants);
+        return attribute ?? attributes[attributeKey];
     }
 
-    public static bool GetKeyExists(JsonObject collectibleAttributes, string attributeKey, IItemStack? stack)
+    public static bool GetKeyExists(JsonObject attributes, string attributeKey, IItemStack? stack)
     {
-        if (stack is null || !collectibleAttributes.KeyExists(STFA_ATTRIBUTES_KEY) || attributeKey == STFA_ATTRIBUTES_KEY)
+        if (stack is null || !attributes.KeyExists(ARL_ATTRIBUTES_KEY) || attributeKey == ARL_ATTRIBUTES_KEY)
         {
-            return collectibleAttributes.KeyExists(attributeKey);
+            return attributes.KeyExists(attributeKey);
         }
 
         Variants variants = Variants.FromStack((ItemStack)stack);
-        if (!variants.Any)
-        {
-            return collectibleAttributes.KeyExists(attributeKey);
-        }
-
-        JsonObject? typedAttribute = GetTypedAttribute(collectibleAttributes, attributeKey, variants);
-        if (typedAttribute != null) return true;
-
-        return collectibleAttributes.KeyExists(attributeKey);
+        bool? keyExists = GetTypedAttribute(attributes, attributeKey, (ItemStack)stack, variants)?.KeyExists(attributeKey);
+        return keyExists ?? attributes.KeyExists(attributeKey);
     }
 
-    public static bool GetIsTrue(JsonObject collectibleAttributes, string attributeKey, IItemStack? stack)
+    public static bool GetIsTrue(JsonObject attributes, string attributeKey, IItemStack? stack)
     {
-        if (stack is null || !collectibleAttributes.KeyExists(STFA_ATTRIBUTES_KEY) || attributeKey == STFA_ATTRIBUTES_KEY)
+        if (stack is null || !attributes.KeyExists(ARL_ATTRIBUTES_KEY) || attributeKey == ARL_ATTRIBUTES_KEY)
         {
-            return collectibleAttributes.IsTrue(attributeKey);
+            return attributes.IsTrue(attributeKey);
         }
 
         Variants variants = Variants.FromStack((ItemStack)stack);
-        if (!variants.Any)
-        {
-            return collectibleAttributes.IsTrue(attributeKey);
-        }
-
-        return IsTrue(collectibleAttributes, attributeKey, variants) ?? collectibleAttributes.IsTrue(attributeKey);
+        bool? isTrue = GetTypedAttribute(attributes, attributeKey, (ItemStack)stack, variants)?.IsTrue(attributeKey);
+        return isTrue ?? attributes.IsTrue(attributeKey);
     }
 }
