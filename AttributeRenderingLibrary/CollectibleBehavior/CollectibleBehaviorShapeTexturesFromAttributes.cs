@@ -69,10 +69,12 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public ICoreClientAPI clientApi;
     public ICoreAPI coreApi;
 #nullable enable
+    
+    public virtual string MeshRefCacheKey => $"ARL_{this}_MeshRefs";
 
     public override void OnLoaded(ICoreAPI api)
     {
-        if (collObj.Attributes != null && collObj.Attributes.IsTrue("wearableAttachment"))
+        if (collObj.Attributes != null && collObj.Attributes.IsTrue("wearableAttachment") && this is not AttributeRenderingLibrary.CollectibleBehaviorWearableAttachment)
         {
             LoggerUtil.Warn(api, this, $"'AttributeRenderingLibrary.ShapeTexturesFromAttributes' behavior no longer supports wearables properly. Please, replace it with 'AttributeRenderingLibrary.Wearable' behavior for {collObj.Code} instead");
         }
@@ -80,14 +82,29 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         clientApi = api as ICoreClientAPI;
         coreApi = api;
         iattr = IAttachableToEntity.FromAttributes(collObj);
+
+        if (clientApi != null)
+        {
+            clientApi.Event.ReloadShapes += Event_ReloadShapes;
+            clientApi.Event.ReloadTextures += Event_ReloadTextures;
+        }
     }
 
     public override void OnUnloaded(ICoreAPI api)
     {
-        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
-        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
+        DisposeOfMeshes(api);
     }
+
+    public virtual void Event_ReloadShapes() => DisposeOfMeshes(coreApi);
+    public virtual void Event_ReloadTextures() => DisposeOfMeshes(coreApi);
+
+    public virtual void DisposeOfMeshes(ICoreAPI api)
+    {
+        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, MeshRefCacheKey);
+        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
+        ObjectCacheUtil.Delete(api, MeshRefCacheKey);
+    }
+
 
     public override void Initialize(JsonObject properties)
     {
@@ -182,7 +199,10 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         Shape? shape = GetShape(slot, variants, overrideShape, out CompositeShape? rcshape);
 
-        if (shape == null || rcshape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
+        if (shape == null || rcshape == null)
+        {
+            return RenderExtensions.GetUnknownItemModelData(clientApi);
+        }
 
         UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
         Dictionary<string, AssetLocation>? prefixedTextureCodes = null;
@@ -201,16 +221,16 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        TesselationMetaData meta = new()
-        {
-            QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = GetShapeSelectiveElements(slot.Itemstack, rcshape),
-            IgnoreElements = GetShapeIgnoreElements(slot.Itemstack, rcshape),
-            TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes item behavior"
-        };
+        rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
 
-        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+        clientApi.Tesselator.TesselateShapeExt(
+            typeForLogging: $"{this} item behavior",
+            compositeShape: rcshape,
+            modeldata: out mesh,
+            texSource: stexSource,
+            quantityElements: rcshape.QuantityElements,
+            selectiveElements: GetShapeSelectiveElements(variants, rcshape));
+
         return mesh;
     }
 
@@ -228,18 +248,18 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             return null;
         }
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        originalShape = rcshape;
-        return Vintagestory.API.Common.Shape.TryGet(coreApi, rcshape.Base);
+        originalShape = variants.ReplacePlaceholders(ucshape.Clone());
+        if (originalShape.CheckIfExists(coreApi, out Shape? shape))
+        {
+            return shape;
+        }
+        return null;
     }
 
-    public virtual string[] GetShapeIgnoreElements(ItemStack itemStack, CompositeShape cshape)
+    public virtual string[] GetShapeIgnoreElements(Variants variants, CompositeShape cshape)
     {
         if (ShapeIgnoreElementsByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] elements) && elements != null)
             {
                 return variants.ReplacePlaceholders(elements).Append(cshape.IgnoreElements);
@@ -248,7 +268,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         if (ShapeIgnoreElementsCombineByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             List<string> result = cshape.IgnoreElements is null ? new() : new(cshape.IgnoreElements);
             foreach (string[] elements in variants.FindAllByVariant(ShapeIgnoreElementsCombineByType))
             {
@@ -260,11 +279,10 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return cshape.IgnoreElements;
     }
 
-    public virtual string[] GetShapeSelectiveElements(ItemStack itemStack, CompositeShape cshape)
+    public virtual string[] GetShapeSelectiveElements(Variants variants, CompositeShape cshape)
     {
         if (ShapeSelectiveElementsByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] elements) && elements != null)
             {
                 return variants.ReplacePlaceholders(elements).Append(cshape.SelectiveElements);
@@ -273,7 +291,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         if (ShapeSelectiveElementsCombineByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             List<string> result = cshape.SelectiveElements is null ? new() : new(cshape.SelectiveElements);
             foreach (string[] elements in variants.FindAllByVariant(ShapeSelectiveElementsCombineByType))
             {
@@ -287,7 +304,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override void OnBeforeRender(ICoreClientAPI clientApi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
+        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, MeshRefCacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
 
         string key = GetMeshCacheKey(renderinfo.InSlot);
 

@@ -65,6 +65,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public IAttachableToEntity? iattr;
     #endregion
 
+    public virtual string MeshRefCacheKey => $"ARL_{this}_MeshRefs";
+
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
@@ -76,14 +78,28 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         LoadTypes();
         iattr = IAttachableToEntity.FromAttributes(this);
+
+        if (api is ICoreClientAPI clientApi)
+        {
+            clientApi.Event.ReloadShapes += Event_ReloadShapes;
+            clientApi.Event.ReloadTextures += Event_ReloadTextures;
+        }
     }
 
     public override void OnUnloaded(ICoreAPI api)
     {
         base.OnUnloaded(api);
-        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_ItemShapeTexturesFromAttributes_MeshRefs");
+        DisposeOfMeshes(api);
+    }
+
+    public virtual void Event_ReloadShapes() => DisposeOfMeshes(api);
+    public virtual void Event_ReloadTextures() => DisposeOfMeshes(api);
+
+    public virtual void DisposeOfMeshes(ICoreAPI api)
+    {
+        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, MeshRefCacheKey);
         meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_ItemShapeTexturesFromAttributes_MeshRefs");
+        ObjectCacheUtil.Delete(api, MeshRefCacheKey);
     }
 
     public virtual void LoadTypes()
@@ -188,16 +204,16 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        TesselationMetaData meta = new()
-        {
-            QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = GetShapeSelectiveElements(slot.Itemstack, rcshape),
-            IgnoreElements = GetShapeIgnoreElements(slot.Itemstack, rcshape),
-            TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes item"
-        };
+        rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
 
-        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+        clientApi.Tesselator.TesselateShapeExt(
+            typeForLogging: $"{this} item",
+            compositeShape: rcshape,
+            modeldata: out mesh,
+            texSource: stexSource,
+            quantityElements: rcshape.QuantityElements,
+            selectiveElements: GetShapeSelectiveElements(variants, rcshape));
+
         return mesh;
     }
 
@@ -215,18 +231,18 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return null;
         }
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        originalShape = rcshape;
-        return Vintagestory.API.Common.Shape.TryGet(api, rcshape.Base);
+        originalShape = variants.ReplacePlaceholders(ucshape.Clone());
+        if (originalShape.CheckIfExists(api, out Shape? shape))
+        {
+            return shape;
+        }
+        return null;
     }
 
-    public virtual string[] GetShapeIgnoreElements(ItemStack itemStack, CompositeShape cshape)
+    public virtual string[] GetShapeIgnoreElements(Variants variants, CompositeShape cshape)
     {
         if (ShapeIgnoreElementsByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             if (variants.FindByVariant(ShapeIgnoreElementsByType, out string[] elements) && elements != null)
             {
                 return variants.ReplacePlaceholders(elements).Append(cshape.IgnoreElements);
@@ -235,7 +251,6 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         if (ShapeIgnoreElementsCombineByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             List<string> result = cshape.IgnoreElements is null ? new() : new(cshape.IgnoreElements);
             foreach (string[] elements in variants.FindAllByVariant(ShapeIgnoreElementsCombineByType))
             {
@@ -247,11 +262,10 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return cshape.IgnoreElements;
     }
 
-    public virtual string[] GetShapeSelectiveElements(ItemStack itemStack, CompositeShape cshape)
+    public virtual string[] GetShapeSelectiveElements(Variants variants, CompositeShape cshape)
     {
         if (ShapeSelectiveElementsByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             if (variants.FindByVariant(ShapeSelectiveElementsByType, out string[] elements) && elements != null)
             {
                 return variants.ReplacePlaceholders(elements).Append(cshape.SelectiveElements);
@@ -260,7 +274,6 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         if (ShapeSelectiveElementsCombineByType is { Count: > 0 })
         {
-            Variants variants = Variants.FromStack(itemStack);
             List<string> result = cshape.SelectiveElements is null ? new() : new(cshape.SelectiveElements);
             foreach (string[] elements in variants.FindAllByVariant(ShapeSelectiveElementsCombineByType))
             {
@@ -274,7 +287,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override void OnBeforeRender(ICoreClientAPI clientApi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_ItemShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
+        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, MeshRefCacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
 
         string key = GetMeshCacheKey(renderinfo.InSlot);
 

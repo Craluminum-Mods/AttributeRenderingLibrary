@@ -15,14 +15,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
     public Dictionary<string, bool> IsFoldableByType { get; protected set; }
     public Dictionary<string, bool> VisibleDamageEffectByType { get; protected set; }
 
-    public override void OnUnloaded(ICoreAPI api)
-    {
-        base.OnUnloaded(api);
-
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_wearableAttachmentMeshRefs");
-        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_wearableAttachmentMeshRefs");
-    }
+    public override string MeshRefCacheKey => $"ARL_{this}_wearableAttachmentMeshRefs";
 
     public override void LoadTypes(JsonObject properties)
     {
@@ -70,7 +63,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
     public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        Dictionary<string, MultiTextureMeshRef> meshrefs = ObjectCacheUtil.GetOrCreate(capi, "AttributeRenderingLibrary_wearableAttachmentMeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
+        Dictionary<string, MultiTextureMeshRef> meshrefs = ObjectCacheUtil.GetOrCreate(capi, MeshRefCacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
         string key = GetMeshCacheKey(renderinfo.InSlot, "default");
 
         if (!meshrefs.TryGetValue(key, out renderinfo.ModelRef))
@@ -145,7 +138,15 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        clientApi.Tesselator.TesselateShapeWithJointIds("entity", newShape, out mesh, stexSource, new Vec3f(), quantityElements: rcshape.QuantityElements, selectiveElements: GetShapeSelectiveElements(slot.Itemstack, rcshape));
+        clientApi.Tesselator.TesselateShapeWithJointIdsExt(
+            typeForLogging: "entity",
+            shapeBase: newShape,
+            modeldata: out mesh,
+            texSource: stexSource,
+            rotation: rcshape.RotateXYZCopy * GameMath.DEG2RAD,
+            quantityElements: rcshape.QuantityElements,
+            selectiveElements: GetShapeSelectiveElements(variants, rcshape),
+            ignoreElements: GetShapeIgnoreElements(variants, rcshape));
 
         return mesh;
     }

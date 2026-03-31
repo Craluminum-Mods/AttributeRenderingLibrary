@@ -81,6 +81,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public ICoreClientAPI clientApi;
     public ICoreAPI coreApi;
 #nullable enable
+    
+    public virtual string MeshRefCacheKey => $"ARL_{this}_MeshRefs";
+    public virtual string MeshCacheKey => $"ARL_{this}_Meshes";
 
     public override void OnLoaded(ICoreAPI api)
     {
@@ -91,17 +94,31 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         clientApi = api as ICoreClientAPI;
         coreApi = api;
         iattr = IAttachableToEntity.FromAttributes(collObj);
+
+        if (clientApi != null)
+        {
+            clientApi.Event.ReloadShapes += Event_ReloadShapes;
+            clientApi.Event.ReloadTextures += Event_ReloadTextures;
+        }
     }
 
     public override void OnUnloaded(ICoreAPI api)
     {
-        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
-        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs");
+        DisposeOfMeshes(api);
+    }
 
-        Dictionary<string, MeshData>? meshes = ObjectCacheUtil.TryGet<Dictionary<string, MeshData>>(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
+    public virtual void Event_ReloadShapes() => DisposeOfMeshes(coreApi);
+    public virtual void Event_ReloadTextures() => DisposeOfMeshes(coreApi);
+    
+    public virtual void DisposeOfMeshes(ICoreAPI api)
+    {
+        Dictionary<string, MultiTextureMeshRef>? meshRefs = ObjectCacheUtil.TryGet<Dictionary<string, MultiTextureMeshRef>>(api, MeshRefCacheKey);
+        meshRefs?.Foreach(meshRef => meshRef.Value?.Dispose());
+        ObjectCacheUtil.Delete(api, MeshRefCacheKey);
+
+        Dictionary<string, MeshData>? meshes = ObjectCacheUtil.TryGet<Dictionary<string, MeshData>>(api, MeshCacheKey);
         meshes?.Foreach(mesh => mesh.Value?.Dispose());
-        ObjectCacheUtil.Delete(api, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes");
+        ObjectCacheUtil.Delete(api, MeshCacheKey);
     }
 
     public override void Initialize(JsonObject properties)
@@ -277,16 +294,16 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         bool foundInventoryTextures = slot.Itemstack.FindByVariant(TexturesInventoryByType!, out _);
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, foundInventoryTextures ? TexturesInventoryByType : texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        TesselationMetaData meta = new()
-        {
-            QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
-            IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
-            TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes block behavior"
-        };
+        rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
 
-        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+        clientApi.Tesselator.TesselateShapeExt(
+            typeForLogging: $"{this} block behavior",
+            compositeShape: rcshape,
+            modeldata: out mesh,
+            texSource: stexSource,
+            quantityElements: rcshape.QuantityElements,
+            selectiveElements: GetShapeSelectiveElements(variants, rcshape));
+
         return mesh;
     }
 
@@ -317,7 +334,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     /// <returns>Mesh for placed block</returns>
     public virtual MeshData GetOrCreateMesh(Variants variants, CompositeShape? overrideShape, BlockPos atBlockPos, string extraCacheKey, ITexPositionSource overrideTexturesource = null)
     {
-        Dictionary<string, MeshData> cMeshes = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_Meshes", () => new Dictionary<string, MeshData>());
+        Dictionary<string, MeshData> cMeshes = ObjectCacheUtil.GetOrCreate(clientApi, MeshCacheKey, () => new Dictionary<string, MeshData>());
 
         string key = string.IsNullOrEmpty(extraCacheKey) ? $"{block.Code}-{variants}" : $"{block.Code}-{variants}-{extraCacheKey}";
         if (overrideTexturesource != null || !cMeshes.TryGetValue(key, out MeshData? mesh))
@@ -345,16 +362,18 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
             ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-            TesselationMetaData meta = new()
-            {
-                QuantityElements = rcshape.QuantityElements,
-                SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
-                IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
-                TexSource = stexSource,
-                TypeForLogging = "ShapeTexturesFromAttributes block behavior"
-            };
+            // no need to rotate placed block before BlockEntityBehavior.OnTesselation
+            rcshape.rotateX = rcshape.rotateY = rcshape.rotateZ = 0;
 
-            clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+            rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
+
+            clientApi.Tesselator.TesselateShapeExt(
+                typeForLogging: $"{this} block behavior",
+                compositeShape: rcshape,
+                modeldata: out mesh,
+                texSource: stexSource,
+                quantityElements: rcshape.QuantityElements,
+                selectiveElements: GetShapeSelectiveElements(variants, rcshape));
 
             if (overrideTexturesource == null)
             {
@@ -403,23 +422,22 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
-        TesselationMetaData meta = new()
-        {
-            QuantityElements = rcshape.QuantityElements,
-            SelectiveElements = GetShapeSelectiveElements(variants, rcshape),
-            IgnoreElements = GetShapeIgnoreElements(variants, rcshape),
-            TexSource = stexSource,
-            TypeForLogging = "ShapeTexturesFromAttributes block behavior"
-        };
+        rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
 
-        clientApi.Tesselator.TesselateShape(meta, shape, out mesh);
+        clientApi.Tesselator.TesselateShapeExt(
+            typeForLogging: $"{this} block behavior",
+            compositeShape: rcshape,
+            modeldata: out mesh,
+            texSource: stexSource,
+            quantityElements: rcshape.QuantityElements,
+            selectiveElements: GetShapeSelectiveElements(variants, rcshape));
+
         return mesh;
     }
 
     public virtual Shape? GetShape(ItemSlot? slot, BlockPos? pos, Variants variants, CompositeShape? overrideShape, out CompositeShape? originalShape)
     {
         CompositeShape? ucshape = overrideShape;
-
         if (ucshape == null)
         {
             variants.FindByVariant(shapeByType, out ucshape);
@@ -431,11 +449,12 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             return null;
         }
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        originalShape = rcshape;
-        return Vintagestory.API.Common.Shape.TryGet(coreApi, rcshape.Base);
+        originalShape = variants.ReplacePlaceholders(ucshape.Clone());
+        if (originalShape.CheckIfExists(coreApi, out Shape? shape))
+        {
+            return shape;
+        }
+        return null;
     }
 
     public virtual Shape? GetInventoryShape(ItemSlot slot, Variants variants, CompositeShape? overrideShape, out CompositeShape? originalShape)
@@ -457,11 +476,12 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             return null;
         }
 
-        CompositeShape rcshape = variants.ReplacePlaceholders(ucshape.Clone());
-        rcshape.Base = rcshape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json");
-
-        originalShape = rcshape;
-        return Vintagestory.API.Common.Shape.TryGet(coreApi, rcshape.Base);
+        originalShape = variants.ReplacePlaceholders(ucshape.Clone());
+        if (originalShape.CheckIfExists(coreApi, out Shape? shape))
+        {
+            return shape;
+        }
+        return null;
     }
 
     public virtual string[] GetShapeIgnoreElements(Variants variants, CompositeShape cshape)
@@ -512,7 +532,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void OnBeforeRender(ICoreClientAPI clientApi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, "AttributeRenderingLibrary_BehaviorShapeTexturesFromAttributes_MeshRefs", () => new Dictionary<string, MultiTextureMeshRef>());
+        Dictionary<string, MultiTextureMeshRef> meshRefs = ObjectCacheUtil.GetOrCreate(clientApi, MeshRefCacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
 
         string key = GetMeshCacheKey(renderinfo.InSlot);
 
@@ -826,12 +846,15 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             beBehavior.Variants.FindByVariant(shapeByType, out CompositeShape shapeForRotation);
             shapeForRotation ??= block.Shape;
 
-            return new Vec3f
+            if (shapeForRotation != null)
             {
-                X = (shapeForRotation?.rotateX ?? 0) * GameMath.DEG2RAD,
-                Y = (shapeForRotation?.rotateY ?? 0) * GameMath.DEG2RAD,
-                Z = (shapeForRotation?.rotateZ ?? 0) * GameMath.DEG2RAD
-            };
+                return new Vec3f
+                {
+                    X = shapeForRotation.rotateX * GameMath.DEG2RAD,
+                    Y = shapeForRotation.rotateY * GameMath.DEG2RAD,
+                    Z = shapeForRotation.rotateZ * GameMath.DEG2RAD
+                };
+            }
         }
 
         return Vec3f.Zero;
