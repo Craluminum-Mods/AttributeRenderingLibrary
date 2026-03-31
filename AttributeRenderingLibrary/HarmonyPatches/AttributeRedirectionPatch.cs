@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
-using static HarmonyLib.Code;
 
 namespace AttributeRenderingLibrary.HarmonyPatches;
 
@@ -82,15 +81,15 @@ public static class AttributeRedirectionPatch
 
                 if (usage.Calls(indexer))
                 {
-                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(AttributeRedirectionPatch), nameof(GetAttribute)));
+                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetAttribute)));
                 }
                 else if (usage.Calls(keyExists))
                 {
-                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(AttributeRedirectionPatch), nameof(GetKeyExists)));
+                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetKeyExists)));
                 }
                 else if (usage.Calls(isTrue))
                 {
-                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(AttributeRedirectionPatch), nameof(GetIsTrue)));
+                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetIsTrue)));
                 }
 
                 handledInstructions.Add(usage);
@@ -112,29 +111,5 @@ public static class AttributeRedirectionPatch
         usage.operand = method;
 
         matcher.Insert(loadInstruction);
-    }
-
-    private static JsonObject GetAttribute(JsonObject collectibleAttributes, string attributeKey, IItemStack? itemStack)
-    {
-        if(itemStack is null) return collectibleAttributes[attributeKey];
-        
-        //TODO decide based on attributes
-        return collectibleAttributes[attributeKey];
-    }
-
-    private static bool GetKeyExists(JsonObject collectibleAttributes, string attributeKey, IItemStack? itemStack)
-    {
-        if(itemStack is null) return collectibleAttributes.KeyExists(attributeKey);
-        
-        //TODO decide based on attributes
-        return collectibleAttributes.KeyExists(attributeKey);
-    }
-
-    private static bool GetIsTrue(JsonObject collectibleAttributes, string attributeKey, IItemStack? itemStack)
-    {
-        if (itemStack is null) return collectibleAttributes.IsTrue(attributeKey);
-
-        //TODO decide based on attributes
-        return collectibleAttributes.IsTrue(attributeKey);
     }
 }
