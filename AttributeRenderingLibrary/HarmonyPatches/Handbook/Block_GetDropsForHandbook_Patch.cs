@@ -1,12 +1,11 @@
-﻿
-using HarmonyLib;
+﻿using HarmonyLib;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 
-namespace AttributeRenderingLibrary.HarmonyPatches;
+namespace AttributeRenderingLibrary.HarmonyPatches.Handbook;
 
 [HarmonyPatch(typeof(Block), nameof(Block.GetDropsForHandbook))]
-public static class GetDropsForHandbookPatch
+public static class Block_GetDropsForHandbook_Patch
 {
     [HarmonyPostfix]
     public static void Postfix(Block __instance, ref BlockDropItemStack[] __result, ItemStack handbookStack, IPlayer forPlayer)
