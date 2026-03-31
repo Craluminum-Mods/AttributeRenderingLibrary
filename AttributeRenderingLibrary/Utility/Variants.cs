@@ -156,10 +156,26 @@ public class Variants
     }
 
     /// <summary>
+    /// Mutates the provided <see cref="JsonObject"/> by replacing placeholders in all its tokens.
+    /// <para><br/>WARNING: This modifies the original reference. If shared, it changes globally.</para>
+    /// </summary>
+    /// <returns>The same <see cref="JsonObject"/> instance with resolved placeholders.</returns>
+    public JsonObject? ReplacePlaceholders(JsonObject? input)
+    {
+        if (input is not { Count: > 0 }) return input;
+
+        foreach ((string key, string value) in Elements)
+        {
+            input.FillPlaceHolder(key, value);
+        }
+        return input;
+    }
+
+    /// <summary>
     /// Mutates the provided <see cref="AssetLocation"/> by replacing placeholders in its Path.
     /// <para><br/>WARNING: This modifies the original reference. If shared, it changes globally.</para>
     /// </summary>
-    /// <returns>The same <see cref="AssetLocation"/> instance with a replaced path.</returns>
+    /// <returns>The same <see cref="AssetLocation"/> instance with resolved placeholders.</returns>
     public AssetLocation ReplacePlaceholders(AssetLocation location)
     {
         if (location is not { Path: not null }) return location!;
@@ -174,7 +190,7 @@ public class Variants
     /// <para><br/>WARNING: This modifies the original reference. If the shape is shared (e.g., from a Block Type),
     /// it will be changed globally.</para>
     /// </summary>
-    /// <returns>The same <see cref="CompositeShape"/> instance with replaced placeholders.</returns>
+    /// <returns>The same <see cref="CompositeShape"/> instance with resolved placeholders.</returns>
     public CompositeShape ReplacePlaceholders(CompositeShape cshape)
     {
         if (cshape is not { Base: not null }) return cshape!;
@@ -215,7 +231,7 @@ public class Variants
     /// <para><br/>WARNING: This modifies the original texture definition. If this texture is part of 
     /// a shared block or item type, the change will apply globally.</para>
     /// </summary>
-    /// <returns>The same <see cref="CompositeTexture"/> instance with replaced placeholders.</returns>
+    /// <returns>The same <see cref="CompositeTexture"/> instance with resolved placeholders.</returns>
     public CompositeTexture ReplacePlaceholders(CompositeTexture ctex)
     {
         if (ctex is not { Base: not null }) return ctex!;
@@ -232,7 +248,7 @@ public class Variants
     /// <para><br/>WARNING: Modifies the original reference. This can lead to unexpected behavior if 
     /// the stack is shared across multiple instances.</para>
     /// </summary>
-    /// <returns>The same <see cref="JsonItemStack"/> instance with replaced placeholders.</returns>
+    /// <returns>The same <see cref="JsonItemStack"/> instance with resolved placeholders.</returns>
     public JsonItemStack ReplacePlaceholders(JsonItemStack jstack)
     {
         if (jstack is not { Code: not null }) return jstack!;
@@ -249,7 +265,7 @@ public class Variants
     /// <para><br/>WARNING: Modifies the original reference. This can lead to unexpected behavior if 
     /// the stack is shared across multiple instances.</para>
     /// </summary>
-    /// <returns>The same <see cref="BlockDropItemStack"/> instance with replaced placeholders.</returns>
+    /// <returns>The same <see cref="BlockDropItemStack"/> instance with resolved placeholders.</returns>
     public BlockDropItemStack ReplacePlaceholders(BlockDropItemStack bdstack)
     {
         if (bdstack is not { Code: not null }) return bdstack!;
