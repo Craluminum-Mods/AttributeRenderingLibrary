@@ -63,7 +63,18 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
     {
         base.Initialize(properties);
 
-        if (properties.Exists) JsonUtil.Populate(properties.Token, this);
+        if (properties is not { Count: > 0 }) return;
+
+        ProcessTimeByType = properties["processTime"].AsObject<Dictionary<string, float>>();
+        ProcessedStacksByType = properties["processedStacks"].AsObject<Dictionary<string, BlockDropItemStack[]?>>(null, collObj.Code.Domain);
+        ProcessingSoundByType = properties["processingSound"].AsObject<Dictionary<string, AssetLocation?>?>(null, collObj.Code.Domain);
+        ProcessingAnimationCodeByType = properties["processingAnimationCode"].AsObject<Dictionary<string, string?>>();
+        RemainingItemByType = properties["remainingItem"].AsObject<Dictionary<string, JsonItemStack?>>(null, collObj.Code.Domain);
+        InteractionHelpCodeByType = properties["interactionHelpCode"].AsObject<Dictionary<string, string?>>();
+        HandbookProcessIntoTitleByType = properties["handbookProcessIntoTitle"].AsObject<Dictionary<string, string?>>();
+        HandbookCreatedByTitleByType = properties["handbookCreatedByTitle"].AsObject<Dictionary<string, string?>>();
+        ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
+        ToolDamageByType = properties["toolDamage"].AsObject<Dictionary<string, int>>();
     }
 
     public override void OnLoaded(ICoreAPI api)
@@ -88,7 +99,7 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
 
     public virtual BlockDropItemStack[]? GetProcessedStacks(ItemSlot slot)
     {
-        if (!slot.Itemstack.FindByVariant(ProcessedStacksByType, out BlockDropItemStack[] result, out Variants variants) || result == null)
+        if (!slot.Itemstack!.FindByVariant(ProcessedStacksByType!, out BlockDropItemStack[] result, out Variants variants) || result == null)
         {
             return result;
         }
@@ -110,7 +121,7 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
 
     public virtual JsonItemStack? GetRemainingItem(ItemSlot slot)
     {
-        if (!slot.Itemstack.FindByVariant(RemainingItemByType, out JsonItemStack result, out Variants variants) || result == null)
+        if (!slot.Itemstack!.FindByVariant(RemainingItemByType!, out JsonItemStack result, out Variants variants) || result == null)
         {
             return result;
         }
@@ -181,7 +192,7 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
         {
             processedStacks?.Foreach(processedStack =>
             {
-                ItemStack? stack = processedStack.GetNextItemStack(slot.Itemstack.StackSize);
+                ItemStack? stack = processedStack.GetNextItemStack(slot.Itemstack!.StackSize);
                 if (stack == null) return;
                 var origStack = stack.Clone();
                 var quantity = stack.StackSize;
@@ -239,16 +250,18 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
                 if (resp != EnumWorldAccessResponse.Granted) notProtected = false;
             }
 
-            if (notProtected) return
-            [
-                new()
-                    {
-                        ActionLangCode = GetInteractionHelpCode(slot),
-                        MouseButton = EnumMouseButton.Right,
-                        HotKeyCode = "shift",
-                        Itemstacks = GetTool(slot) == null ? null : ObjectCacheUtil.GetToolStacks(be.Api, (EnumTool)GetTool(slot))
-                    }
-            ];
+            if (notProtected)
+            {
+                return [
+                    new()
+                        {
+                            ActionLangCode = GetInteractionHelpCode(slot),
+                            MouseButton = EnumMouseButton.Right,
+                            HotKeyCode = "shift",
+                            Itemstacks = GetTool(slot) is not { } tool ? null : ObjectCacheUtil.GetToolStacks(be.Api, tool)
+                        }
+                ];
+            }
         }
         return [];
     }

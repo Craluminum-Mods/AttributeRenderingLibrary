@@ -108,8 +108,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         LoadTags();
 
-        shapeByType = Attributes["shape"].AsObject<Dictionary<string, CompositeShape>>();
-        texturesByType = Attributes["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>();
+        shapeByType = Attributes["shape"].AsObject<Dictionary<string, CompositeShape>>(null, Code.Domain);
+        texturesByType = Attributes["textures"].AsObject<Dictionary<string, Dictionary<string, CompositeTexture>>>(null, Code.Domain);
 
         ShapeIgnoreElementsByType = Attributes["shapeIgnoreElements"].AsObject<Dictionary<string, string[]>>();
         ShapeIgnoreElementsCombineByType = Attributes["shapeIgnoreElementsCombine"].AsObject<Dictionary<string, string[]>>();
@@ -129,13 +129,13 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
-        CombustiblePropsByType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>();
-        NutritionPropsByType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>();
-        GrindingPropsByType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>();
-        CrushingPropsByType = Attributes["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>();
-        TransitionablePropsByType = Attributes["transitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>();
-        JuiceablePropsByType = Attributes["juiceableProperties"].AsObject<Dictionary<string, JuiceableProperties>>();
-        DistillationPropsByType = Attributes["distillationProps"].AsObject<Dictionary<string, DistillationProps>>();
+        CombustiblePropsByType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, Code.Domain);
+        NutritionPropsByType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, Code.Domain);
+        GrindingPropsByType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>(null, Code.Domain);
+        CrushingPropsByType = Attributes["crushingProps"].AsObject<Dictionary<string, CrushingProperties>>(null, Code.Domain);
+        TransitionablePropsByType = Attributes["transitionableProps"].AsObject<Dictionary<string, TransitionableProperties[]>>(null, Code.Domain);
+        JuiceablePropsByType = Attributes["juiceableProperties"].AsObject<Dictionary<string, JuiceableProperties>>(null, Code.Domain);
+        DistillationPropsByType = Attributes["distillationProps"].AsObject<Dictionary<string, DistillationProps>>(null, Code.Domain);
 
         HeldLeftReadyAnimationByType = Attributes["heldLeftReadyAnimation"].AsObject<Dictionary<string, string>>();
         HeldRightReadyAnimationByType = Attributes["heldRightReadyAnimation"].AsObject<Dictionary<string, string>>();
@@ -146,8 +146,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         HeldTpUseAnimationByType = Attributes["heldTpUseAnimation"].AsObject<Dictionary<string, string>>();
         HeldTpHitAnimationByType = Attributes["heldTpHitAnimation"].AsObject<Dictionary<string, string>>();
 
-        AttachedShapeByType = Attributes["STFA_attachableToEntity"]?["attachedShape"].AsObject<Dictionary<string, CompositeShape>>();
-        AttachedShapeBySlotCodeByType = Attributes["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>();
+        AttachedShapeByType = Attributes["STFA_attachableToEntity"]?["attachedShape"].AsObject<Dictionary<string, CompositeShape>>(null, Code.Domain);
+        AttachedShapeBySlotCodeByType = Attributes["STFA_attachableToEntity"]?["attachedShapeBySlotCode"].AsObject<Dictionary<string, System.Collections.Generic.OrderedDictionary<string, CompositeShape>>>(null, Code.Domain);
         CategoryCodeByType = Attributes["STFA_attachableToEntity"]?["categoryCode"].AsObject<Dictionary<string, string>>();
         DisableElementsByType = Attributes["STFA_attachableToEntity"]?["disableElements"].AsObject<Dictionary<string, string[]>>();
         KeepElementsByType = Attributes["STFA_attachableToEntity"]?["keepElements"].AsObject<Dictionary<string, string[]>>();

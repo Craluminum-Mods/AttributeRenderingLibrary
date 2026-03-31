@@ -15,7 +15,7 @@ public class CollectibleBehaviorDisplayableProps(CollectibleObject collObj) : Co
 
         if (properties is not { Count: > 0 }) return;
 
-        DisplayablePropsByCodeByType = properties["displayable"].AsObject<Dictionary<string, Dictionary<string, DisplayableAttributes>>>();
+        DisplayablePropsByCodeByType = properties["displayable"].AsObject<Dictionary<string, Dictionary<string, DisplayableAttributes>>>(null, collObj.Code.Domain);
     }
 
     public DisplayableAttributes? GetDisplayableProps(ItemSlot inSlot, string displayType)

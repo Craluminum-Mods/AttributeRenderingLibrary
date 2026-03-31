@@ -83,7 +83,21 @@ public class CollectibleBehaviorHealingItem(CollectibleObject collObj) : Collect
     {
         base.Initialize(properties);
 
-        if (properties.Exists) JsonUtil.Populate(properties.Token, this);
+        if (properties is not { Count: > 0 }) return;
+
+        HealthByType = properties["Health"].AsObject<Dictionary<string, float>>();
+        ApplicationTimeSecByType = properties["ApplicationTimeSec"].AsObject<Dictionary<string, float>>();
+        MaxApplicationTimeSecByType = properties["MaxApplicationTimeSec"].AsObject<Dictionary<string, float>>();
+        TicksByType = properties["Ticks"].AsObject<Dictionary<string, int>>();
+        EffectDurationSecByType = properties["EffectDurationSec"].AsObject<Dictionary<string, float>>();
+        CancelInAirByType = properties["CancelInAir"].AsObject<Dictionary<string, bool>>();
+        CancelWhileSwimmingByType = properties["CancelWhileSwimming"].AsObject<Dictionary<string, bool>>();
+        SoundByType = properties["Sound"].AsObject<Dictionary<string, AssetLocation?>?>(null, collObj.Code.Domain);
+        AppliedSoundByType = properties["AppliedSound"].AsObject<Dictionary<string, AssetLocation?>?>(null, collObj.Code.Domain);
+        SoundRangeByType = properties["SoundRange"].AsObject<Dictionary<string, float>>();
+        CanReviveByType = properties["CanRevive"].AsObject<Dictionary<string, bool>>();
+        AffectedByArmorByType = properties["AffectedByArmor"].AsObject<Dictionary<string, bool>>();
+        DelayToCancelSecByType = properties["DelayToCancelSec"].AsObject<Dictionary<string, float>>();
     }
 
     public override void OnLoaded(ICoreAPI api)
