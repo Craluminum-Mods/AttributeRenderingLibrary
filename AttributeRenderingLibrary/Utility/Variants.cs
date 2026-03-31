@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,11 +13,15 @@ namespace AttributeRenderingLibrary;
 /// <summary>
 /// Collection of attributes very similar to VariantGroups, that are stored in local ItemStack / BlockEntity, instead of global CollectibleObject (Block, Item)
 /// </summary>
-public class Variants
+public class Variants : IEnumerable<KeyValuePair<string, string>>
 {
     public const string RootAttributeName = "types";
 
     protected SortedDictionary<string, string> Elements { get; set; } = [];
+
+    public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => Elements.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public int Count => Elements.Count;
     public bool Any => Elements.Count != 0;
