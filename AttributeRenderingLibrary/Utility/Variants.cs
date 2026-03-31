@@ -90,15 +90,14 @@ public class Variants
     public static Variants FromTreeAttribute(ITreeAttribute rootTree)
     {
         Variants variants = new();
-        if (!rootTree.HasAttribute(RootAttributeName))
+        var tree = rootTree.GetTreeAttribute(RootAttributeName);
+        if (tree is not null)
         {
-            return variants;
-        }
-
-        ITreeAttribute typesTree = rootTree.GetTreeAttribute(RootAttributeName);
-        foreach (string key in typesTree.Select(x => x.Key).Where(key => !variants.Elements.ContainsKey(key)))
-        {
-            variants.Elements.Add(key, typesTree.GetString(key));
+            foreach((var key, var item) in tree)
+            {
+                if(item is not StringAttribute strAttr) continue;
+                variants.Elements.Add(key, string.Intern(strAttr.value));
+            }
         }
         return variants;
     }
