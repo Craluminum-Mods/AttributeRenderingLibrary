@@ -190,7 +190,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
 
         if (GetDressType(inSlot) == EnumCharacterDressType.Head)
         {
-            float rainProt = collObj.Attributes["rainProtectionPerc"].AsFloat(0);
+            float rainProt = inSlot.Itemstack!.ItemAttributes["rainProtectionPerc"].AsFloat(0);
             if (rainProt > 0)
             {
                 dsc.AppendLine(Lang.Get("Protection from rain: {0}%", (int)(rainProt * 100)));

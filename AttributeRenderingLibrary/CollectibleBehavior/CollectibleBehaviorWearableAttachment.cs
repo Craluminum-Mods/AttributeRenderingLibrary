@@ -74,7 +74,7 @@ public class CollectibleBehaviorWearableAttachment(CollectibleObject collObj) : 
 
         renderinfo.NormalShaded = true;
 
-        if ((itemstack.FindByVariant(VisibleDamageEffectByType, out bool visibleDamageEffect) && visibleDamageEffect) || (collObj.Attributes is { Count: > 0 } && collObj.Attributes.IsTrue("visibleDamageEffect")))
+        if ((itemstack.FindByVariant(VisibleDamageEffectByType, out bool visibleDamageEffect) && visibleDamageEffect) || (itemstack.ItemAttributes?.IsTrue("visibleDamageEffect") == true))
         {
             renderinfo.DamageEffect = Math.Max(0, 1 - ((float)collObj.GetRemainingDurability(itemstack) / collObj.GetMaxDurability(itemstack) * 1.1f));
         }
