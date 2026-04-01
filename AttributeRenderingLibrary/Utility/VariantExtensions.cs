@@ -256,18 +256,19 @@ public static class VariantExtensions
 
     public static void GetDebugDescription(this Variants variants, StringBuilder sb, bool withDebugInfo = false)
     {
-        if (ClientSettings.ExtendedDebugInfo && variants.Any)
-        {
-            sb.AppendLine("<font color=\"#bbbbbb\">ARL Variants:");
-            foreach (string keyVal in variants.GetAsStringArray())
-            {
-                sb.AppendLine($"- {keyVal}");
-            }
-            sb.AppendLine("</font>");
-        }
-        else
+        if (!ClientSettings.ExtendedDebugInfo) return;
+
+        if (!variants.Any)
         {
             sb.AppendLine("<font color=\"#bbbbbb\">ARL Variants: None</font>");
+            return;
         }
+
+        sb.AppendLine("<font color=\"#bbbbbb\">ARL Variants:");
+        foreach (string keyVal in variants.GetAsStringArray())
+        {
+            sb.AppendLine($"- {keyVal}");
+        }
+        sb.AppendLine("</font>");
     }
 }
