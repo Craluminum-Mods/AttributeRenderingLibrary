@@ -6,6 +6,7 @@ using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Util;
+using Vintagestory.Client.NoObf;
 
 namespace AttributeRenderingLibrary;
 
@@ -255,7 +256,7 @@ public static class VariantExtensions
 
     public static void GetDebugDescription(this Variants variants, StringBuilder sb, bool withDebugInfo = false)
     {
-        if (withDebugInfo && variants.Any)
+        if (ClientSettings.ExtendedDebugInfo && variants.Any)
         {
             sb.AppendLine("<font color=\"#bbbbbb\">ARL Variants:");
             foreach (string keyVal in variants.GetAsStringArray())
