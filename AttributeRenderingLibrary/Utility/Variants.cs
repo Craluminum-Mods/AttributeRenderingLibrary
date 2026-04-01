@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,11 +13,15 @@ namespace AttributeRenderingLibrary;
 /// <summary>
 /// Collection of attributes very similar to VariantGroups, that are stored in local ItemStack / BlockEntity, instead of global CollectibleObject (Block, Item)
 /// </summary>
-public class Variants
+public class Variants : IEnumerable<KeyValuePair<string, string>>
 {
     public const string RootAttributeName = "types";
 
     protected SortedDictionary<string, string> Elements { get; set; } = [];
+
+    public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => Elements.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public int Count => Elements.Count;
     public bool Any => Elements.Count != 0;
@@ -26,20 +31,17 @@ public class Variants
         return [.. Elements.Select(x => $"{x.Key}-{x.Value}")];
     }
 
-    public string Get(string key)
+    public string? this[string key]
     {
-        return Elements.GetValueOrDefault(key)!;
+        get => Elements.GetValueOrDefault(key);
+        set => Elements[key] = value!;
     }
 
-    public void Set(string key, string value)
-    {
-        if (Elements.ContainsKey(key))
-        {
-            Elements[key] = value;
-            return;
-        }
-        _ = Elements.TryAdd(key, value);
-    }
+    [Obsolete("Use the indexer instead")]
+    public string Get(string key) => this[key]!;
+
+    [Obsolete("Use the indexer instead")]
+    public void Set(string key, string value) => this[key] = value;
 
     public void Set(params Variant[] newVariants)
     {
@@ -50,7 +52,7 @@ public class Variants
 
         foreach (Variant variant in newVariants)
         {
-            Set(variant.Key, variant.Value);
+            this[variant.Key] = variant.Value;
         }
     }
 
@@ -63,7 +65,7 @@ public class Variants
 
         foreach ((string key, string value) in newVariants)
         {
-            Set(key, value);
+            this[key] =  value;
         }
     }
 
@@ -88,22 +90,21 @@ public class Variants
         {
             if (ignoreKeys?.Contains(key) == true) continue;
 
-            Set(key, value);
+            this[key] = value;
         }
     }
 
     public static Variants FromTreeAttribute(ITreeAttribute rootTree)
     {
         Variants variants = new();
-        if (!rootTree.HasAttribute(RootAttributeName))
+        var tree = rootTree.GetTreeAttribute(RootAttributeName);
+        if (tree is not null)
         {
-            return variants;
-        }
-
-        ITreeAttribute typesTree = rootTree.GetTreeAttribute(RootAttributeName);
-        foreach (string key in typesTree.Select(x => x.Key).Where(key => !variants.Elements.ContainsKey(key)))
-        {
-            variants.Elements.Add(key, typesTree.GetString(key));
+            foreach((var key, var item) in tree)
+            {
+                if(item is not StringAttribute strAttr) continue;
+                variants.Elements.Add(key, string.Intern(strAttr.value));
+            }
         }
         return variants;
     }
