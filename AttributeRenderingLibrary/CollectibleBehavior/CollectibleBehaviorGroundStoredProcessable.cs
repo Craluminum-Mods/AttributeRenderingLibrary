@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -25,34 +24,15 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
         public static int ToolDamage = 1;
     }
 
-    [JsonProperty("ProcessTime")]
     public Dictionary<string, float>? ProcessTimeByType { get; protected set; }
-
-    [JsonProperty("ProcessedStacks")]
     public Dictionary<string, BlockDropItemStack[]?>? ProcessedStacksByType { get; protected set; }
-
-    [JsonProperty("ProcessingSound")]
     public Dictionary<string, AssetLocation?>? ProcessingSoundByType { get; protected set; }
-
-    [JsonProperty("ProcessingAnimationCode")]
     public Dictionary<string, string?>? ProcessingAnimationCodeByType { get; protected set; }
-
-    [JsonProperty("RemainingItem")]
     public Dictionary<string, JsonItemStack?>? RemainingItemByType { get; protected set; }
-
-    [JsonProperty("interactionHelpCode")]
     public Dictionary<string, string?>? InteractionHelpCodeByType { get; protected set; }
-
-    [JsonProperty("HandbookProcessIntoTitle")]
     public Dictionary<string, string?>? HandbookProcessIntoTitleByType { get; protected set; }
-
-    [JsonProperty("HandbookCreatedByTitle")]
     public Dictionary<string, string?>? HandbookCreatedByTitleByType { get; protected set; }
-
-    [JsonProperty("Tool")]
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
-
-    [JsonProperty("ToolDamage")]
     public Dictionary<string, int>? ToolDamageByType { get; protected set; }
 
     #nullable disable

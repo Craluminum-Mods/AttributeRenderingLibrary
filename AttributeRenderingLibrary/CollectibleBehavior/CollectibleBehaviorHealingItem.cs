@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Client;
@@ -31,43 +30,18 @@ public class CollectibleBehaviorHealingItem(CollectibleObject collObj) : Collect
         public static float DelayToCancelSec => 0.5f;
     }
 
-    [JsonProperty("Health")]
     public Dictionary<string, float>? HealthByType { get; protected set; }
-
-    [JsonProperty("ApplicationTimeSec")]
     public Dictionary<string, float>? ApplicationTimeSecByType { get; protected set; }
-
-    [JsonProperty("MaxApplicationTimeSec")]
     public Dictionary<string, float>? MaxApplicationTimeSecByType { get; protected set; }
-
-    [JsonProperty("Ticks")]
     public Dictionary<string, int>? TicksByType { get; protected set; }
-
-    [JsonProperty("EffectDurationSec")]
     public Dictionary<string, float>? EffectDurationSecByType { get; protected set; }
-
-    [JsonProperty("CancelInAir")]
     public Dictionary<string, bool>? CancelInAirByType { get; protected set; }
-
-    [JsonProperty("CancelWhileSwimming")]
     public Dictionary<string, bool>? CancelWhileSwimmingByType { get; protected set; }
-
-    [JsonProperty("Sound")]
     public Dictionary<string, AssetLocation?>? SoundByType { get; protected set; }
-
-    [JsonProperty("AppliedSound")]
     public Dictionary<string, AssetLocation?>? AppliedSoundByType { get; protected set; }
-
-    [JsonProperty("SoundRange")]
     public Dictionary<string, float>? SoundRangeByType { get; protected set; }
-
-    [JsonProperty("CanRevive")]
     public Dictionary<string, bool>? CanReviveByType { get; protected set; }
-
-    [JsonProperty("AffectedByArmor")]
     public Dictionary<string, bool>? AffectedByArmorByType { get; protected set; }
-
-    [JsonProperty("DelayToCancelSec")]
     public Dictionary<string, float>? DelayToCancelSecByType { get; protected set; }
 
     protected IProgressBar? progressBarRender;
