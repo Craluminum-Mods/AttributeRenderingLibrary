@@ -22,7 +22,7 @@ public static class VariantExtensions
     public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result)
     {
         Core.Api?.World.FrameProfiler.Enter("AttributeRenderingLibrary.FindByVariant");
-        result = default;
+        result = default!;
 
         if (variants == null || inDictionary is not { Count: > 0 })
         {
@@ -51,7 +51,7 @@ public static class VariantExtensions
     /// </summary>
     public static bool FindByVariant<T>(this ItemStack stack, Dictionary<string, T> inDictionary, out T result)
     {
-        result = default;
+        result = default!;
 
         return stack != null && inDictionary is { Count: > 0 } && FindByVariant(Variants.FromStack(stack), inDictionary, out result);
     }
@@ -62,7 +62,7 @@ public static class VariantExtensions
     /// </summary>
     public static bool FindByVariant<T>(this ItemStack stack, Dictionary<string, T> inDictionary, out T result, out Variants variants)
     {
-        result = default;
+        result = default!;
 
         if (stack == null)
         {
@@ -177,7 +177,7 @@ public static class VariantExtensions
         Variants newVariants = variants?.Clone() ?? Variants.FromStack(newStack);
 
         newVariants.Set(setVariants);
-        newVariants.RemoveKeys(removeVariants?.ToArray());
+        newVariants.RemoveKeys(removeVariants?.ToArray()!);
         newVariants.ToStack(newStack);
     }
 
@@ -185,24 +185,49 @@ public static class VariantExtensions
     {
         foreach (object entry in entries)
         {
-            if (entry is string)
+            switch (entry)
             {
-                sb.Append(Lang.GetMatching(variants.ReplacePlaceholders(entry.ToString())));
-            }
-            else if (entry is JArray array && array.Any())
-            {
-                object[] args = [.. array.Skip(1).Select(arg =>
-                {
-                    return arg.Type switch
+                case string str:
                     {
-                        JTokenType.String => variants.ReplacePlaceholders(arg.ToString()),
-                        _ => (object)arg
-                    };
-                })];
-
-                string key = variants.ReplacePlaceholders(array[0].ToString());
-                sb.Append([.. Lang.GetMatching(key, args)]);
+                        sb.Append(Lang.GetMatching(key: variants.ReplacePlaceholders(str)));
+                    }
+                    break;
+                case JArray array:
+                    {
+                        string result = variants.TranslateJArray(array);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            sb.Append(result);
+                        }
+                    }
+                    break;
             }
+        }
+    }
+
+    private static string TranslateJArray(this Variants variants, JArray array)
+    {
+        if (!array.Any()) return string.Empty;
+
+        object[] args = [.. array.Skip(1).Select(arg =>
+        {
+            return arg.Type switch
+            {
+                JTokenType.String => Lang.GetMatching(key: variants.ReplacePlaceholders(arg.ToString())),
+                JTokenType.Array  => variants.TranslateJArray(arg.ToObject<JArray>()!),
+                _                 => (object)arg
+            };
+        })];
+
+        string resultKey = variants.ReplacePlaceholders(array[0].ToString());
+
+        if (Lang.HasTranslation(resultKey))
+        {
+            return Lang.GetMatching(resultKey, args);
+        }
+        else
+        {
+            return string.Format(resultKey, args);
         }
     }
 
