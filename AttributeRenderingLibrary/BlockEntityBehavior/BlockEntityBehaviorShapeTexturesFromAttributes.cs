@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Client;
+﻿using System.Text;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -47,6 +48,16 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
             Variants = Variants.FromStack(byItemStack);
         }
         Init();
+    }
+
+    public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
+    {
+        base.GetBlockInfo(forPlayer, dsc);
+
+        if (Api is ICoreClientAPI capi)
+        {
+            Variants.GetDebugDescription(dsc);
+        }
     }
 
     public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
