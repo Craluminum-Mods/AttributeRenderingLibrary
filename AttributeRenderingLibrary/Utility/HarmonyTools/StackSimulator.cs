@@ -8,8 +8,8 @@ using System.Text;
 
 namespace AttributeRenderingLibrary.Utility.HarmonyTools;
 
-delegate bool TraceRequirement(StackEntry entry);
-delegate bool TraceAdvancementRequirement(StackEntry entry, Trace trace);
+delegate bool TraceRequirement(StackSimulator simulator, StackEntry entry);
+delegate bool TraceAdvancementRequirement(StackSimulator simulator, StackEntry entry, Trace trace);
 
 internal class StackEntry
 {
@@ -32,18 +32,17 @@ internal class Trace
 
     public List<StackEntry> Path { get; } = [];
 
-    //TODO generate
-    private CodeInstruction? LoadInstruction { get; set; }
+    public CodeInstruction? LastFoundLoadInstruction { get; set; }
 
     public CodeInstruction? FindOrCreateLoadInstruction(CodeMatcher matcher)
     {
-        if(LoadInstruction is not null) return LoadInstruction.Clone();
+        if(LastFoundLoadInstruction is not null) return LastFoundLoadInstruction.Clone();
         
         var alreadyStored = GetAlreadyStored(Origin.Instruction);
         if(alreadyStored is not null)
         {
-            LoadInstruction = alreadyStored;
-            return LoadInstruction.Clone();
+            LastFoundLoadInstruction = alreadyStored;
+            return LastFoundLoadInstruction.Clone();
         }
 
         matcher.Start().MatchStartForward(new CodeMatch(instruction => instruction == Origin.Instruction));
@@ -52,8 +51,8 @@ internal class Trace
         alreadyStored = GetAlreadyStored(matcher.Instruction);
         if(alreadyStored is not null)
         {
-            LoadInstruction = alreadyStored;
-            return LoadInstruction.Clone();
+            LastFoundLoadInstruction = alreadyStored;
+            return LastFoundLoadInstruction.Clone();
         }
 
         matcher.DeclareLocal(Origin.Type, out var localBuilder);
@@ -62,8 +61,8 @@ internal class Trace
             CodeInstruction.LoadLocal(localBuilder.LocalIndex)
         );
 
-        LoadInstruction = CodeInstruction.LoadLocal(localBuilder.LocalIndex);
-        return LoadInstruction.Clone();
+        LastFoundLoadInstruction = CodeInstruction.LoadLocal(localBuilder.LocalIndex);
+        return LastFoundLoadInstruction.Clone();
     }
 
     private static CodeInstruction? GetAlreadyStored(CodeInstruction instruction)
@@ -169,7 +168,7 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
         OpCodes.Conv_R_Un
     ];
 
-    internal readonly Type[] parameters = GetParameters(originalMethod);
+    public readonly Type[] parameters = GetParameters(originalMethod);
 
     internal readonly LocalVariableInfo[] locals = originalMethod.GetMethodBody()?.LocalVariables.ToArray() ?? [];
 
@@ -187,17 +186,20 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
 
     public readonly Dictionary<StackEntry, Trace> Traces = [];
 
+    public CodeMatcher Matcher { get; } = matcher;
+    public MethodBase OriginalMethod { get; } = originalMethod;
+
     public void Simulate()
     {
-        matcher.Start();
+        Matcher.Start();
 
         do
         {
             UpdateStack();
 
-            if(TrueFalseBranchCodes.Contains(matcher.Opcode) || ComparitiveBranchCodes.Contains(matcher.Opcode))
+            if(TrueFalseBranchCodes.Contains(Matcher.Opcode) || ComparitiveBranchCodes.Contains(Matcher.Opcode))
             {
-                var newPathPos = matcher.Pos + 1;
+                var newPathPos = Matcher.Pos + 1;
                 if (CheckedPathPos.Add(newPathPos))
                 {
                     AlternativePaths.Push(new AlternativePath
@@ -207,51 +209,51 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
                     });
                 }
                 
-                var targetLabel = (Label)matcher.Operand;
-                matcher.MatchStartForward(
+                var targetLabel = (Label)Matcher.Operand;
+                Matcher.MatchStartForward(
                     new CodeMatch(instruction => instruction.labels.Contains(targetLabel))
                 );
                 continue;
             }
 
-            else if(matcher.Opcode == OpCodes.Switch)
+            else if(Matcher.Opcode == OpCodes.Switch)
             {
-                var options = (Label[])matcher.Operand;
-                var currentPos = matcher.Pos;
+                var options = (Label[])Matcher.Operand;
+                var currentPos = Matcher.Pos;
                 for(var i = 0; i < options.Length; i++)
                 {
-                    matcher.Start().Advance(currentPos);
+                    Matcher.Start().Advance(currentPos);
 
                     var otherLabel = options[i];
-                    matcher.MatchStartForward(
+                    Matcher.MatchStartForward(
                         new CodeMatch(instruction => instruction.labels.Contains(otherLabel))
                     );
 
-                    if (CheckedPathPos.Add(matcher.Pos))
+                    if (CheckedPathPos.Add(Matcher.Pos))
                     {
                         AlternativePaths.Push(new AlternativePath
                         {
                             Stack = new Stack<StackEntry>(Stack.Reverse()),
-                            Pos = matcher.Pos
+                            Pos = Matcher.Pos
                         });
                     }
                 }
 
-                matcher.Start().Advance(currentPos);
+                Matcher.Start().Advance(currentPos);
             }
 
-            else if(UnconditionalJumpCodes.Contains(matcher.Opcode))
+            else if(UnconditionalJumpCodes.Contains(Matcher.Opcode))
             {
-                var targetLabel = (Label)matcher.Operand;
-                matcher.MatchStartForward(
+                var targetLabel = (Label)Matcher.Operand;
+                Matcher.MatchStartForward(
                     new CodeMatch(instruction => instruction.labels.Contains(targetLabel))
                 );
                 continue;
             }
 
-            matcher.Advance(1);
+            Matcher.Advance(1);
         }
-        while ((matcher.IsValid && matcher.Opcode != OpCodes.Ret) || MoveToNextPath());
+        while ((Matcher.IsValid && Matcher.Opcode != OpCodes.Ret) || MoveToNextPath());
     }
 
     private bool MoveToNextPath()
@@ -259,7 +261,7 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
         if(AlternativePaths.TryPop(out var path)) 
         {
             Stack = path.Stack;
-            matcher.Start().Advance(path.Pos);
+            Matcher.Start().Advance(path.Pos);
             return true;
         }
 
@@ -268,7 +270,7 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
 
     private void UpdateStack()
     {
-        CodeInstruction instruction = matcher.Instruction;
+        CodeInstruction instruction = Matcher.Instruction;
 
         if(instruction.blocks is { Count: > 0 })
         {
@@ -503,7 +505,7 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
             Type = returnType
         };
 
-        if (shouldTrace(entry))
+        if (shouldTrace(this, entry))
         {
             Traces.Add(entry, new Trace
             {
@@ -512,7 +514,7 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
         }
         else foreach(var trace in Traces.Values)
         {
-            if(trace.Usage.Contains(instruction) && shouldTraceAdvance(entry, trace))
+            if(trace.Usage.Contains(instruction) && shouldTraceAdvance(this, entry, trace))
             {
                 trace.Path.Add(entry);
                 Traces.Add(entry, trace);
@@ -531,7 +533,7 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
 
             if(Traces.TryGetValue(removed, out var trace))
             {
-                trace.Usage.Add(matcher.Instruction);
+                trace.Usage.Add(Matcher.Instruction);
             }
         }
     }

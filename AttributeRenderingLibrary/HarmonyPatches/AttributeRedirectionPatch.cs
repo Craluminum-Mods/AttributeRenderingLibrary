@@ -38,21 +38,29 @@ public static class AttributeRedirectionPatch
         Logger = null;
     }
 
+    internal static bool ShouldTrace(StackSimulator simulator, StackEntry entry)
+    {
+        if(typeof(IItemStack).IsAssignableFrom(entry.Type)) return true;
+        if(typeof(CollectibleObject).IsAssignableFrom(entry.Type)) return entry.Instruction.opcode == OpCodes.Ldarg_0 || (entry.Instruction.operand is FieldInfo field && typeof(CollectibleBehavior).IsAssignableFrom(field.DeclaringType));
+        return false;
+    }
+
+    internal static bool ShouldTraceAdvance(StackSimulator simulator, StackEntry entry, Trace trace)
+    {
+        return (typeof(CollectibleObject).IsAssignableFrom(entry.Type) && typeof(IItemStack).IsAssignableFrom(trace.Origin.Type)) ||
+            entry.Instruction.Calls(AccessTools.PropertyGetter(typeof(ItemStack), nameof(ItemStack.ItemAttributes))) ||
+            entry.Instruction.LoadsField(AccessTools.Field(typeof(CollectibleObject), nameof(CollectibleObject.Attributes)));
+    }
+
     public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
     {
         var matcher = new CodeMatcher(instructions, generator);
 
-        var itemAttributesGetter = AccessTools.PropertyGetter(typeof(ItemStack), nameof(ItemStack.ItemAttributes));
-        var attributesField = AccessTools.Field(typeof(CollectibleObject), nameof(CollectibleObject.Attributes));
-
         var simulator = new StackSimulator(
             matcher,
             __originalMethod,
-            shouldTrace: entry => typeof(IItemStack).IsAssignableFrom(entry.Type),
-            shouldTraceAdvance: (entry, trace) => 
-                typeof(CollectibleObject).IsAssignableFrom(entry.Type) ||
-                entry.Instruction.Calls(itemAttributesGetter) || 
-                entry.Instruction.LoadsField(attributesField)
+            shouldTrace: ShouldTrace,
+            shouldTraceAdvance: ShouldTraceAdvance
         );
         
         try
@@ -69,8 +77,19 @@ public static class AttributeRedirectionPatch
         var indexer = AccessTools.IndexerGetter(typeof(JsonObject), [typeof(string)]);
         var keyExists = AccessTools.Method(typeof(JsonObject), nameof(JsonObject.KeyExists));
         var isTrue = AccessTools.Method(typeof(JsonObject), nameof(JsonObject.IsTrue));
+        MethodInfo[] targetMethods = [indexer, keyExists, isTrue];
 
-        var uniqueTraces = simulator.Traces.Values.Distinct().ToList();
+        var uniqueTraces = simulator.Traces.Values
+            .Where(trace => trace.Usage.Any(usage => targetMethods.Any(target => usage.Calls(target))))
+            .Distinct()
+            .ToList();
+        if(uniqueTraces.Count <= 0) return instructions;
+
+        if(uniqueTraces.Any(trace => typeof(IItemStack).IsAssignableFrom(trace.Origin.Type)))
+        {
+            //We can only support fallback to parameters if there is no direct link, otherwise we might accidentally load the parameter for a different stack than intended
+            uniqueTraces.RemoveAll(trace => !typeof(IItemStack).IsAssignableFrom(trace.Origin.Type));
+        }
         HashSet<CodeInstruction> handledInstructions = [];
 
         foreach(var trace in uniqueTraces)
@@ -81,15 +100,15 @@ public static class AttributeRedirectionPatch
 
                 if (usage.Calls(indexer))
                 {
-                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetAttribute)));
+                    HandleIntercept(simulator, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetAttribute)));
                 }
                 else if (usage.Calls(keyExists))
                 {
-                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetKeyExists)));
+                    HandleIntercept(simulator, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetKeyExists)));
                 }
                 else if (usage.Calls(isTrue))
                 {
-                    HandleIntercept(matcher, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetIsTrue)));
+                    HandleIntercept(simulator, trace, usage, AccessTools.Method(typeof(CollectibleAttributeExtensions), nameof(CollectibleAttributeExtensions.GetIsTrue)));
                 }
 
                 handledInstructions.Add(usage);
@@ -101,9 +120,38 @@ public static class AttributeRedirectionPatch
         return matcher.InstructionEnumeration();
     }
 
-    private static void HandleIntercept(CodeMatcher matcher, Trace trace, CodeInstruction usage, MethodInfo method)
+    private static void HandleIntercept(StackSimulator simulator, Trace trace, CodeInstruction usage, MethodInfo method)
     {
-        var loadInstruction = trace.FindOrCreateLoadInstruction(matcher);
+        CodeInstruction? loadInstruction = trace.LastFoundLoadInstruction;
+        var matcher = simulator.Matcher;
+        if(loadInstruction is null)
+        {
+            if (typeof(IItemStack).IsAssignableFrom(trace.Origin.Type))
+            {
+                loadInstruction = trace.FindOrCreateLoadInstruction(matcher);
+            }
+            else if (typeof(CollectibleObject).IsAssignableFrom(trace.Origin.Type))
+            {
+                for(int paramIndex = 0; paramIndex < simulator.parameters.Length; paramIndex++)
+                {
+                    var paramType = simulator.parameters[paramIndex];
+                    if (!typeof(IItemStack).IsAssignableFrom(paramType) && !typeof(ItemSlot).IsAssignableFrom(paramType)) continue;
+
+                    matcher.Start();
+                    matcher.DeclareLocal(typeof(IItemStack), out var itemStackLocal);
+                    matcher.InsertAndAdvance(CodeInstruction.LoadArgument(paramIndex));
+                    if (typeof(ItemSlot).IsAssignableFrom(paramType))
+                    {
+                        matcher.InsertAndAdvance(new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(ItemSlot), "Itemstack")));
+                    }
+                    matcher.InsertAndAdvance(CodeInstruction.StoreLocal(itemStackLocal.LocalIndex));
+                    loadInstruction = trace.LastFoundLoadInstruction = CodeInstruction.LoadLocal(itemStackLocal.LocalIndex);
+
+                    break;
+                }
+            }
+        }
+        if(loadInstruction is null) return; //Failed to find ItemStack/ItemSlot
 
         matcher.Start().MatchStartForward(new CodeMatch(instruction => instruction == usage));
 
