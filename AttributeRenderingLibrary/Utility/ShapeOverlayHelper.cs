@@ -91,8 +91,7 @@ public class ShapeOverlayHelper
 
         foreach ((string textureCode, CompositeTexture texture) in textures)
         {
-            CompositeTexture ctex = texture.Clone();
-            ctex = variants.ReplacePlaceholders(ctex);
+            CompositeTexture ctex = variants.ReplacePlaceholders(texture.Clone());
             if (!clientApi.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
             {
                 ctex.Base.Path = "unknown";

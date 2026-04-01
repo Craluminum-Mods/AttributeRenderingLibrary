@@ -113,4 +113,10 @@ public interface IBlockPropertiesSupplier : IPropertiesSupplier
         handling = EnumHandling.PassThrough;
         return EnumBlockMaterial.Stone;
     }
+
+    int GetColor(ICoreClientAPI capi, BlockPos pos, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return 0;
+    }
 }
