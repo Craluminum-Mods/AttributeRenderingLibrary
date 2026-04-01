@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+﻿using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -87,6 +88,12 @@ public interface IPropertiesSupplier : ICollectiblePropertiesSupplier
     {
         handling = EnumHandling.PassThrough;
         return null;
+    }
+
+    int GetRandomColor(ICoreClientAPI capi, ItemStack stack, ref EnumHandling handling)
+    {
+        handling = EnumHandling.PassThrough;
+        return 0;
     }
 }
 

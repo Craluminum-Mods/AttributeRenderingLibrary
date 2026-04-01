@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -30,6 +31,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
+    public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
     public Dictionary<string, CombustibleProperties>? CombustiblePropsByType { get; protected set; }
@@ -139,6 +141,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
+        ParticlesTextureCodeByType = properties["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, collObj.Code.Domain);
         NutritionPropsByType = properties["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, collObj.Code.Domain);
         GrindingPropsByType = properties["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>(null, collObj.Code.Domain);
@@ -434,6 +437,27 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         handling = EnumHandling.PreventSubsequent;
         return animCode;
     }
+
+    public virtual int GetRandomColor(ICoreClientAPI capi, ItemStack stack, ref EnumHandling handling)
+    {
+        Variants? variants = Variants.FromStack(stack);
+        Dictionary<string, BakedCompositeTexture?>? bakedTextures = ShapeOverlayHelper.GetBakedVariantTextures(capi, variants, texturesByType);
+
+        if (bakedTextures is { Count: > 0 })
+        {
+            string? particlesTextureCode = GetParticlesTextureCode(capi.World, stack);
+            BakedCompositeTexture? bakedCompositeTexture = particlesTextureCode != null ? bakedTextures[particlesTextureCode] : bakedTextures?.First().Value;
+            if (bakedCompositeTexture != null)
+            {
+                handling = EnumHandling.PreventSubsequent;
+                return capi.ItemTextureAtlas.GetRandomColor(bakedCompositeTexture.TextureSubId);
+            }
+        }
+        return 0;
+    }
+
+    public virtual string? GetParticlesTextureCode(IWorldAccessor world, ItemStack stack) => stack.GetByVariant(ParticlesTextureCodeByType!, collObj.ParticlesTextureCode);
+
     #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
