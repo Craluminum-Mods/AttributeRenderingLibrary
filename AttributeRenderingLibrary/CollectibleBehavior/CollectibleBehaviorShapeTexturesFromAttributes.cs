@@ -333,12 +333,14 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
-        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        variants.GetDebugDescription(dsc, withDebugInfo);
+
+        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys) || langKeys is not { Count: > 0 })
         {
             return;
         }
         variants.GetDescription(dsc, langKeys);
-        variants.GetDebugDescription(dsc, withDebugInfo);
     }
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack, ref EnumHandling handling)

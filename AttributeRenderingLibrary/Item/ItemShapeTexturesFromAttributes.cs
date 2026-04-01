@@ -317,12 +317,14 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        variants.GetDebugDescription(dsc, withDebugInfo);
+
+        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys) || langKeys is not { Count: > 0 })
         {
             return;
         }
         variants.GetDescription(dsc, langKeys);
-        variants.GetDebugDescription(dsc, withDebugInfo);
     }
 
     public override byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack) => stack.GetByVariant(LightHsvByType, defaultValue: () => base.GetLightHsv(blockAccessor, pos, stack))!;
