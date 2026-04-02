@@ -13,7 +13,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IBlockPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IBlockPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider, IHandbookGrouping
 {
 #pragma warning disable CS8766
     #region Collectible properties
@@ -34,6 +34,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
     public Dictionary<string, string>? HandbookPageCodeByType { get; protected set; }
+    public Dictionary<string, string>? HandbookCodeForGroupingByType { get; protected set; }
+    public Dictionary<string, string>? HandbookWildcardForGroupingByType { get; protected set; }
     //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
     //public Dictionary<string, string>? TextureCodeForBlockColorByType { get; protected set; }
     #endregion
@@ -159,6 +161,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
         HandbookPageCodeByType = properties["handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
+        HandbookCodeForGroupingByType = properties["handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
+        HandbookWildcardForGroupingByType = properties["handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
         //ParticlesTextureCodeByType = properties["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         //TextureCodeForBlockColorByType = properties["textureCodeForBlockColor"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, block.Code.Domain);
@@ -1456,5 +1460,33 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             return variants.ReplacePlaceholders(result);
         }
         return GuiHandbookItemStackPage.PageCodeForStack(stack);
+    }
+
+    public AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookCodeForGroupingByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+
+        Dictionary<string, string> attributes = Variants.FromStack(stack).GetElements();
+        if (attributes.Count == 0)
+        {
+            return stack.Collectible.Code;
+        }
+
+        return AssetLocation.Create(stack.Collectible.Code.Path + "-" + string.Join("-", attributes.Values), stack.Collectible.Code.Domain);
+    }
+
+    public string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookWildcardForGroupingByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+
+        return variants.ReplacePlaceholders(wildcard);
     }
 }

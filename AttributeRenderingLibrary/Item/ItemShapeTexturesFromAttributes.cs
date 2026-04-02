@@ -11,7 +11,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, ICollectiblePropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider
+public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, ICollectiblePropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider, IHandbookGrouping
 {
 #pragma warning disable CS8766
     #region Collectible properties
@@ -32,6 +32,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
     public Dictionary<string, string>? HandbookPageCodeByType { get; protected set; }
+    public Dictionary<string, string>? HandbookCodeForGroupingByType { get; protected set; }
+    public Dictionary<string, string>? HandbookWildcardForGroupingByType { get; protected set; }
     //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
@@ -133,6 +135,8 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
         HandbookPageCodeByType = Attributes["handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
+        HandbookCodeForGroupingByType = Attributes["handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
+        HandbookWildcardForGroupingByType = Attributes["handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
         //ParticlesTextureCodeByType = Attributes["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, Code.Domain);
         NutritionPropsByType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, Code.Domain);
@@ -729,5 +733,33 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             return variants.ReplacePlaceholders(result);
         }
         return GuiHandbookItemStackPage.PageCodeForStack(stack);
+    }
+
+    public AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookCodeForGroupingByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+
+        Dictionary<string, string> attributes = Variants.FromStack(stack).GetElements();
+        if (attributes.Count == 0)
+        {
+            return stack.Collectible.Code;
+        }
+
+        return AssetLocation.Create(stack.Collectible.Code.Path + "-" + string.Join("-", attributes.Values), stack.Collectible.Code.Domain);
+    }
+
+    public string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookWildcardForGroupingByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+
+        return variants.ReplacePlaceholders(wildcard);
     }
 }

@@ -26,6 +26,8 @@ public class Variants
         return [.. Elements.Select(x => $"{x.Key}-{x.Value}")];
     }
 
+    public Dictionary<string, string> GetElements() => Elements.ToDictionary(x => x.Key, y => y.Value);
+
     public string Get(string key)
     {
         return Elements.GetValueOrDefault(key)!;
