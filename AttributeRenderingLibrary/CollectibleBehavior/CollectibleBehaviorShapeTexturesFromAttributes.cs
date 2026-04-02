@@ -145,9 +145,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
-        HandbookPageCodeByType = properties["handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
-        HandbookCodeForGroupingByType = properties["handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
-        HandbookWildcardForGroupingByType = properties["handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
+        HandbookPageCodeByType = properties["STFA_handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
+        HandbookCodeForGroupingByType = properties["STFA_handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
+        HandbookWildcardForGroupingByType = properties["STFA_handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
         //ParticlesTextureCodeByType = properties["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, collObj.Code.Domain);
         NutritionPropsByType = properties["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, collObj.Code.Domain);
