@@ -144,7 +144,7 @@ public static class VariantExtensions
 
     public static bool IsTrue(this Variants variants, Dictionary<string, bool> inDictionary)
     {
-        return variants != null && variants.FindByVariant(inDictionary, out bool result) && result;
+        return variants.FindByVariant(inDictionary, out bool result) && result;
     }
 
     /// <summary>
@@ -172,7 +172,7 @@ public static class VariantExtensions
     /// <remarks>
     /// The method ensures that the original variants and stack remain unmodified by cloning them before applying changes.
     /// </remarks>
-    public static void OverwriteVariants(this ItemStack oldStack, out ItemStack newStack, Dictionary<string, string> setVariants = null, List<string> removeVariants = null, Variants variants = null)
+    public static void OverwriteVariants(this ItemStack oldStack, out ItemStack newStack, Dictionary<string, string> setVariants = null!, List<string> removeVariants = null!, Variants variants = null!)
     {
         newStack = oldStack.Clone();
         Variants newVariants = variants?.Clone() ?? Variants.FromStack(newStack);

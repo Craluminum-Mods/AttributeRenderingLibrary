@@ -14,6 +14,7 @@ namespace AttributeRenderingLibrary;
 
 public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : CollectibleBehavior(collObj), IShapeTexturesFromAttributes, IPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
+#pragma warning disable CS8766
     #region Collectible properties
     public Dictionary<string, TagSet>? TagsByType { get; protected set; }
     public Dictionary<string, CompositeShape>? shapeByType { get; protected set; }
@@ -192,7 +193,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         }
     }
 
-    public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas) => GetOrCreateMesh(slot, targetAtlas, overrideShape: null);
+    public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas) => GetOrCreateMesh(slot, targetAtlas, overrideShape: null!);
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, CompositeShape overrideShape)
     {
@@ -311,9 +312,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         string key = GetMeshCacheKey(renderinfo.InSlot);
 
-        if (!meshRefs.TryGetValue(key, out MultiTextureMeshRef meshref))
+        if (!meshRefs.TryGetValue(key, out MultiTextureMeshRef? meshref))
         {
-            MeshData mesh = GenMesh(renderinfo.InSlot, clientApi.ItemTextureAtlas, null);
+            MeshData mesh = GenMesh(renderinfo.InSlot, clientApi.ItemTextureAtlas, null!);
             meshref = clientApi.Render.UploadMultiTextureMesh(mesh);
             meshRefs[key] = meshref;
         }
@@ -326,29 +327,26 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
     {
-        if (!itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (itemStack.FindByVariant(NameByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return;
+            sb.Clear().Append(variants.GetName(langKeys));
         }
-
-        sb.Clear().Append(variants.GetName(langKeys));
     }
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
-        Variants variants = Variants.FromStack(inSlot.Itemstack);
+        Variants variants = Variants.FromStack(inSlot.Itemstack!);
         variants.GetDebugDescription(dsc, withDebugInfo);
 
-        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys) || langKeys is not { Count: > 0 })
+        if (variants.FindByVariant(DescriptionByType!, out List<object> langKeys) && langKeys is { Count: > 0 })
         {
-            return;
+            variants.GetDescription(dsc, langKeys);
         }
-        variants.GetDescription(dsc, langKeys);
     }
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack, ref EnumHandling handling)
     {
-        if (!itemstack.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
+        if (!itemstack.FindByVariant(StorageFlagsByType!, out EnumItemStorageFlags storageFlags))
         {
             return base.GetStorageFlags(itemstack, ref handling);
         }
@@ -358,7 +356,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override int GetMaxDurability(ItemStack itemstack, int durability, ref EnumHandling handling)
     {
-        if (!itemstack.FindByVariant(DurabilityByType, out int maxDurability))
+        if (!itemstack.FindByVariant(DurabilityByType!, out int maxDurability))
         {
             return base.GetMaxDurability(itemstack, durability, ref handling);
         }
@@ -368,7 +366,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override float GetAttackPower(ItemStack itemstack, float attackPower, ref EnumHandling handling)
     {
-        if (!itemstack.FindByVariant(AttackPowerByType, out float newAttackPower))
+        if (!itemstack.FindByVariant(AttackPowerByType!, out float newAttackPower))
         {
             return base.GetAttackPower(itemstack, attackPower, ref handling);
         }
@@ -378,7 +376,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override float GetAttackRange(ItemStack itemstack, float attackRange, ref EnumHandling handling)
     {
-        if (!itemstack.FindByVariant(AttackRangeByType, out float newAttackRange))
+        if (!itemstack.FindByVariant(AttackRangeByType!, out float newAttackRange))
         {
             return base.GetAttackRange(itemstack, attackRange, ref handling);
         }
@@ -388,7 +386,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot, ref EnumHandling handling)
     {
-        if (!slot.Itemstack.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeed))
+        if (!slot.Itemstack!.FindByVariant(MiningSpeedByType!, out Dictionary<EnumBlockMaterial, float> miningSpeed))
         {
             return base.GetMiningSpeeds(slot, ref handling);
         }
@@ -398,8 +396,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override string GetHeldReadyAnimation(ItemSlot slot, Entity forEntity, EnumHand hand, ref EnumHandling handling)
     {
-        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
-        if (!slot.Itemstack.FindByVariant(animCodesByType, out string animCode))
+        Dictionary<string, string>? animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
+        if (!slot.Itemstack!.FindByVariant(animCodesByType!, out string animCode))
         {
             return base.GetHeldReadyAnimation(slot, forEntity, hand, ref handling);
         }
@@ -409,8 +407,8 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override string GetHeldTpIdleAnimation(ItemSlot slot, Entity forEntity, EnumHand hand, ref EnumHandling handling)
     {
-        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
-        if (!slot.Itemstack.FindByVariant(animCodesByType, out string animCode))
+        Dictionary<string, string>? animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
+        if (!slot.Itemstack!.FindByVariant(animCodesByType!, out string animCode))
         {
             return base.GetHeldTpIdleAnimation(slot, forEntity, hand, ref handling);
         }
@@ -420,7 +418,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override string GetHeldTpUseAnimation(ItemSlot slot, Entity forEntity, ref EnumHandling handling)
     {
-        if (!slot.Itemstack.FindByVariant(HeldTpUseAnimationByType, out string animCode))
+        if (!slot.Itemstack!.FindByVariant(HeldTpUseAnimationByType!, out string animCode))
         {
             return base.GetHeldTpUseAnimation(slot, forEntity, ref handling);
         }
@@ -430,7 +428,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public override string GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity, ref EnumHandling handling)
     {
-        if (!slot.Itemstack.FindByVariant(HeldTpHitAnimationByType, out string animCode))
+        if (!slot.Itemstack!.FindByVariant(HeldTpHitAnimationByType!, out string animCode))
         {
             return base.GetHeldTpHitAnimation(slot, byEntity, ref handling);
         }
@@ -475,32 +473,32 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual string GetMeshCacheKey(ItemSlot slot)
     {
-        return $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
+        return $"{slot.Itemstack!.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
     }
     #endregion
     #region IContainedCustomName
     public virtual string GetContainedInfo(ItemSlot inSlot)
     {
-        if (!inSlot.Itemstack.FindByVariant(ContainedDescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (inSlot.Itemstack!.FindByVariant(ContainedDescriptionByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return inSlot.Itemstack.GetName();
+            StringBuilder dsc = new();
+            variants.GetDescription(dsc, langKeys);
+            return dsc.ToString();
         }
 
-        StringBuilder dsc = new();
-        variants.GetDescription(dsc, langKeys);
-        return dsc.ToString();
+        return inSlot.Itemstack!.GetName();
     }
 
     public virtual string GetContainedName(ItemSlot inSlot, int quantity)
     {
-        if (!inSlot.Itemstack.FindByVariant(ContainedNameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (inSlot.Itemstack!.FindByVariant(ContainedNameByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return inSlot.Itemstack.GetName();
+            StringBuilder dsc = new();
+            variants.GetDescription(dsc, langKeys);
+            return dsc.ToString();
         }
 
-        StringBuilder dsc = new();
-        variants.GetDescription(dsc, langKeys);
-        return dsc.ToString();
+        return inSlot.Itemstack!.GetName();
     }
     #endregion
     #region IAttachableToEntity
@@ -541,13 +539,13 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     {
         Variants variants = Variants.FromStack(stack);
 
-        if (stack.FindByVariant(AttachedShapeByType, out CompositeShape attachedShape) && attachedShape != null)
+        if (variants.FindByVariant(AttachedShapeByType!, out CompositeShape attachedShape) && attachedShape != null)
         {
             CompositeShape rcshape = variants.ReplacePlaceholders(attachedShape.Clone());
             return rcshape.RemoveNonExistingOverlays(coreApi)!;
         }
 
-        if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out var attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
+        if (variants.FindByVariant(AttachedShapeBySlotCodeByType!, out var attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
         {
             foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
             {
@@ -596,7 +594,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     #region IPropertiesSupplier
     public virtual TagSet GetTags(ItemStack stack, ref EnumHandling handling)
     {
-        if (stack.FindByVariant(TagsByType, out TagSet result))
+        if (stack.FindByVariant(TagsByType!, out TagSet result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -605,7 +603,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack, ref EnumHandling handling)
     {
-        if (stack.FindByVariant(LightHsvByType, out byte[] result))
+        if (stack.FindByVariant(LightHsvByType!, out byte[] result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -614,7 +612,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling)
     {
-        if (slot.Itemstack.FindByVariant(DamagedByByType, out EnumItemDamageSource[] result))
+        if (slot.Itemstack!.FindByVariant(DamagedByByType!, out EnumItemDamageSource[] result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -623,7 +621,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual EnumTool? GetTool(ItemSlot slot, ref EnumHandling handling)
     {
-        if (slot.Itemstack.FindByVariant(ToolByType, out EnumTool? result))
+        if (slot.Itemstack!.FindByVariant(ToolByType!, out EnumTool? result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -632,7 +630,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual int GetToolTier(ItemSlot slot, ref EnumHandling handling)
     {
-        if (slot.Itemstack.FindByVariant(ToolTierByType, out int result))
+        if (slot.Itemstack!.FindByVariant(ToolTierByType!, out int result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -641,9 +639,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(CombustiblePropsByType, out CombustibleProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(CombustiblePropsByType!, out CombustibleProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.SmeltedStack == null)
@@ -665,9 +663,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(NutritionPropsByType, out FoodNutritionProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(NutritionPropsByType!, out FoodNutritionProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.EatenStack == null)
@@ -689,9 +687,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(GrindingPropsByType, out GrindingProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(GrindingPropsByType!, out GrindingProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.GroundStack == null)
@@ -713,9 +711,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(CrushingPropsByType, out CrushingProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(CrushingPropsByType!, out CrushingProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.CrushedStack == null)
@@ -737,9 +735,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(TransitionablePropsByType, out TransitionableProperties[] result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(TransitionablePropsByType!, out TransitionableProperties[] result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         List<TransitionableProperties> allResolvedProps = [];
@@ -769,9 +767,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual JuiceableProperties GetJuiceableProperties(ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(JuiceablePropsByType, out JuiceableProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(JuiceablePropsByType!, out JuiceableProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         JuiceableProperties clonedProps = new()
@@ -817,9 +815,9 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
     public virtual DistillationProps GetDistillationProperties(ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(DistillationPropsByType, out DistillationProps result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(DistillationPropsByType!, out DistillationProps result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.DistilledStack == null)
@@ -830,7 +828,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
 
         DistillationProps clonedProps = new()
         {
-            DistilledStack = result.DistilledStack?.Clone(),
+            DistilledStack = result.DistilledStack.Clone(),
             Ratio = result.Ratio
         };
 
