@@ -11,7 +11,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, ICollectiblePropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
+public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, ICollectiblePropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider
 {
 #pragma warning disable CS8766
     #region Collectible properties
@@ -31,6 +31,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
+    public Dictionary<string, string>? HandbookPageCodeByType { get; protected set; }
     //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
@@ -131,6 +132,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
+        HandbookPageCodeByType = Attributes["handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
         //ParticlesTextureCodeByType = Attributes["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, Code.Domain);
         NutritionPropsByType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, Code.Domain);
@@ -718,4 +720,14 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return clonedProps;
     }
     #endregion
+
+    public virtual string HandbookPageCodeForStack(IWorldAccessor world, ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookPageCodeByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+        return GuiHandbookItemStackPage.PageCodeForStack(stack);
+    }
 }

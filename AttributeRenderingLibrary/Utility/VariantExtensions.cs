@@ -121,7 +121,7 @@ public static class VariantExtensions
     /// <summary>
     /// Same as FindByVariant, but returns a value instead of bool. Returns a default value using lazy evaluation.
     /// </summary>
-    public static T? GetByVariant<T>(this ItemStack? stack, Dictionary<string, T>? inDictionary, Func<T> defaultValue)
+    public static T GetByVariant<T>(this ItemStack? stack, Dictionary<string, T>? inDictionary, Func<T> defaultValue)
     {
         return stack?.FindByVariant(inDictionary!, out var result) == true ? result : defaultValue();
     }
@@ -137,7 +137,7 @@ public static class VariantExtensions
     /// <summary>
     /// Same as FindByVariant, but returns a value instead of bool. Returns a default value using lazy evaluation.
     /// </summary>
-    public static IEnumerable<T>? GetByVariant<T>(this ItemStack? stack, Dictionary<string, IEnumerable<T>>? inDictionary, Func<IEnumerable<T>> defaultValue)
+    public static IEnumerable<T> GetByVariant<T>(this ItemStack? stack, Dictionary<string, IEnumerable<T>>? inDictionary, Func<IEnumerable<T>> defaultValue)
     {
         return stack?.FindByVariant(inDictionary!, out var result) == true ? result : defaultValue();
     }

@@ -12,7 +12,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : CollectibleBehavior(collObj), IShapeTexturesFromAttributes, IPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
+public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject collObj) : CollectibleBehavior(collObj), IShapeTexturesFromAttributes, IPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider
 {
 #pragma warning disable CS8766
     #region Collectible properties
@@ -32,6 +32,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
     public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
+    public Dictionary<string, string>? HandbookPageCodeByType { get; protected set; }
     //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
@@ -142,6 +143,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
+        HandbookPageCodeByType = properties["handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
         //ParticlesTextureCodeByType = properties["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, collObj.Code.Domain);
         NutritionPropsByType = properties["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, collObj.Code.Domain);
@@ -843,4 +845,14 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return clonedProps;
     }
     #endregion
+
+    public virtual string HandbookPageCodeForStack(IWorldAccessor world, ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookPageCodeByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+        return GuiHandbookItemStackPage.PageCodeForStack(stack);
+    }
 }
