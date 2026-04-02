@@ -30,7 +30,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
-    public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
+    //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
     public Dictionary<string, CombustibleProperties>? CombustiblePropsByType { get; protected set; }
@@ -130,7 +130,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
-        ParticlesTextureCodeByType = Attributes["particlesTextureCode"].AsObject<Dictionary<string, string>>();
+        //ParticlesTextureCodeByType = Attributes["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, Code.Domain);
         NutritionPropsByType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, Code.Domain);
         GrindingPropsByType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>(null, Code.Domain);
@@ -488,24 +488,32 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return slot.Itemstack.GetByVariant(HeldTpHitAnimationByType, defaultValue: () => base.GetHeldTpHitAnimation(slot, byEntity));
     }
 
-    public override int GetRandomColor(ICoreClientAPI capi, ItemStack stack)
-    {
-        Variants? variants = Variants.FromStack(stack);
-        Dictionary<string, BakedCompositeTexture?>? bakedTextures = ShapeOverlayHelper.GetBakedVariantTextures(capi, variants, texturesByType);
+    /*
+     * April 2 2026
+     * 
+     * Spent hours testing code for these colors and couldn't get them to work properly
+     * 
+     * The only way to get rid of ugly "unknown" particles is to implement code below
+     */
 
-        if (bakedTextures is { Count: > 0 })
-        {
-            string? particlesTextureCode = GetParticlesTextureCode(capi.World, stack);
-            BakedCompositeTexture? bakedCompositeTexture = particlesTextureCode != null ? bakedTextures[particlesTextureCode] : bakedTextures?.First().Value;
-            if (bakedCompositeTexture != null)
-            {
-                return capi.ItemTextureAtlas.GetRandomColor(bakedCompositeTexture.TextureSubId);
-            }
-        }
-        return base.GetRandomColor(capi, stack);
-    }
+    //public override int GetRandomColor(ICoreClientAPI capi, ItemStack stack)
+    //{
+    //    Variants? variants = Variants.FromStack(stack);
+    //    UniversalTextureSource? texSource = ShapeOverlayHelper.GetTextureSource(capi, capi.ItemTextureAtlas, stack.Collectible.Code, variants, texturesByType);
+    //    if (texSource != null)
+    //    {
+    //        string? textureCode = GetParticlesTextureCode(capi.World, stack);
+    //        TextureAtlasPosition texPos = textureCode != null ? texSource[textureCode] : texSource.firstTexPos;
+    //        if (texPos != null)
+    //        {
+    //            return capi.ItemTextureAtlas.GetRandomColor(texPos, rndIndex: -1);
+    //        }
+    //    }
+    //    return base.GetRandomColor(capi, stack);
+    //}
 
-    public virtual string? GetParticlesTextureCode(IWorldAccessor world, ItemStack stack) => stack.GetByVariant(ParticlesTextureCodeByType!, ParticlesTextureCode);
+    ///// <inheritdoc cref="CollectibleObject.ParticlesTextureCode"/>
+    //public virtual string? GetParticlesTextureCode(IWorldAccessor world, ItemStack stack) => stack.GetByVariant(ParticlesTextureCodeByType!, ParticlesTextureCode);
 
     #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)

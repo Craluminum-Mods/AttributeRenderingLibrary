@@ -32,8 +32,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
-    public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
-    public Dictionary<string, string>? TextureCodeForBlockColorByType { get; protected set; }
+    //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
+    //public Dictionary<string, string>? TextureCodeForBlockColorByType { get; protected set; }
     #endregion
     #region Block properties
     public Dictionary<string, CompositeShape>? shapeInventoryByType { get; protected set; }
@@ -89,7 +89,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void OnLoaded(ICoreAPI api)
     {
-        // blocks with this behavior cannot be chiseled
+        // blocks with this behavior cannot bebehavior chiseled
         block.Attributes ??= new JsonObject(new JObject());
         block.Attributes.Token!["canChisel"] = JToken.FromObject(false);
 
@@ -156,8 +156,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
-        ParticlesTextureCodeByType = properties["particlesTextureCode"].AsObject<Dictionary<string, string>>();
-        TextureCodeForBlockColorByType = properties["textureCodeForBlockColor"].AsObject<Dictionary<string, string>>();
+        //ParticlesTextureCodeByType = properties["particlesTextureCode"].AsObject<Dictionary<string, string>>();
+        //TextureCodeForBlockColorByType = properties["textureCodeForBlockColor"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, block.Code.Domain);
         NutritionPropsByType = properties["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, block.Code.Domain);
         GrindingPropsByType = properties["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>(null, block.Code.Domain);
@@ -831,118 +831,146 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return animCode;
     }
 
-    /// <inheritdoc cref="CollectibleObject.GetRandomColor(ICoreClientAPI, ItemStack)"/>
-    public virtual int GetRandomColor(ICoreClientAPI capi, ItemStack stack, ref EnumHandling handling)
-    {
-        handling = EnumHandling.PreventSubsequent;
-        return capi.BlockTextureAtlas.GetRandomColor(GetTextureSubIdForBlockColor(capi, stack, null));
-    }
+    /*
+     * April 2 2026
+     * 
+     * Spent hours testing code for these colors and couldn't get them to work properly
+     * 
+     * The only way to get rid of ugly "unknown" particles is to implement code below
+     */
 
-    /// <inheritdoc cref="Block.GetRandomColor(ICoreClientAPI, BlockPos, BlockFacing, int)"/>
-    public override int GetRandomColor(ICoreClientAPI capi, BlockPos pos, BlockFacing facing, int rndIndex, ref EnumHandling handling)
-    {
-        if (pos != null && capi.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
-        {
-            Dictionary<string, BakedCompositeTexture?>? bakedTextures = ShapeOverlayHelper.GetBakedVariantTextures(capi, beBehavior.Variants, texturesByType);
-            if (bakedTextures is { Count: > 0 })
-            {
-                string? textureCode = GetParticlesTextureCode(capi.World, null, pos);
-                BakedCompositeTexture? bakedCompositeTexture = textureCode != null ? bakedTextures[textureCode] : bakedTextures?.First().Value;
-                if (bakedCompositeTexture != null)
-                {
-                    handling = EnumHandling.PreventSubsequent;
-                    return capi.BlockTextureAtlas.GetRandomColor(bakedCompositeTexture.TextureSubId, rndIndex);
-                }
-            }
-        }
-        return base.GetRandomColor(capi, pos, facing, rndIndex, ref handling);
-    }
+    ///// <inheritdoc cref="CollectibleObject.GetRandomColor(ICoreClientAPI, ItemStack)"/>
+    //public virtual int GetRandomColor(ICoreClientAPI capi, ItemStack stack, ref EnumHandling handling)
+    //{
 
-    /// <inheritdoc cref="Block.GetColorWithoutTint(ICoreClientAPI, BlockPos)"/>
-    public override int GetColorWithoutTint(ICoreClientAPI capi, BlockPos pos, ref EnumHandling handling)
-    {
-        Block? attachedBlock = this.block.HasBehavior("Decor", capi.ClassRegistry) ? null : capi.World.BlockAccessor.GetDecor(pos, new DecorBits(BlockFacing.UP));
-        if (attachedBlock != null && attachedBlock != this.block)
-        {
-            handling = EnumHandling.PreventSubsequent;
-            return attachedBlock.GetColorWithoutTint(capi, pos);
-        }
-        int textureSubIdForBlockColor = GetTextureSubIdForBlockColor(capi, null, pos);
-        if (textureSubIdForBlockColor < 0)
-        {
-            handling = EnumHandling.PreventSubsequent;
-            return -1;
-        }
-        handling = EnumHandling.PreventSubsequent;
-        return capi.BlockTextureAtlas.GetAverageColor(textureSubIdForBlockColor);
-    }
+    //    Variants variants = Variants.FromStack(stack);
+    //    if (!variants.Any) return 0;
 
-    /// <inheritdoc cref="Block.GetColor(ICoreClientAPI, BlockPos)"/>
-    public virtual int GetColor(ICoreClientAPI capi, BlockPos pos, ref EnumHandling handling)
-    {
-        EnumHandling tempHandling = EnumHandling.PassThrough;
-        int color = this.GetColorWithoutTint(capi, pos, ref tempHandling);
-        if (block.ClimateColorMapResolved != null || block.SeasonColorMapResolved != null)
-        {
-            color = capi.World.ApplyColorMapOnRgba(block.ClimateColorMapResolved, block.SeasonColorMapResolved, color, pos.X, pos.Y, pos.Z, flipRb: false);
-        }
-        handling = EnumHandling.PreventSubsequent;
-        return color;
-    }
+    //    TextureAtlasPosition? result = null;
+    //    UniversalTextureSource? texSource = ShapeOverlayHelper.GetTextureSource(capi, capi.BlockTextureAtlas, this.block.Code, variants, texturesByType);
+    //    if (texSource != null)
+    //    {
+    //        if (variants.FindByVariant(TextureCodeForBlockColorByType!, out string? textureCode) && texSource.textures.ContainsKey(textureCode))
+    //        {
+    //            result = texSource[textureCode];
+    //        }
 
-    /// <inheritdoc cref="CollectibleObject.ParticlesTextureCode"/>
-    public virtual string? GetParticlesTextureCode(IWorldAccessor world, ItemStack? stack, BlockPos? pos)
-    {
-        string result = collObj.ParticlesTextureCode;
-        if (pos != null && world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
-        {
-            if (beBehavior.Variants.FindByVariant(ParticlesTextureCodeByType!, out result) && result != null)
-            {
-                return result;
-            }
-        }
-        else
-        {
-            if (stack.FindByVariant(ParticlesTextureCodeByType!, out result) && result != null)
-            {
-                return result;
-            }
-        }
-        return result;
-    }
+    //        if (result == null || result.AvgColor < 0)
+    //        {
+    //            if (texSource.textures.ContainsKey("up"))
+    //            {
+    //                result = texSource["up"];
+    //            }
+    //            else if (texSource.textures.Count > 0)
+    //            {
+    //                result = texSource.GetFirstTexPos();
+    //            }
+    //        }
+    //        if (result != null)
+    //        {
+    //            handling = EnumHandling.PreventSubsequent;
+    //            return result.AvgColor;
+    //        }
+    //    }
+    //    return 0;
+    //}
 
-    public virtual int GetTextureSubIdForBlockColor(ICoreClientAPI capi, ItemStack? stack, BlockPos? pos)
-    {
-        int result = block.TextureSubIdForBlockColor;
+    ///// <inheritdoc cref="Block.GetRandomColor(ICoreClientAPI, BlockPos, BlockFacing, int)"/>
+    //public override int GetRandomColor(ICoreClientAPI capi, BlockPos pos, BlockFacing facing, int rndIndex, ref EnumHandling handling)
+    //{
+    //    if (pos != null && capi.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
+    //    {
+    //        UniversalTextureSource? texSource = ShapeOverlayHelper.GetTextureSource(capi, capi.BlockTextureAtlas, block.Code, beBehavior.Variants, texturesByType);
+    //        if (texSource != null)
+    //        {
+    //            string? textureCode = GetParticlesTextureCode(capi.World, null, pos);
+    //            TextureAtlasPosition? texPos = textureCode != null ? texSource[textureCode] : texSource.GetFirstTexPos();
+    //            if (texPos != null)
+    //            {
+    //                handling = EnumHandling.PreventSubsequent;
+    //                return capi.ItemTextureAtlas.GetRandomColor(texPos, rndIndex);
+    //            }
+    //        }
+    //    }
+    //    return base.GetRandomColor(capi, pos, facing, rndIndex, ref handling);
+    //}
 
-        Variants? variants = pos != null && capi.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior
-            ? beBehavior.Variants
-            : stack == null ? null : Variants.FromStack(stack);
+    ///// <inheritdoc cref="Block.GetColorWithoutTint(ICoreClientAPI, BlockPos)"/>
+    //public override int GetColorWithoutTint(ICoreClientAPI capi, BlockPos pos, ref EnumHandling handling)
+    //{
+    //    Block? attachedBlock = this.block.HasBehavior("Decor", capi.ClassRegistry) ? null : capi.World.BlockAccessor.GetDecor(pos, new DecorBits(BlockFacing.UP));
+    //    if (attachedBlock != null && attachedBlock != this.block)
+    //    {
+    //        handling = EnumHandling.PreventSubsequent;
+    //        return attachedBlock.GetColorWithoutTint(capi, pos);
+    //    }
 
-        if (variants == null) return result;
+    //    if (capi.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } bebehavior)
+    //    {
+    //        TextureAtlasPosition? result = null;
+    //        Variants? variants = bebehavior.Variants;
+    //        UniversalTextureSource? texSource = ShapeOverlayHelper.GetTextureSource(capi, capi.BlockTextureAtlas, this.block.Code, variants, texturesByType);
+    //        if (texSource != null)
+    //        {
+    //            if (variants.FindByVariant(TextureCodeForBlockColorByType!, out string? textureCode) && texSource.textures.ContainsKey(textureCode))
+    //            {
+    //                result = texSource[textureCode];
+    //            }
 
-        Dictionary<string, BakedCompositeTexture?>? bakedTextures = ShapeOverlayHelper.GetBakedVariantTextures(capi, variants, texturesByType);
+    //            if (result == null)
+    //            {
+    //                if (texSource.textures.ContainsKey("up"))
+    //                {
+    //                    result = texSource["up"];
+    //                }
+    //                else if (texSource.textures.Count > 0)
+    //                {
+    //                    result = texSource.GetFirstTexPos();
+    //                }
+    //            }
+    //            if (result != null)
+    //            {
+    //                handling = EnumHandling.PreventSubsequent;
+    //                return result.AvgColor;
+    //            }
+    //        }
+    //    }
+    //    return 0;
+    //}
 
-        if (bakedTextures == null) return result;
+    ///// <inheritdoc cref="Block.GetColor(ICoreClientAPI, BlockPos)"/>
+    //public virtual int GetColor(ICoreClientAPI capi, BlockPos pos, ref EnumHandling handling)
+    //{
+    //    EnumHandling tempHandling = EnumHandling.PassThrough;
+    //    int color = this.GetColorWithoutTint(capi, pos, ref tempHandling);
+    //    if (block.ClimateColorMapResolved != null || block.SeasonColorMapResolved != null)
+    //    {
+    //        color = capi.World.ApplyColorMapOnRgba(block.ClimateColorMapResolved, block.SeasonColorMapResolved, color, pos.X, pos.Y, pos.Z, flipRb: false);
+    //        handling = EnumHandling.PreventSubsequent;
+    //    }
+    //    return color;
+    //}
 
-        if (variants.FindByVariant(TextureCodeForBlockColorByType!, out string? textureCode) && textureCode != null && bakedTextures.TryGetValue(textureCode, out var colorTexture) && colorTexture != null)
-        {
-            result = colorTexture.TextureSubId;
-        }
-
-        if (result < 0)
-        {
-            if (bakedTextures.TryGetValue("up", out var upTexture))
-            {
-                result = upTexture.TextureSubId;
-            }
-            else if (bakedTextures.Count > 0)
-            {
-                result = (bakedTextures.First().Value?.TextureSubId).GetValueOrDefault();
-            }
-        }
-        return result;
-    }
+    ///// <inheritdoc cref="CollectibleObject.ParticlesTextureCode"/>
+    //public virtual string? GetParticlesTextureCode(IWorldAccessor world, ItemStack? stack, BlockPos? pos)
+    //{
+    //    string result = collObj.ParticlesTextureCode;
+    //    if (pos != null && world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
+    //    {
+    //        if (beBehavior.Variants.FindByVariant(ParticlesTextureCodeByType!, out result) && result != null)
+    //        {
+    //            return result;
+    //        }
+    //    }
+    //    else
+    //    {
+    //        if (stack.FindByVariant(ParticlesTextureCodeByType!, out result) && result != null)
+    //        {
+    //            return result;
+    //        }
+    //    }
+    //    return result;
+    //}
 
     /// <summary>
     /// Rotation (in radians) for the block at the given position

@@ -6,10 +6,10 @@ using Vintagestory.API.MathTools;
 namespace AttributeRenderingLibrary;
 
 /// <summary>
-/// Better version of Vintagestory.GameContent.ShapeTextureSource that supports both items and blocks
+/// Better version of <see cref="ShapeTextureSource"/> that supports both items and blocks
 /// </summary>
 public class UniversalShapeTextureSource : ITexPositionSource
-{
+{   
     ICoreClientAPI capi;
     ITextureAtlasAPI targetAtlas;
     Shape shape;
@@ -44,13 +44,13 @@ public class UniversalShapeTextureSource : ITexPositionSource
         {
             TextureAtlasPosition texPos;
 
-            if (textures.TryGetValue(textureCode, out CompositeTexture ctex) || textures.TryGetValue("all", out ctex))
+            if (textures.TryGetValue(textureCode, out CompositeTexture? ctex) || textures.TryGetValue("all", out ctex))
             {
                 targetAtlas.GetOrInsertTexture(ctex, out _, out texPos);
             }
             else
             {
-                shape.Textures.TryGetValue(textureCode, out AssetLocation texturePath);
+                shape.Textures.TryGetValue(textureCode, out AssetLocation? texturePath);
 
                 if (texturePath == null)
                 {

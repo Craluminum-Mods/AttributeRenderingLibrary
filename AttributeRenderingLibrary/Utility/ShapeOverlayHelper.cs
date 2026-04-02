@@ -82,7 +82,7 @@ public class ShapeOverlayHelper
     /// <param name="clientApi"></param>
     /// <param name="textureSource">The texture source to use</param>
     /// <param name="variants">The variants used to resolve the textures</param>
-    /// <param name="texturesByType">The textures grouped by variant</param>
+    /// <param name="textures"></param>
     /// <param name="prefixedTextureCodes">The texture codes that have been prefixed</param>
     /// <param name="overlayPrefix">The texture prefix to use for prefixed codes</param>
     public static void BakeVariantTextures(ICoreClientAPI clientApi, UniversalShapeTextureSource textureSource, Variants variants, Dictionary<string, CompositeTexture>? textures, Dictionary<string, AssetLocation>? prefixedTextureCodes = null, string overlayPrefix = "")
@@ -109,54 +109,33 @@ public class ShapeOverlayHelper
         }
     }
 
-    /// <summary>
-    /// Bakes textures based on variants
-    /// </summary>
-    /// <param name="clientApi"></param>
-    /// <param name="variants">The variants used to resolve the textures</param>
-    /// <param name="texturesByType">The textures grouped by variant</param>
-    /// <returns>Baked textures</returns>
-    public static Dictionary<string, BakedCompositeTexture?>? GetBakedVariantTextures(ICoreClientAPI clientApi, Variants variants, Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType)
-    {
-        if (!variants.FindByVariant(texturesByType!, out Dictionary<string, CompositeTexture> variantTextures))
-        {
-            return [];
-        }
+    ///// <summary>
+    ///// Bakes textures based on variants
+    ///// </summary>
+    ///// <param name="clientApi"></param>
+    ///// <param name="atlas"></param>
+    ///// <param name="location"></param>
+    ///// <param name="variants">The variants used to resolve the textures</param>
+    ///// <param name="texturesByType">The textures grouped by variant</param>
+    ///// <returns>Baked textures</returns>
+    //public static UniversalTextureSource? GetTextureSource(ICoreClientAPI clientApi, ITextureAtlasAPI atlas, AssetLocation location, Variants variants, Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType)
+    //{
+    //    return variants.FindByVariant(texturesByType!, out Dictionary<string, CompositeTexture> variantTextures)
+    //        ? GetTextureSource(clientApi, atlas, location, variants, variantTextures)
+    //        : null;
+    //}
 
-        return GetBakedVariantTextures(clientApi, variants, variantTextures);
-    }
-
-    /// <summary>
-    /// Bakes textures based on variants
-    /// </summary>
-    /// <param name="clientApi"></param>
-    /// <param name="variants">The variants used to resolve the textures</param>
-    /// <param name="textures">The textures</param>
-    /// <returns>Baked textures</returns>
-    public static Dictionary<string, BakedCompositeTexture?>? GetBakedVariantTextures(ICoreClientAPI clientApi, Variants variants, Dictionary<string, CompositeTexture>? textures)
-    {
-        Dictionary<string, BakedCompositeTexture?> bakedTextures = [];
-
-        if (textures == null) return bakedTextures;
-
-        foreach ((string textureCode, CompositeTexture texture) in textures)
-        {
-            CompositeTexture ctex = variants.ReplacePlaceholders(texture.Clone());
-
-            if (!clientApi.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
-            {
-                ctex.Base.Path = "unknown";
-                ctex.Base.Domain = "game";
-            }
-
-            ctex.Bake(clientApi.Assets);
-
-            if (!bakedTextures.ContainsKey(textureCode))
-            {
-                bakedTextures[textureCode] = ctex.Baked;
-            }
-        }
-
-        return bakedTextures;
-    }
+    ///// <summary>
+    ///// Bakes textures based on variants
+    ///// </summary>
+    ///// <param name="clientApi"></param>
+    ///// <param name="atlas"></param>
+    ///// <param name="location"></param>
+    ///// <param name="variants">The variants used to resolve the textures</param>
+    ///// <param name="textures">The textures</param>
+    ///// <returns>Baked textures</returns>
+    //public static UniversalTextureSource GetTextureSource(ICoreClientAPI clientApi, ITextureAtlasAPI atlas, AssetLocation location, Variants variants, Dictionary<string, CompositeTexture>? textures)
+    //{
+    //    return new UniversalTextureSource(clientApi, atlas, location, textures ?? [], pathUpdater: variants.ReplacePlaceholders);
+    //}
 }
