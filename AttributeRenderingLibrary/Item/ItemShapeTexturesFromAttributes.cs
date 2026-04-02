@@ -134,9 +134,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
-        HandbookPageCodeByType = Attributes["handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
-        HandbookCodeForGroupingByType = Attributes["handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
-        HandbookWildcardForGroupingByType = Attributes["handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
+        HandbookPageCodeByType = Attributes["STFA_handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
+        HandbookCodeForGroupingByType = Attributes["STFA_handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
+        HandbookWildcardForGroupingByType = Attributes["STFA_handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
         //ParticlesTextureCodeByType = Attributes["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, Code.Domain);
         NutritionPropsByType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, Code.Domain);
