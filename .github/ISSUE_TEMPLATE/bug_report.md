@@ -11,7 +11,7 @@ body:
       placeholder: v1.22
     validations:
       required: false
-  - type: dropdown
+  - type: input
     id: shortdescription
     attributes:
       label: Mod Version
@@ -82,14 +82,7 @@ body:
       
       You can drag and drop log files here.
       
-      You can also cut and paste from any crash report here:
-      
-      ```
-      
-
-      Crash
-
-      
-      ```"
+      You can drag and drop log files here, you can also cut and paste from any crash report here:
+      \n```\nCrash\n```"
     validations:
       required: true
