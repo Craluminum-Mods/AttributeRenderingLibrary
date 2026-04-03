@@ -1,38 +1,95 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+name: Bugreport
+description: You can report a bug or issue here.  Before starting, it is worth searching to see if your issue has already been reported. Search both Open *and* Closed issues
+labels: ["status: new"]
 
----
+body:
+  - type: input
+    id: shortdescription
+    attributes:
+      label: Game Version
+      description: What Game Version were you using?
+      placeholder: v1.22
+    validations:
+      required: false
+  - type: dropdown
+    id: shortdescription
+    attributes:
+      label: Mod Version
+      description: What Mod Version of Attribute Rendering Library were you using?
+      placeholder: v3.0.0-pre.8
+    validations:
+      required: false
+  - type: dropdown
+    id: operating-systems
+    attributes:
+      label: Platform
+      description: Select your operating system.
+      options:
+        - Windows
+        - Mac
+        - Linux
+    validations:
+      required: false
+  - type: dropdown
+    id: playmode
+    attributes:
+      label: SP/MP
+      description: Single- or Multi-player?
+      options:
+        - Singleplayer
+        - Multiplayer
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Explain the issue you're running into.
+      placeholder: Explain it here.
+    validations:
+      required: false
+  - type: textarea
+    id: modlist
+    attributes:
+      label: Modlist
+      description: List all mods that you were using when this issue happened.
+      placeholder: Paste modlist here.
+    validations:
+      required: false
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Explain how we could reproduce your bug/issue.
+      placeholder: 1. Make a '....' 2. Use it on '....' 3. It crashes / doesn't do the thing.
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Attach a screenshot if it helps explain the issue / shows a visual bug.
+      placeholder: Drag and drop pictures here.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (Required)
+      description: In the game's `Logs` folder there will be useful information in almost all cases.  For the gameplay session when the issue occurred, please drag and drop **all** those log files here. Please provide both server- and client- logs - or in Multiplayer, you will only have access to client- logs if you're the player reporting the issue.  If you're the server owner, post server- logs and if relevant please try to obtain the client logs from the affected player as well.<br><br>If you re-started the game already after the issue occurred, your older logs are in folder `Logs\Archive`.<br><br>In the event of a crash please also copy & paste the information from the Crash Reporter screen, paste it between the triple quote marks in the box below. This helps us quickly find the issue, and may help other players with the same issue.
+      placeholder: Paste crash between the triple backticks. Also drag and drop full log files here - especially `client-main.log`
+      value: "Log files are now required in all cases (unless it's a website issue)
+      
+      You can drag and drop log files here.
+      
+      You can also cut and paste from any crash report here:
+      
+      ```
+      
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+      Crash
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
-
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
-
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
-
-**Additional context**
-Add any other context about the problem here.
+      
+      ```"
+    validations:
+      required: true
