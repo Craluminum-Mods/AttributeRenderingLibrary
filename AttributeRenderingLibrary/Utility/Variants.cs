@@ -164,7 +164,7 @@ public class Variants
     /// <returns>The same <see cref="JsonObject"/> instance with resolved placeholders.</returns>
     public JsonObject? ReplacePlaceholders(JsonObject? input)
     {
-        if (input is not { Count: > 0 }) return input;
+        if (input == null) return input;
 
         foreach ((string key, string value) in Elements)
         {
