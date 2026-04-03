@@ -19,7 +19,26 @@ public static class DynamicTargetTools
         if(exclude is not null && exclude.Length > 0) assemblies = assemblies.Except(exclude);
         if(referencing is not null && referencing.Length > 0) assemblies = assemblies.Where(assembly =>  assembly.GetReferencedAssemblies().Any(a1 => referencing.Any(a2 => a1.FullName == a2.FullName)));
 
-        return assemblies.Select(assembly => (assembly, AssemblyDefinition.ReadAssembly(assembly.Location)));
+        foreach(var assembly in assemblies)
+        {
+            AssemblyDefinition? assemblyDefinition = null;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(assembly.Location))
+                {
+                    assemblyDefinition = AssemblyDefinition.ReadAssembly(assembly.Location);
+                }
+            }
+            catch
+            {
+                //Ignore assemblies that cannot be read
+            }
+
+            if(assemblyDefinition is not null)
+            {
+                yield return (assembly, assemblyDefinition);
+            }
+        }
     }
 
     public static IEnumerable<MethodBase> GetMethodsUsing(MethodBase[]? methods = null, FieldInfo[]? fields = null, Assembly[]? exclude = null, ILogger? logger = null)
@@ -44,7 +63,7 @@ public static class DynamicTargetTools
                     if (!method.HasBody || method.HasGenericParameters || !method.Uses(methods, fields)) continue;
                     
                     //TODO maybe improve matching for overloads
-                    var realMethods = assembly.GetTypes()
+                    var realMethods = AccessTools.GetTypesFromAssembly(assembly)
                         .First(realType => realType.Name == type.Name)
                         .GetMethods(AccessTools.allDeclared)
                         .Where(realMethod => realMethod.Name == method.Name)
