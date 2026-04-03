@@ -4,7 +4,7 @@ labels: ["status: new"]
 
 body:
   - type: input
-    id: shortdescription
+    id: gameversion
     attributes:
       label: Game Version
       description: What Game Version were you using?
@@ -12,7 +12,7 @@ body:
     validations:
       required: false
   - type: input
-    id: shortdescription
+    id: modversion
     attributes:
       label: Mod Version
       description: What Mod Version of Attribute Rendering Library were you using?
@@ -86,3 +86,4 @@ body:
       \n```\nCrash\n```"
     validations:
       required: true
+
