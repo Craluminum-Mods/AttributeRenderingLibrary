@@ -11,8 +11,9 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, ICollectiblePropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
+public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttributes, ICollectiblePropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider, IHandbookGrouping
 {
+#pragma warning disable CS8766
     #region Collectible properties
     public Dictionary<string, TagSet>? TagsByType { get; protected set; }
     public Dictionary<string, CompositeShape>? shapeByType { get; protected set; }
@@ -30,6 +31,10 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
+    public Dictionary<string, string>? HandbookPageCodeByType { get; protected set; }
+    public Dictionary<string, string>? HandbookCodeForGroupingByType { get; protected set; }
+    public Dictionary<string, string>? HandbookWildcardForGroupingByType { get; protected set; }
+    //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
     #endregion
     #region Collectible properties (resolvable)
     public Dictionary<string, CombustibleProperties>? CombustiblePropsByType { get; protected set; }
@@ -129,6 +134,10 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         DamagedByByType = Attributes["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = Attributes["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = Attributes["toolTier"].AsObject<Dictionary<string, int>>();
+        HandbookPageCodeByType = Attributes["STFA_handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
+        HandbookCodeForGroupingByType = Attributes["STFA_handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
+        HandbookWildcardForGroupingByType = Attributes["STFA_handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
+        //ParticlesTextureCodeByType = Attributes["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = Attributes["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, Code.Domain);
         NutritionPropsByType = Attributes["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, Code.Domain);
         GrindingPropsByType = Attributes["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>(null, Code.Domain);
@@ -167,28 +176,26 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         }
     }
 
-    public override TagSet GetTags(ItemStack stack) => !stack.FindByVariant(TagsByType, out TagSet tags)
-            ? base.GetTags(stack)
-            : tags;
+    public override TagSet GetTags(ItemStack stack) => stack.GetByVariant(TagsByType, () => base.GetTags(stack));
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
     {
-        return GetOrCreateMesh(slot, targetAtlas, overrideShape: null);
+        return GetOrCreateMesh(slot, targetAtlas, overrideShape: null!);
     }
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, CompositeShape overrideShape)
     {
-        ICoreClientAPI clientApi = api as ICoreClientAPI;
+        ICoreClientAPI clientApi = (api as ICoreClientAPI)!;
         MeshData mesh = RenderExtensions.GenEmptyMesh();
 
-        Variants variants = Variants.FromStack(slot.Itemstack);
+        Variants variants = Variants.FromStack(slot.Itemstack!);
 
         Shape? shape = GetShape(slot, variants, overrideShape, out CompositeShape? rcshape);
 
         if (shape == null || rcshape == null) return RenderExtensions.GetUnknownItemModelData(clientApi);
 
         UniversalShapeTextureSource stexSource = new(clientApi, targetAtlas, shape, rcshape.Base.ToString());
-        Dictionary<string, AssetLocation> prefixedTextureCodes = null;
+        Dictionary<string, AssetLocation>? prefixedTextureCodes = null;
         string overlayPrefix = "";
 
         if (rcshape.Overlays is { Length: > 0 })
@@ -197,7 +204,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             prefixedTextureCodes = ShapeOverlayHelper.AddOverlays(clientApi, overlayPrefix, variants, stexSource, shape, rcshape);
         }
 
-        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack.Item.Textures)
+        foreach ((string textureCode, CompositeTexture texture) in slot.Itemstack!.Item.Textures)
         {
             stexSource.textures[textureCode] = texture;
         }
@@ -293,7 +300,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         if (!meshRefs.TryGetValue(key, out MultiTextureMeshRef? meshref))
         {
-            MeshData mesh = GenMesh(renderinfo.InSlot, clientApi.ItemTextureAtlas, null);
+            MeshData mesh = GenMesh(renderinfo.InSlot, clientApi.ItemTextureAtlas, null!);
             meshref = clientApi.Render.UploadMultiTextureMesh(mesh);
             meshRefs[key] = meshref;
         }
@@ -306,23 +313,24 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override string GetHeldItemName(ItemStack itemStack)
     {
-        if (!itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (itemStack.FindByVariant(NameByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return base.GetHeldItemName(itemStack);
+            return variants.GetName(langKeys);
         }
-        return variants.GetName(langKeys);
+        return base.GetHeldItemName(itemStack);
     }
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
-        {
-            return;
-        }
-        variants.GetDescription(dsc, langKeys);
+        Variants variants = Variants.FromStack(inSlot.Itemstack!);
         variants.GetDebugDescription(dsc, withDebugInfo);
+
+        if (variants.FindByVariant(DescriptionByType!, out List<object> langKeys) && langKeys is { Count: > 0 })
+        {
+            variants.GetDescription(dsc, langKeys);
+        }
     }
 
     public override byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack) => stack.GetByVariant(LightHsvByType, defaultValue: () => base.GetLightHsv(blockAccessor, pos, stack))!;
@@ -345,7 +353,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override CombustibleProperties GetCombustibleProperties(IWorldAccessor world, ItemStack stack, BlockPos pos)
     {
-        if (!stack.FindByVariant(CombustiblePropsByType, out CombustibleProperties props, out Variants variants) || props == null)
+        if (!stack.FindByVariant(CombustiblePropsByType!, out CombustibleProperties props, out Variants variants) || props == null)
         {
             return base.GetCombustibleProperties(world, stack, pos);
         }
@@ -367,7 +375,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity)
     {
-        if (!stack.FindByVariant(NutritionPropsByType, out FoodNutritionProperties props, out Variants variants) || props == null)
+        if (!stack.FindByVariant(NutritionPropsByType!, out FoodNutritionProperties props, out Variants variants) || props == null)
         {
             return base.GetNutritionProperties(world, stack, forEntity);
         }
@@ -389,7 +397,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack)
     {
-        if (!stack.FindByVariant(GrindingPropsByType, out GrindingProperties props, out Variants variants) || props == null)
+        if (!stack.FindByVariant(GrindingPropsByType!, out GrindingProperties props, out Variants variants) || props == null)
         {
             return base.GetGrindingProperties(world, stack);
         }
@@ -411,7 +419,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack)
     {
-        if (!stack.FindByVariant(CrushingPropsByType, out CrushingProperties props, out Variants variants) || props == null)
+        if (!stack.FindByVariant(CrushingPropsByType!, out CrushingProperties props, out Variants variants) || props == null)
         {
             return base.GetCrushingProperties(world, stack);
         }
@@ -433,7 +441,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public override TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity)
     {
-        if (!stack.FindByVariant(TransitionablePropsByType, out TransitionableProperties[] allTypedProps, out Variants variants) || allTypedProps == null)
+        if (!stack.FindByVariant(TransitionablePropsByType!, out TransitionableProperties[] allTypedProps, out Variants variants) || allTypedProps == null)
         {
             return base.GetTransitionableProperties(world, stack, forEntity);
         }
@@ -484,6 +492,33 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return slot.Itemstack.GetByVariant(HeldTpHitAnimationByType, defaultValue: () => base.GetHeldTpHitAnimation(slot, byEntity));
     }
 
+    /*
+     * April 2 2026
+     * 
+     * Spent hours testing code for these colors and couldn't get them to work properly
+     * 
+     * The only way to get rid of ugly "unknown" particles is to implement code below
+     */
+
+    //public override int GetRandomColor(ICoreClientAPI capi, ItemStack stack)
+    //{
+    //    Variants? variants = Variants.FromStack(stack);
+    //    UniversalTextureSource? texSource = ShapeOverlayHelper.GetTextureSource(capi, capi.ItemTextureAtlas, stack.Collectible.Code, variants, texturesByType);
+    //    if (texSource != null)
+    //    {
+    //        string? textureCode = GetParticlesTextureCode(capi.World, stack);
+    //        TextureAtlasPosition texPos = textureCode != null ? texSource[textureCode] : texSource.firstTexPos;
+    //        if (texPos != null)
+    //        {
+    //            return capi.ItemTextureAtlas.GetRandomColor(texPos, rndIndex: -1);
+    //        }
+    //    }
+    //    return base.GetRandomColor(capi, stack);
+    //}
+
+    ///// <inheritdoc cref="CollectibleObject.ParticlesTextureCode"/>
+    //public virtual string? GetParticlesTextureCode(IWorldAccessor world, ItemStack stack) => stack.GetByVariant(ParticlesTextureCodeByType!, ParticlesTextureCode);
+
     #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos)
     {
@@ -492,32 +527,32 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public virtual string GetMeshCacheKey(ItemSlot slot)
     {
-        return $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
+        return $"{slot.Itemstack!.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
     }
     #endregion
     #region IContainedCustomName
     public virtual string GetContainedInfo(ItemSlot inSlot)
     {
-        if (!inSlot.Itemstack.FindByVariant(ContainedDescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (inSlot.Itemstack!.FindByVariant(ContainedDescriptionByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return inSlot.Itemstack.GetName();
+            StringBuilder dsc = new();
+            variants.GetDescription(dsc, langKeys);
+            return dsc.ToString();
         }
 
-        StringBuilder dsc = new();
-        variants.GetDescription(dsc, langKeys);
-        return dsc.ToString();
+        return inSlot.Itemstack!.GetName();
     }
 
     public virtual string GetContainedName(ItemSlot inSlot, int quantity)
     {
-        if (!inSlot.Itemstack.FindByVariant(ContainedNameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (inSlot.Itemstack!.FindByVariant(ContainedNameByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return inSlot.Itemstack.GetName();
+            StringBuilder dsc = new();
+            variants.GetDescription(dsc, langKeys);
+            return dsc.ToString();
         }
 
-        StringBuilder dsc = new();
-        variants.GetDescription(dsc, langKeys);
-        return dsc.ToString();
+        return inSlot.Itemstack!.GetName();
     }
     #endregion
     #region IAttachableToEntity
@@ -558,13 +593,13 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     {
         Variants variants = Variants.FromStack(stack);
 
-        if (stack.FindByVariant(AttachedShapeByType, out CompositeShape attachedShape) && attachedShape != null)
+        if (variants.FindByVariant(AttachedShapeByType!, out CompositeShape attachedShape) && attachedShape != null)
         {
             CompositeShape rcshape = variants.ReplacePlaceholders(attachedShape.Clone());
             return rcshape.RemoveNonExistingOverlays(api)!;
         }
 
-        if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out var attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
+        if (variants.FindByVariant(AttachedShapeBySlotCodeByType!, out var attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
         {
             foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
             {
@@ -613,9 +648,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     #region ICollectiblePropertiesSupplier
     public virtual JuiceableProperties GetJuiceableProperties(ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(JuiceablePropsByType, out JuiceableProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(JuiceablePropsByType!, out JuiceableProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         JuiceableProperties clonedProps = new()
@@ -661,9 +696,9 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public virtual DistillationProps GetDistillationProperties(ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(DistillationPropsByType, out DistillationProps result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(DistillationPropsByType!, out DistillationProps result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.DistilledStack == null)
@@ -674,7 +709,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
         DistillationProps clonedProps = new()
         {
-            DistilledStack = result.DistilledStack?.Clone(),
+            DistilledStack = result.DistilledStack.Clone(),
             Ratio = result.Ratio
         };
 
@@ -689,4 +724,42 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return clonedProps;
     }
     #endregion
+
+    public virtual string HandbookPageCodeForStack(IWorldAccessor world, ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookPageCodeByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+        return GuiHandbookItemStackPage.PageCodeForStack(stack);
+    }
+
+    public AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookCodeForGroupingByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+
+        Dictionary<string, string> attributes = Variants.FromStack(stack).GetElements();
+        if (attributes.Count == 0)
+        {
+            return stack.Collectible.Code;
+        }
+
+        return AssetLocation.Create(stack.Collectible.Code.Path + "-" + string.Join("-", attributes.Values), stack.Collectible.Code.Domain);
+    }
+
+    public string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookWildcardForGroupingByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+
+        return variants.ReplacePlaceholders(wildcard);
+    }
 }

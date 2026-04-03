@@ -68,12 +68,30 @@ public class ShapeOverlayHelper
     /// <param name="overlayPrefix">The texture prefix to use for prefixed codes</param>
     public static void BakeVariantTextures(ICoreClientAPI clientApi, UniversalShapeTextureSource textureSource, Variants variants, Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType, Dictionary<string, AssetLocation>? prefixedTextureCodes = null, string overlayPrefix = "")
     {
-        if (!variants.FindByVariant(texturesByType!, out Dictionary<string, CompositeTexture> variantTextures)) return;
-
-        foreach ((string textureCode, CompositeTexture texture) in variantTextures)
+        if (!variants.FindByVariant(texturesByType!, out Dictionary<string, CompositeTexture> variantTextures))
         {
-            CompositeTexture ctex = texture.Clone();
-            ctex = variants.ReplacePlaceholders(ctex);
+            return;
+        }
+
+        BakeVariantTextures(clientApi, textureSource, variants, variantTextures, prefixedTextureCodes, overlayPrefix);
+    }
+
+    /// <summary>
+    /// Bakes textures based on variants and optional prefix, and adds them to the texture source
+    /// </summary>
+    /// <param name="clientApi"></param>
+    /// <param name="textureSource">The texture source to use</param>
+    /// <param name="variants">The variants used to resolve the textures</param>
+    /// <param name="textures"></param>
+    /// <param name="prefixedTextureCodes">The texture codes that have been prefixed</param>
+    /// <param name="overlayPrefix">The texture prefix to use for prefixed codes</param>
+    public static void BakeVariantTextures(ICoreClientAPI clientApi, UniversalShapeTextureSource textureSource, Variants variants, Dictionary<string, CompositeTexture>? textures, Dictionary<string, AssetLocation>? prefixedTextureCodes = null, string overlayPrefix = "")
+    {
+        if (textures == null) return;
+
+        foreach ((string textureCode, CompositeTexture texture) in textures)
+        {
+            CompositeTexture ctex = variants.ReplacePlaceholders(texture.Clone());
             if (!clientApi.Assets.Exists(ctex.Base.CopyWithPathPrefixAndAppendixOnce("textures/", ".png")))
             {
                 ctex.Base.Path = "unknown";
@@ -90,4 +108,34 @@ public class ShapeOverlayHelper
             }
         }
     }
+
+    ///// <summary>
+    ///// Bakes textures based on variants
+    ///// </summary>
+    ///// <param name="clientApi"></param>
+    ///// <param name="atlas"></param>
+    ///// <param name="location"></param>
+    ///// <param name="variants">The variants used to resolve the textures</param>
+    ///// <param name="texturesByType">The textures grouped by variant</param>
+    ///// <returns>Baked textures</returns>
+    //public static UniversalTextureSource? GetTextureSource(ICoreClientAPI clientApi, ITextureAtlasAPI atlas, AssetLocation location, Variants variants, Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType)
+    //{
+    //    return variants.FindByVariant(texturesByType!, out Dictionary<string, CompositeTexture> variantTextures)
+    //        ? GetTextureSource(clientApi, atlas, location, variants, variantTextures)
+    //        : null;
+    //}
+
+    ///// <summary>
+    ///// Bakes textures based on variants
+    ///// </summary>
+    ///// <param name="clientApi"></param>
+    ///// <param name="atlas"></param>
+    ///// <param name="location"></param>
+    ///// <param name="variants">The variants used to resolve the textures</param>
+    ///// <param name="textures">The textures</param>
+    ///// <returns>Baked textures</returns>
+    //public static UniversalTextureSource GetTextureSource(ICoreClientAPI clientApi, ITextureAtlasAPI atlas, AssetLocation location, Variants variants, Dictionary<string, CompositeTexture>? textures)
+    //{
+    //    return new UniversalTextureSource(clientApi, atlas, location, textures ?? [], pathUpdater: variants.ReplacePlaceholders);
+    //}
 }

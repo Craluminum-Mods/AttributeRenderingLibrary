@@ -6,6 +6,7 @@ using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Util;
+using Vintagestory.Client.NoObf;
 
 namespace AttributeRenderingLibrary;
 
@@ -22,7 +23,7 @@ public static class VariantExtensions
     public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result)
     {
         Core.Api?.World.FrameProfiler.Enter("AttributeRenderingLibrary.FindByVariant");
-        result = default;
+        result = default!;
 
         if (variants == null || inDictionary is not { Count: > 0 })
         {
@@ -51,7 +52,7 @@ public static class VariantExtensions
     /// </summary>
     public static bool FindByVariant<T>(this ItemStack stack, Dictionary<string, T> inDictionary, out T result)
     {
-        result = default;
+        result = default!;
 
         return stack != null && inDictionary is { Count: > 0 } && FindByVariant(Variants.FromStack(stack), inDictionary, out result);
     }
@@ -62,7 +63,7 @@ public static class VariantExtensions
     /// </summary>
     public static bool FindByVariant<T>(this ItemStack stack, Dictionary<string, T> inDictionary, out T result, out Variants variants)
     {
-        result = default;
+        result = default!;
 
         if (stack == null)
         {
@@ -120,7 +121,7 @@ public static class VariantExtensions
     /// <summary>
     /// Same as FindByVariant, but returns a value instead of bool. Returns a default value using lazy evaluation.
     /// </summary>
-    public static T? GetByVariant<T>(this ItemStack? stack, Dictionary<string, T>? inDictionary, Func<T> defaultValue)
+    public static T GetByVariant<T>(this ItemStack? stack, Dictionary<string, T>? inDictionary, Func<T> defaultValue)
     {
         return stack?.FindByVariant(inDictionary!, out var result) == true ? result : defaultValue();
     }
@@ -136,14 +137,14 @@ public static class VariantExtensions
     /// <summary>
     /// Same as FindByVariant, but returns a value instead of bool. Returns a default value using lazy evaluation.
     /// </summary>
-    public static IEnumerable<T>? GetByVariant<T>(this ItemStack? stack, Dictionary<string, IEnumerable<T>>? inDictionary, Func<IEnumerable<T>> defaultValue)
+    public static IEnumerable<T> GetByVariant<T>(this ItemStack? stack, Dictionary<string, IEnumerable<T>>? inDictionary, Func<IEnumerable<T>> defaultValue)
     {
         return stack?.FindByVariant(inDictionary!, out var result) == true ? result : defaultValue();
     }
 
     public static bool IsTrue(this Variants variants, Dictionary<string, bool> inDictionary)
     {
-        return variants != null && variants.FindByVariant(inDictionary, out bool result) && result;
+        return variants.FindByVariant(inDictionary, out bool result) && result;
     }
 
     /// <summary>
@@ -171,13 +172,13 @@ public static class VariantExtensions
     /// <remarks>
     /// The method ensures that the original variants and stack remain unmodified by cloning them before applying changes.
     /// </remarks>
-    public static void OverwriteVariants(this ItemStack oldStack, out ItemStack newStack, Dictionary<string, string> setVariants = null, List<string> removeVariants = null, Variants variants = null)
+    public static void OverwriteVariants(this ItemStack oldStack, out ItemStack newStack, Dictionary<string, string> setVariants = null!, List<string> removeVariants = null!, Variants variants = null!)
     {
         newStack = oldStack.Clone();
         Variants newVariants = variants?.Clone() ?? Variants.FromStack(newStack);
 
         newVariants.Set(setVariants);
-        newVariants.RemoveKeys(removeVariants?.ToArray());
+        newVariants.RemoveKeys(removeVariants?.ToArray()!);
         newVariants.ToStack(newStack);
     }
 
@@ -185,24 +186,49 @@ public static class VariantExtensions
     {
         foreach (object entry in entries)
         {
-            if (entry is string)
+            switch (entry)
             {
-                sb.Append(Lang.GetMatching(variants.ReplacePlaceholders(entry.ToString())));
-            }
-            else if (entry is JArray array && array.Any())
-            {
-                object[] args = [.. array.Skip(1).Select(arg =>
-                {
-                    return arg.Type switch
+                case string str:
                     {
-                        JTokenType.String => variants.ReplacePlaceholders(arg.ToString()),
-                        _ => (object)arg
-                    };
-                })];
-
-                string key = variants.ReplacePlaceholders(array[0].ToString());
-                sb.Append([.. Lang.GetMatching(key, args)]);
+                        sb.Append(Lang.GetMatching(key: variants.ReplacePlaceholders(str)));
+                    }
+                    break;
+                case JArray array:
+                    {
+                        string result = variants.TranslateJArray(array);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            sb.Append(result);
+                        }
+                    }
+                    break;
             }
+        }
+    }
+
+    private static string TranslateJArray(this Variants variants, JArray array)
+    {
+        if (!array.Any()) return string.Empty;
+
+        object[] args = [.. array.Skip(1).Select(arg =>
+        {
+            return arg.Type switch
+            {
+                JTokenType.String => Lang.GetMatching(key: variants.ReplacePlaceholders(arg.ToString())),
+                JTokenType.Array  => variants.TranslateJArray(arg.ToObject<JArray>()!),
+                _                 => (object)arg
+            };
+        })];
+
+        string resultKey = variants.ReplacePlaceholders(array[0].ToString());
+
+        if (Lang.HasTranslation(resultKey))
+        {
+            return Lang.GetMatching(resultKey, args);
+        }
+        else
+        {
+            return string.Format(resultKey, args);
         }
     }
 
@@ -230,17 +256,19 @@ public static class VariantExtensions
 
     public static void GetDebugDescription(this Variants variants, StringBuilder sb, bool withDebugInfo = false)
     {
+        if (!ClientSettings.ExtendedDebugInfo) return;
+
         if (!variants.Any)
         {
+            sb.AppendLine("<font color=\"#bbbbbb\">ARL Variants: None</font>");
             return;
         }
-        if (withDebugInfo)
+
+        sb.AppendLine("<font color=\"#bbbbbb\">ARL Variants:");
+        foreach (string keyVal in variants.GetAsStringArray())
         {
-            sb.AppendLine();
-            foreach (string keyVal in variants.GetAsStringArray())
-            {
-                sb.AppendLine($"DEBUG::{keyVal}");
-            }
+            sb.AppendLine($"- {keyVal}");
         }
+        sb.AppendLine("</font>");
     }
 }

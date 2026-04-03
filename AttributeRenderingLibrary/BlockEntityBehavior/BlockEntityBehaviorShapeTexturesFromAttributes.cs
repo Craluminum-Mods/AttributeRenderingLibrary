@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Client;
+﻿using System.Text;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -7,9 +8,9 @@ namespace AttributeRenderingLibrary;
 
 public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockentity) : BlockEntityBehavior(blockentity)
 {
-    public BlockBehaviorShapeTexturesFromAttributes OwnBehavior => Block?.GetBehavior<BlockBehaviorShapeTexturesFromAttributes>();
+    public BlockBehaviorShapeTexturesFromAttributes? OwnBehavior => Block?.GetBehavior<BlockBehaviorShapeTexturesFromAttributes>();
     public Variants Variants { get; protected set; } = new Variants();
-    protected MeshData mesh;
+    protected MeshData? mesh;
 
     public override void Initialize(ICoreAPI api, JsonObject properties)
     {
@@ -23,7 +24,7 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
 
         if (Api.Side == EnumAppSide.Client)
         {
-            mesh = OwnBehavior.GetOrCreateMesh(Variants);
+            mesh = OwnBehavior?.GetOrCreateMesh(Variants, null, Pos, "");
         }
     }
 
@@ -40,7 +41,7 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
         Init();
     }
 
-    public override void OnBlockPlaced(ItemStack byItemStack = null)
+    public override void OnBlockPlaced(ItemStack? byItemStack = null)
     {
         if (byItemStack != null)
         {
@@ -49,20 +50,30 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
         Init();
     }
 
+    public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
+    {
+        base.GetBlockInfo(forPlayer, dsc);
+
+        if (Api is ICoreClientAPI capi)
+        {
+            Variants.GetDebugDescription(dsc);
+        }
+    }
+
     public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
     {
-        Vec3f rotationRad = OwnBehavior.GetRotation(Api.World, Pos);
-        MeshData clonedMesh = mesh.Clone();
+        Vec3f? rotationRad = OwnBehavior?.GetRotation(Api.World, Pos);
+        MeshData? clonedMesh = mesh?.Clone() ?? RenderExtensions.GetUnknownBlockModelData((Api as ICoreClientAPI)!);
 
         if (Block.RandomizeRotations)
         {
             int randomSelector = GameMath.MurmurHash3(-Blockentity.Pos.X, (Blockentity.Block.RandomizeAxes == EnumRandomizeAxes.XYZ) ? Blockentity.Pos.Y : 0, Blockentity.Pos.Z);
             float[] matrix = TesselationMetaData.randomRotMatrices[GameMath.Mod(randomSelector, TesselationMetaData.randomRotMatrices.Length)];
-            clonedMesh = clonedMesh.MatrixTransform(matrix);
+            clonedMesh = clonedMesh?.MatrixTransform(matrix);
         }
-        else
+        else if (rotationRad != null)
         {
-            clonedMesh = clonedMesh.Rotate(Vec3f.Half, rotationRad.X, rotationRad.Y, rotationRad.Z);
+            clonedMesh = clonedMesh?.Rotate(rotationRad.X, rotationRad.Y, rotationRad.Z);
         }
 
         mesher.AddMeshData(clonedMesh);

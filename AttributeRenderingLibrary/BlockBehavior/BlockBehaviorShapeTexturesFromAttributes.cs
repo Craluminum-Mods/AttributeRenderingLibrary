@@ -13,8 +13,9 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IBlockPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IBlockPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider, IHandbookGrouping
 {
+#pragma warning disable CS8766
     #region Collectible properties
     public Dictionary<string, TagSet>? TagsByType { get; protected set; }
     public Dictionary<string, CompositeShape>? shapeByType { get; protected set; }
@@ -32,6 +33,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
+    public Dictionary<string, string>? HandbookPageCodeByType { get; protected set; }
+    public Dictionary<string, string>? HandbookCodeForGroupingByType { get; protected set; }
+    public Dictionary<string, string>? HandbookWildcardForGroupingByType { get; protected set; }
+    //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
+    //public Dictionary<string, string>? TextureCodeForBlockColorByType { get; protected set; }
     #endregion
     #region Block properties
     public Dictionary<string, CompositeShape>? shapeInventoryByType { get; protected set; }
@@ -87,7 +93,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void OnLoaded(ICoreAPI api)
     {
-        // blocks with this behavior cannot be chiseled
+        // blocks with this behavior cannot bebehavior chiseled
         block.Attributes ??= new JsonObject(new JObject());
         block.Attributes.Token!["canChisel"] = JToken.FromObject(false);
 
@@ -154,6 +160,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
+        HandbookPageCodeByType = properties["STFA_handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
+        HandbookCodeForGroupingByType = properties["STFA_handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
+        HandbookWildcardForGroupingByType = properties["STFA_handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
+        //ParticlesTextureCodeByType = properties["particlesTextureCode"].AsObject<Dictionary<string, string>>();
+        //TextureCodeForBlockColorByType = properties["textureCodeForBlockColor"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, block.Code.Domain);
         NutritionPropsByType = properties["nutritionProps"].AsObject<Dictionary<string, FoodNutritionProperties>>(null, block.Code.Domain);
         GrindingPropsByType = properties["grindingProps"].AsObject<Dictionary<string, GrindingProperties>>(null, block.Code.Domain);
@@ -291,8 +302,12 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             stexSource.textures[textureCode] = texture;
         }
 
-        bool foundInventoryTextures = slot.Itemstack.FindByVariant(TexturesInventoryByType!, out _);
-        ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, foundInventoryTextures ? TexturesInventoryByType : texturesByType, prefixedTextureCodes, overlayPrefix);
+        bool foundInventoryTextures = variants.FindByVariant(TexturesInventoryByType!, out Dictionary<string, CompositeTexture>? texturesInventory);
+
+        if (foundInventoryTextures)
+            ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesInventory, prefixedTextureCodes, overlayPrefix);
+        else
+            ShapeOverlayHelper.BakeVariantTextures(clientApi, stexSource, variants, texturesByType, prefixedTextureCodes, overlayPrefix);
 
         rcshape.IgnoreElements = GetShapeIgnoreElements(variants, rcshape);
 
@@ -314,9 +329,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     /// <param name="overrideTexturesource">Optional custom texture source, e.g. for decals. When provided, the result is not cached.</param>
     /// <returns>Mesh for placed block</returns>
     [Obsolete("Use GetOrCreateMesh(Variants, CompositeShape, BlockPos, string, ITexPositionSource) instead")]
-    public virtual MeshData GetOrCreateMesh(Variants variants, ITexPositionSource overrideTexturesource = null)
+    public virtual MeshData GetOrCreateMesh(Variants variants, ITexPositionSource overrideTexturesource = null!)
     {
-        return GetOrCreateMesh(variants: variants, overrideShape: null, atBlockPos: null, extraCacheKey: "", overrideTexturesource: overrideTexturesource);
+        return GetOrCreateMesh(variants: variants, overrideShape: null, atBlockPos: null!, extraCacheKey: "", overrideTexturesource: overrideTexturesource);
     }
 
     /// <summary>
@@ -332,7 +347,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     /// <param name="atBlockPos">Block position. Use it to get block and/or block entity</param>
     /// <param name="overrideTexturesource">Optional custom texture source, e.g. for decals. When provided, the result is not cached.</param>
     /// <returns>Mesh for placed block</returns>
-    public virtual MeshData GetOrCreateMesh(Variants variants, CompositeShape? overrideShape, BlockPos atBlockPos, string extraCacheKey, ITexPositionSource overrideTexturesource = null)
+    public virtual MeshData GetOrCreateMesh(Variants variants, CompositeShape? overrideShape, BlockPos atBlockPos, string extraCacheKey, ITexPositionSource overrideTexturesource = null!)
     {
         Dictionary<string, MeshData> cMeshes = ObjectCacheUtil.GetOrCreate(clientApi, MeshCacheKey, () => new Dictionary<string, MeshData>());
 
@@ -440,7 +455,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         CompositeShape? ucshape = overrideShape;
         if (ucshape == null)
         {
-            variants.FindByVariant(shapeByType, out ucshape);
+            variants.FindByVariant(shapeByType!, out ucshape);
             ucshape ??= block.Shape;
         }
         if (ucshape == null)
@@ -462,10 +477,10 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         CompositeShape? ucshape = overrideShape;
 
         if (ucshape == null)
-            variants.FindByVariant(shapeInventoryByType, out ucshape);
+            variants.FindByVariant(shapeInventoryByType!, out ucshape);
 
         if (ucshape == null)
-            variants.FindByVariant(shapeByType, out ucshape);
+            variants.FindByVariant(shapeByType!, out ucshape);
 
         ucshape ??= block.ShapeInventory;
         ucshape ??= block.Shape;
@@ -536,9 +551,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         string key = GetMeshCacheKey(renderinfo.InSlot);
 
-        if (!meshRefs.TryGetValue(key, out MultiTextureMeshRef meshref))
+        if (!meshRefs.TryGetValue(key, out MultiTextureMeshRef? meshref))
         {
-            MeshData mesh = GenGuiMesh(renderinfo.InSlot);
+            MeshData mesh = GenGuiMesh(renderinfo.InSlot!, null);
             meshref = clientApi.Render.UploadMultiTextureMesh(mesh);
             meshRefs[key] = meshref;
         }
@@ -553,7 +568,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
         {
-            if (beBehavior.Variants.FindByVariant(DropsByType, out BlockDropItemStack[] unresolvedDrops)
+            if (beBehavior.Variants.FindByVariant(DropsByType!, out BlockDropItemStack[] unresolvedDrops)
                 && unresolvedDrops != null
                 && unresolvedDrops.Length > 0)
             {
@@ -561,11 +576,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
                 for (int i = 0; i < unresolvedDrops.Length; i++)
                 {
                     BlockDropItemStack dstack = beBehavior.Variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
-                    if (!dstack.Resolve(world, "AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", dstack.Code))
+                    if (!dstack.Resolve(world, "AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", dstack.Code!))
                     {
                         break;
                     }
-                    ItemStack stack = dstack.ToRandomItemstackForPlayer(byPlayer, world, dropQuantityMultiplier);
+                    ItemStack? stack = dstack.ToRandomItemstackForPlayer(byPlayer, world, dropQuantityMultiplier);
                     if (stack != null)
                     {
                         resolvedDrops.Add(stack);
@@ -584,7 +599,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
 
         handling = EnumHandling.PassThrough;
-        return null;
+        return null!;
     }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
@@ -598,7 +613,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
 
         handling = EnumHandling.PassThrough;
-        return null;
+        return null!;
     }
 
     public override void GetDecal(IWorldAccessor world, BlockPos pos, ITexPositionSource decalTexSource, ref MeshData decalModelData, ref MeshData blockModelData, ref EnumHandling handled)
@@ -611,8 +626,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         Vec3f rotationRad = GetRotation(world, pos);
         float[] mat = Matrixf.Create().Translate(0.5f, 0.5f, 0.5f).Rotate(rotationRad).Translate(-0.5f, -0.5f, -0.5f).Values;
-        MeshData decalMesh = GetOrCreateMesh(beBehavior.Variants, overrideTexturesource: decalTexSource).Clone().MatrixTransform(mat);
-        MeshData blockMesh = GetOrCreateMesh(beBehavior.Variants).Clone().MatrixTransform(mat);
+        MeshData decalMesh = GetOrCreateMesh(beBehavior.Variants, null, pos, "", overrideTexturesource: decalTexSource).Clone().MatrixTransform(mat);
+        MeshData blockMesh = GetOrCreateMesh(beBehavior.Variants, null, pos, "").Clone().MatrixTransform(mat);
         decalModelData = decalMesh;
         blockModelData = blockMesh;
         return;
@@ -626,7 +641,6 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
 
         if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior
-            && beBehavior.Variants != null
             && beBehavior.Variants.FindByVariant(CollisionBoxesByType, out Cuboidf[] cuboids)
             && cuboids != null
             && cuboids.Length > 0)
@@ -645,7 +659,6 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
 
         if (blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior
-            && beBehavior.Variants != null
             && beBehavior.Variants.FindByVariant(SelectionBoxesByType, out Cuboidf[] cuboids)
             && cuboids != null
             && cuboids.Length > 0)
@@ -677,26 +690,23 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         if (LiquidBarrierOnSidesByType is not { Count: > 0 })
         {
-            return null;
+            return null!;
         }
 
         if (coreApi.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior
-            && beBehavior.Variants != null
             && beBehavior.Variants.FindByVariant(LiquidBarrierOnSidesByType, out float[] liquidBarrierOnSides))
         {
             return liquidBarrierOnSides;
         }
-        return null;
+        return null!;
     }
 
     public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack)
     {
-        if (!itemStack.FindByVariant(NameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (itemStack.FindByVariant(NameByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return;
+            sb.Clear().Append(variants.GetName(langKeys));
         }
-
-        sb.Clear().Append(variants.GetName(langKeys));
     }
 
     public override void GetPlacedBlockName(StringBuilder sb, IWorldAccessor world, BlockPos pos)
@@ -721,17 +731,18 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
-        if (!inSlot.Itemstack.FindByVariant(DescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
-        {
-            return;
-        }
-        variants.GetDescription(dsc, langKeys);
+        Variants variants = Variants.FromStack(inSlot.Itemstack!);
         variants.GetDebugDescription(dsc, withDebugInfo);
+
+        if (variants.FindByVariant(DescriptionByType!, out List<object> langKeys) && langKeys is { Count: > 0 })
+        {
+            variants.GetDescription(dsc, langKeys);
+        }
     }
 
     public override EnumItemStorageFlags GetStorageFlags(ItemStack itemstack, ref EnumHandling handling)
     {
-        if (!itemstack.FindByVariant(StorageFlagsByType, out EnumItemStorageFlags storageFlags))
+        if (!itemstack.FindByVariant(StorageFlagsByType!, out EnumItemStorageFlags storageFlags))
         {
             return base.GetStorageFlags(itemstack, ref handling);
         }
@@ -741,7 +752,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override int GetMaxDurability(ItemStack itemstack, int durability, ref EnumHandling handling)
     {
-        if (!itemstack.FindByVariant(DurabilityByType, out int maxDurability))
+        if (!itemstack.FindByVariant(DurabilityByType!, out int maxDurability))
         {
             return base.GetMaxDurability(itemstack, durability, ref handling);
         }
@@ -751,7 +762,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override float GetAttackPower(ItemStack itemstack, float attackPower, ref EnumHandling handling)
     {
-        if (!itemstack.FindByVariant(AttackPowerByType, out float newAttackPower))
+        if (!itemstack.FindByVariant(AttackPowerByType!, out float newAttackPower))
         {
             return base.GetAttackPower(itemstack, attackPower, ref handling);
         }
@@ -761,7 +772,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override float GetAttackRange(ItemStack itemstack, float attackRange, ref EnumHandling handling)
     {
-        if (!itemstack.FindByVariant(AttackRangeByType, out float newAttackRange))
+        if (!itemstack.FindByVariant(AttackRangeByType!, out float newAttackRange))
         {
             return base.GetAttackRange(itemstack, attackRange, ref handling);
         }
@@ -771,7 +782,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override Dictionary<EnumBlockMaterial, float> GetMiningSpeeds(ItemSlot slot, ref EnumHandling handling)
     {
-        if (!slot.Itemstack.FindByVariant(MiningSpeedByType, out Dictionary<EnumBlockMaterial, float> miningSpeed))
+        if (!slot.Itemstack!.FindByVariant(MiningSpeedByType!, out Dictionary<EnumBlockMaterial, float> miningSpeed))
         {
             return base.GetMiningSpeeds(slot, ref handling);
         }
@@ -781,8 +792,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override string GetHeldReadyAnimation(ItemSlot slot, Entity forEntity, EnumHand hand, ref EnumHandling handling)
     {
-        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
-        if (!slot.Itemstack.FindByVariant(animCodesByType, out string animCode))
+        Dictionary<string, string>? animCodesByType = (hand == EnumHand.Left) ? HeldLeftReadyAnimationByType : HeldRightReadyAnimationByType;
+        if (!slot.Itemstack!.FindByVariant(animCodesByType!, out string animCode))
         {
             return base.GetHeldReadyAnimation(slot, forEntity, hand, ref handling);
         }
@@ -792,8 +803,8 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override string GetHeldTpIdleAnimation(ItemSlot slot, Entity forEntity, EnumHand hand, ref EnumHandling handling)
     {
-        Dictionary<string, string> animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
-        if (!slot.Itemstack.FindByVariant(animCodesByType, out string animCode))
+        Dictionary<string, string>? animCodesByType = (hand == EnumHand.Left) ? HeldLeftTpIdleAnimationByType : HeldRightTpIdleAnimationByType;
+        if (!slot.Itemstack!.FindByVariant(animCodesByType!, out string animCode))
         {
             return base.GetHeldTpIdleAnimation(slot, forEntity, hand, ref handling);
         }
@@ -803,7 +814,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override string GetHeldTpUseAnimation(ItemSlot slot, Entity forEntity, ref EnumHandling handling)
     {
-        if (!slot.Itemstack.FindByVariant(HeldTpUseAnimationByType, out string animCode))
+        if (!slot.Itemstack!.FindByVariant(HeldTpUseAnimationByType!, out string animCode))
         {
             return base.GetHeldTpUseAnimation(slot, forEntity, ref handling);
         }
@@ -813,13 +824,154 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override string GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity, ref EnumHandling handling)
     {
-        if (!slot.Itemstack.FindByVariant(HeldTpHitAnimationByType, out string animCode))
+        if (!slot.Itemstack!.FindByVariant(HeldTpHitAnimationByType!, out string animCode))
         {
             return base.GetHeldTpHitAnimation(slot, byEntity, ref handling);
         }
         handling = EnumHandling.PreventSubsequent;
         return animCode;
     }
+
+    /*
+     * April 2 2026
+     * 
+     * Spent hours testing code for these colors and couldn't get them to work properly
+     * 
+     * The only way to get rid of ugly "unknown" particles is to implement code below
+     */
+
+    ///// <inheritdoc cref="CollectibleObject.GetRandomColor(ICoreClientAPI, ItemStack)"/>
+    //public virtual int GetRandomColor(ICoreClientAPI capi, ItemStack stack, ref EnumHandling handling)
+    //{
+
+    //    Variants variants = Variants.FromStack(stack);
+    //    if (!variants.Any) return 0;
+
+    //    TextureAtlasPosition? result = null;
+    //    UniversalTextureSource? texSource = ShapeOverlayHelper.GetTextureSource(capi, capi.BlockTextureAtlas, this.block.Code, variants, texturesByType);
+    //    if (texSource != null)
+    //    {
+    //        if (variants.FindByVariant(TextureCodeForBlockColorByType!, out string? textureCode) && texSource.textures.ContainsKey(textureCode))
+    //        {
+    //            result = texSource[textureCode];
+    //        }
+
+    //        if (result == null || result.AvgColor < 0)
+    //        {
+    //            if (texSource.textures.ContainsKey("up"))
+    //            {
+    //                result = texSource["up"];
+    //            }
+    //            else if (texSource.textures.Count > 0)
+    //            {
+    //                result = texSource.GetFirstTexPos();
+    //            }
+    //        }
+    //        if (result != null)
+    //        {
+    //            handling = EnumHandling.PreventSubsequent;
+    //            return result.AvgColor;
+    //        }
+    //    }
+    //    return 0;
+    //}
+
+    ///// <inheritdoc cref="Block.GetRandomColor(ICoreClientAPI, BlockPos, BlockFacing, int)"/>
+    //public override int GetRandomColor(ICoreClientAPI capi, BlockPos pos, BlockFacing facing, int rndIndex, ref EnumHandling handling)
+    //{
+    //    if (pos != null && capi.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
+    //    {
+    //        UniversalTextureSource? texSource = ShapeOverlayHelper.GetTextureSource(capi, capi.BlockTextureAtlas, block.Code, beBehavior.Variants, texturesByType);
+    //        if (texSource != null)
+    //        {
+    //            string? textureCode = GetParticlesTextureCode(capi.World, null, pos);
+    //            TextureAtlasPosition? texPos = textureCode != null ? texSource[textureCode] : texSource.GetFirstTexPos();
+    //            if (texPos != null)
+    //            {
+    //                handling = EnumHandling.PreventSubsequent;
+    //                return capi.ItemTextureAtlas.GetRandomColor(texPos, rndIndex);
+    //            }
+    //        }
+    //    }
+    //    return base.GetRandomColor(capi, pos, facing, rndIndex, ref handling);
+    //}
+
+    ///// <inheritdoc cref="Block.GetColorWithoutTint(ICoreClientAPI, BlockPos)"/>
+    //public override int GetColorWithoutTint(ICoreClientAPI capi, BlockPos pos, ref EnumHandling handling)
+    //{
+    //    Block? attachedBlock = this.block.HasBehavior("Decor", capi.ClassRegistry) ? null : capi.World.BlockAccessor.GetDecor(pos, new DecorBits(BlockFacing.UP));
+    //    if (attachedBlock != null && attachedBlock != this.block)
+    //    {
+    //        handling = EnumHandling.PreventSubsequent;
+    //        return attachedBlock.GetColorWithoutTint(capi, pos);
+    //    }
+
+    //    if (capi.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } bebehavior)
+    //    {
+    //        TextureAtlasPosition? result = null;
+    //        Variants? variants = bebehavior.Variants;
+    //        UniversalTextureSource? texSource = ShapeOverlayHelper.GetTextureSource(capi, capi.BlockTextureAtlas, this.block.Code, variants, texturesByType);
+    //        if (texSource != null)
+    //        {
+    //            if (variants.FindByVariant(TextureCodeForBlockColorByType!, out string? textureCode) && texSource.textures.ContainsKey(textureCode))
+    //            {
+    //                result = texSource[textureCode];
+    //            }
+
+    //            if (result == null)
+    //            {
+    //                if (texSource.textures.ContainsKey("up"))
+    //                {
+    //                    result = texSource["up"];
+    //                }
+    //                else if (texSource.textures.Count > 0)
+    //                {
+    //                    result = texSource.GetFirstTexPos();
+    //                }
+    //            }
+    //            if (result != null)
+    //            {
+    //                handling = EnumHandling.PreventSubsequent;
+    //                return result.AvgColor;
+    //            }
+    //        }
+    //    }
+    //    return 0;
+    //}
+
+    ///// <inheritdoc cref="Block.GetColor(ICoreClientAPI, BlockPos)"/>
+    //public virtual int GetColor(ICoreClientAPI capi, BlockPos pos, ref EnumHandling handling)
+    //{
+    //    EnumHandling tempHandling = EnumHandling.PassThrough;
+    //    int color = this.GetColorWithoutTint(capi, pos, ref tempHandling);
+    //    if (block.ClimateColorMapResolved != null || block.SeasonColorMapResolved != null)
+    //    {
+    //        color = capi.World.ApplyColorMapOnRgba(block.ClimateColorMapResolved, block.SeasonColorMapResolved, color, pos.X, pos.Y, pos.Z, flipRb: false);
+    //        handling = EnumHandling.PreventSubsequent;
+    //    }
+    //    return color;
+    //}
+
+    ///// <inheritdoc cref="CollectibleObject.ParticlesTextureCode"/>
+    //public virtual string? GetParticlesTextureCode(IWorldAccessor world, ItemStack? stack, BlockPos? pos)
+    //{
+    //    string result = collObj.ParticlesTextureCode;
+    //    if (pos != null && world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
+    //    {
+    //        if (beBehavior.Variants.FindByVariant(ParticlesTextureCodeByType!, out result) && result != null)
+    //        {
+    //            return result;
+    //        }
+    //    }
+    //    else
+    //    {
+    //        if (stack.FindByVariant(ParticlesTextureCodeByType!, out result) && result != null)
+    //        {
+    //            return result;
+    //        }
+    //    }
+    //    return result;
+    //}
 
     /// <summary>
     /// Rotation (in radians) for the block at the given position
@@ -843,7 +995,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         if (blockEntity?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
         {
-            beBehavior.Variants.FindByVariant(shapeByType, out CompositeShape shapeForRotation);
+            beBehavior.Variants.FindByVariant(shapeByType!, out CompositeShape shapeForRotation);
             shapeForRotation ??= block.Shape;
 
             if (shapeForRotation != null)
@@ -862,31 +1014,31 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     #region IContainedMeshSource
     public virtual MeshData GenMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos) => GenContainedMesh(slot, targetAtlas, atBlockPos);
 
-    public virtual string GetMeshCacheKey(ItemSlot slot) => $"{slot.Itemstack.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
+    public virtual string GetMeshCacheKey(ItemSlot slot) => $"{slot.Itemstack!.Collectible.Code}-{Variants.FromStack(slot.Itemstack)}";
     #endregion
     #region IContainedCustomName
     public virtual string GetContainedInfo(ItemSlot inSlot)
     {
-        if (!inSlot.Itemstack.FindByVariant(ContainedDescriptionByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (inSlot.Itemstack!.FindByVariant(ContainedDescriptionByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return inSlot.Itemstack.GetName();
+            StringBuilder dsc = new();
+            variants.GetDescription(dsc, langKeys);
+            return dsc.ToString();
         }
 
-        StringBuilder dsc = new();
-        variants.GetDescription(dsc, langKeys);
-        return dsc.ToString();
+        return inSlot.Itemstack!.GetName();
     }
 
     public virtual string GetContainedName(ItemSlot inSlot, int quantity)
     {
-        if (!inSlot.Itemstack.FindByVariant(ContainedNameByType, out List<object> langKeys, out Variants variants) || langKeys is not { Count: > 0 })
+        if (inSlot.Itemstack!.FindByVariant(ContainedNameByType!, out List<object> langKeys, out Variants variants) && langKeys is { Count: > 0 })
         {
-            return inSlot.Itemstack.GetName();
+            StringBuilder dsc = new();
+            variants.GetDescription(dsc, langKeys);
+            return dsc.ToString();
         }
 
-        StringBuilder dsc = new();
-        variants.GetDescription(dsc, langKeys);
-        return dsc.ToString();
+        return inSlot.Itemstack!.GetName();
     }
     #endregion
     #region IAttachableToEntity
@@ -927,13 +1079,13 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     {
         Variants variants = Variants.FromStack(stack);
 
-        if (stack.FindByVariant(AttachedShapeByType, out CompositeShape attachedShape) && attachedShape != null)
+        if (variants.FindByVariant(AttachedShapeByType!, out CompositeShape attachedShape) && attachedShape != null)
         {
             CompositeShape rcshape = variants.ReplacePlaceholders(attachedShape.Clone());
             return rcshape.RemoveNonExistingOverlays(coreApi)!;
         }
 
-        if (stack.FindByVariant(AttachedShapeBySlotCodeByType, out var attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
+        if (variants.FindByVariant(AttachedShapeBySlotCodeByType!, out var attachedShapeBySlotCode) && attachedShapeBySlotCode is { Count: > 0 })
         {
             foreach ((string _slotCode, CompositeShape ucshape) in attachedShapeBySlotCode)
             {
@@ -982,7 +1134,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     #region IBlockPropertiesSupplier
     public virtual TagSet GetTags(ItemStack stack, ref EnumHandling handling)
     {
-        if (stack.FindByVariant(TagsByType, out TagSet result))
+        if (stack.FindByVariant(TagsByType!, out TagSet result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -994,7 +1146,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         byte[] result;
         if (pos != null && blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
         {
-            if (beBehavior.Variants.FindByVariant(LightHsvByType, out result))
+            if (beBehavior.Variants.FindByVariant(LightHsvByType!, out result))
             {
                 handling = EnumHandling.PreventSubsequent;
                 return result;
@@ -1002,7 +1154,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
         else
         {
-            if (stack.FindByVariant(LightHsvByType, out result))
+            if (stack.FindByVariant(LightHsvByType!, out result))
             {
                 handling = EnumHandling.PreventSubsequent;
                 return result;
@@ -1035,7 +1187,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         EnumBlockMaterial result;
         if (pos != null && blockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
         {
-            if (beBehavior.Variants.FindByVariant(BlockMaterialByType, out result))
+            if (beBehavior.Variants.FindByVariant(BlockMaterialByType!, out result))
             {
                 handling = EnumHandling.PreventSubsequent;
                 return result;
@@ -1043,7 +1195,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         }
         else
         {
-            if (stack.FindByVariant(BlockMaterialByType, out result))
+            if (stack.FindByVariant(BlockMaterialByType!, out result))
             {
                 handling = EnumHandling.PreventSubsequent;
                 return result;
@@ -1054,7 +1206,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual EnumItemDamageSource[] GetDamagedBy(ItemSlot slot, ref EnumHandling handling)
     {
-        if (slot.Itemstack.FindByVariant(DamagedByByType, out EnumItemDamageSource[] result))
+        if (slot.Itemstack!.FindByVariant(DamagedByByType!, out EnumItemDamageSource[] result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -1063,7 +1215,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual EnumTool? GetTool(ItemSlot slot, ref EnumHandling handling)
     {
-        if (slot.Itemstack.FindByVariant(ToolByType, out EnumTool? result))
+        if (slot.Itemstack!.FindByVariant(ToolByType!, out EnumTool? result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -1072,7 +1224,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual int GetToolTier(ItemSlot slot, ref EnumHandling handling)
     {
-        if (slot.Itemstack.FindByVariant(ToolTierByType, out int result))
+        if (slot.Itemstack!.FindByVariant(ToolTierByType!, out int result))
         {
             handling = EnumHandling.PreventSubsequent;
         }
@@ -1086,17 +1238,17 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         CombustibleProperties result;
         if (pos != null && world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
         {
-            if (!beBehavior.Variants.FindByVariant(CombustiblePropsByType, out result) || result == null)
+            if (!beBehavior.Variants.FindByVariant(CombustiblePropsByType!, out result) || result == null)
             {
-                return result;
+                return result!;
             }
             variants = beBehavior.Variants;
         }
         else
         {
-            if (!stack.FindByVariant(CombustiblePropsByType, out result, out variants) || result == null)
+            if (!stack.FindByVariant(CombustiblePropsByType!, out result, out variants) || result == null)
             {
-                return result;
+                return result!;
             }
         }
 
@@ -1119,9 +1271,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual FoodNutritionProperties GetNutritionProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(NutritionPropsByType, out FoodNutritionProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(NutritionPropsByType!, out FoodNutritionProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.EatenStack == null)
@@ -1143,9 +1295,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual GrindingProperties GetGrindingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(GrindingPropsByType, out GrindingProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(GrindingPropsByType!, out GrindingProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.GroundStack == null)
@@ -1167,9 +1319,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual CrushingProperties GetCrushingProperties(IWorldAccessor world, ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(CrushingPropsByType, out CrushingProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(CrushingPropsByType!, out CrushingProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.CrushedStack == null)
@@ -1191,9 +1343,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual TransitionableProperties[] GetTransitionableProperties(IWorldAccessor world, ItemStack stack, Entity forEntity, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(TransitionablePropsByType, out TransitionableProperties[] result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(TransitionablePropsByType!, out TransitionableProperties[] result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         List<TransitionableProperties> allResolvedProps = [];
@@ -1223,9 +1375,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual JuiceableProperties GetJuiceableProperties(ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(JuiceablePropsByType, out JuiceableProperties result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(JuiceablePropsByType!, out JuiceableProperties result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         JuiceableProperties clonedProps = new()
@@ -1271,9 +1423,9 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual DistillationProps GetDistillationProperties(ItemStack stack, ref EnumHandling handling)
     {
-        if (!stack.FindByVariant(DistillationPropsByType, out DistillationProps result, out Variants variants) || result == null)
+        if (!stack.FindByVariant(DistillationPropsByType!, out DistillationProps result, out Variants variants) || result == null)
         {
-            return result;
+            return result!;
         }
 
         if (result.DistilledStack == null)
@@ -1284,7 +1436,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
         DistillationProps clonedProps = new()
         {
-            DistilledStack = result.DistilledStack?.Clone(),
+            DistilledStack = result.DistilledStack.Clone(),
             Ratio = result.Ratio
         };
 
@@ -1299,4 +1451,42 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return clonedProps;
     }
     #endregion
+
+    public virtual string HandbookPageCodeForStack(IWorldAccessor world, ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookPageCodeByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+        return GuiHandbookItemStackPage.PageCodeForStack(stack);
+    }
+
+    public AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookCodeForGroupingByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+
+        Dictionary<string, string> attributes = Variants.FromStack(stack).GetElements();
+        if (attributes.Count == 0)
+        {
+            return stack.Collectible.Code;
+        }
+
+        return AssetLocation.Create(stack.Collectible.Code.Path + "-" + string.Join("-", attributes.Values), stack.Collectible.Code.Domain);
+    }
+
+    public string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
+    {
+        var variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(HandbookWildcardForGroupingByType!, out string result) && result != null)
+        {
+            return variants.ReplacePlaceholders(result);
+        }
+
+        return variants.ReplacePlaceholders(wildcard);
+    }
 }
