@@ -3,13 +3,15 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockentity) : BlockEntityBehavior(blockentity)
+public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockentity): BlockEntityBehavior(blockentity), IRotatablePlaceable
 {
     public BlockBehaviorShapeTexturesFromAttributes? OwnBehavior => Block?.GetBehavior<BlockBehaviorShapeTexturesFromAttributes>();
     public Variants Variants { get; protected set; } = new Variants();
+
     protected MeshData? mesh;
 
     public override void Initialize(ICoreAPI api, JsonObject properties)
@@ -32,12 +34,21 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
     {
         base.ToTreeAttributes(tree);
         Variants.ToTreeAttribute(tree);
+
+        #region IRotatablePlaceable
+        tree.SetFloat("meshAngleRad", MeshAngleRad);
+        #endregion
     }
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
-        Variants = Variants.FromTreeAttribute(tree);
         base.FromTreeAttributes(tree, worldForResolving);
+        Variants = Variants.FromTreeAttribute(tree);
+
+        #region IRotatablePlaceable
+        MeshAngleRad = tree.GetFloat("meshAngleRad");
+        #endregion
+
         Init();
     }
 
@@ -79,4 +90,26 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
         mesher.AddMeshData(clonedMesh);
         return true; // skip default mesh
     }
+
+    #region IRotatablePlaceable
+    public float MeshAngleRad { get; set; }
+
+    public bool DoPartialSelection()
+    {
+        var tempHandling = EnumHandling.PassThrough;
+        return OwnBehavior?.DoPartialSelection(Api.World, Pos, ref tempHandling) ?? false;
+    }
+
+    public Cuboidf[] GetCollisionBoxes()
+    {
+        var tempHandling = EnumHandling.PassThrough;
+        return OwnBehavior?.GetCollisionBoxes(Api.World.BlockAccessor, Pos, ref tempHandling) ?? Block.CollisionBoxes ?? [ Block.DefaultCollisionBox ];
+    }
+
+    public Cuboidf[] GetSelectionBoxes()
+    {
+        var tempHandling = EnumHandling.PassThrough;
+        return OwnBehavior?.GetSelectionBoxes(Api.World.BlockAccessor, Pos, ref tempHandling) ?? Block.SelectionBoxes ?? [ Block.DefaultCollisionBox ];
+    }
+    #endregion
 }

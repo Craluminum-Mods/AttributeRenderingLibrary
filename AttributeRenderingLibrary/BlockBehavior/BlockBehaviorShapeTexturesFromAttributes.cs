@@ -646,7 +646,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             && cuboids.Length > 0)
         {
             handled = EnumHandling.PreventSubsequent;
-            return cuboids;
+            Vec3f rotation = GetRotation(coreApi.World, pos);
+
+            if (rotation.IsZero)
+                return cuboids;
+            else return [.. cuboids.Select(x => x.RotatedCopyRad(rotation.X, rotation.Y, rotation.Z))];
         }
         return base.GetCollisionBoxes(blockAccessor, pos, ref handled);
     }
@@ -664,7 +668,11 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
             && cuboids.Length > 0)
         {
             handled = EnumHandling.PreventSubsequent;
-            return cuboids;
+            Vec3f rotation = GetRotation(coreApi.World, pos);
+
+            if (rotation.IsZero)
+                return cuboids;
+            else return [.. cuboids.Select(x => x.RotatedCopyRad(rotation.X, rotation.Y, rotation.Z))];
         }
         return base.GetSelectionBoxes(blockAccessor, pos, ref handled);
     }
