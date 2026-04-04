@@ -142,7 +142,7 @@ public static class AttributeRedirectionPatch
                     matcher.InsertAndAdvance(CodeInstruction.LoadArgument(paramIndex));
                     if (typeof(ItemSlot).IsAssignableFrom(paramType))
                     {
-                        matcher.InsertAndAdvance(new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(ItemSlot), "Itemstack")));
+                        matcher.InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AttributeRedirectionPatch), nameof(GetItemStackFromItemSlot))));
                     }
                     matcher.InsertAndAdvance(CodeInstruction.StoreLocal(itemStackLocal.LocalIndex));
                     loadInstruction = trace.LastFoundLoadInstruction = CodeInstruction.LoadLocal(itemStackLocal.LocalIndex);
@@ -160,4 +160,6 @@ public static class AttributeRedirectionPatch
 
         matcher.Insert(loadInstruction);
     }
+
+    private static ItemStack? GetItemStackFromItemSlot(ItemSlot? itemSlot) => itemSlot?.Itemstack;
 }
