@@ -34,8 +34,10 @@ public static class CollectibleAttributeExtensions
         });
     }
 
-    public static JsonObject GetAttribute(JsonObject attributes, string attributeKey, IItemStack? stack)
+    public static JsonObject? GetAttribute(JsonObject attributes, string attributeKey, IItemStack? stack)
     {
+        if (attributes == null) return attributes;
+
         if (stack is null || !attributes.KeyExists(ARL_ATTRIBUTES_KEY) || attributeKey == ARL_ATTRIBUTES_KEY)
         {
             return attributes[attributeKey];
@@ -48,6 +50,8 @@ public static class CollectibleAttributeExtensions
 
     public static bool GetKeyExists(JsonObject attributes, string attributeKey, IItemStack? stack)
     {
+        if (attributes == null) return false;
+
         if (stack is null || !attributes.KeyExists(ARL_ATTRIBUTES_KEY) || attributeKey == ARL_ATTRIBUTES_KEY)
         {
             return attributes.KeyExists(attributeKey);
@@ -60,6 +64,8 @@ public static class CollectibleAttributeExtensions
 
     public static bool GetIsTrue(JsonObject attributes, string attributeKey, IItemStack? stack)
     {
+        if (attributes == null) return false;
+
         if (stack is null || !attributes.KeyExists(ARL_ATTRIBUTES_KEY) || attributeKey == ARL_ATTRIBUTES_KEY)
         {
             return attributes.IsTrue(attributeKey);
