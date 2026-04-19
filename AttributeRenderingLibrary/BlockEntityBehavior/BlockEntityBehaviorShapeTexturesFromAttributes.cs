@@ -18,7 +18,7 @@ public class BlockEntityBehaviorShapeTexturesFromAttributes(BlockEntity blockent
         if (mesh == null) Init();
     }
 
-    protected void Init()
+    protected virtual void Init()
     {
         if (Api == null || OwnBehavior == null) return;
 

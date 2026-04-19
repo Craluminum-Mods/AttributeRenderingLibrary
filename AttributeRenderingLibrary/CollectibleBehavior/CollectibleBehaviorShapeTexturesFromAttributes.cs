@@ -111,7 +111,6 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         ObjectCacheUtil.Delete(api, MeshRefCacheKey);
     }
 
-
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
@@ -860,7 +859,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return GuiHandbookItemStackPage.PageCodeForStack(stack);
     }
 
-    public AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
+    public virtual AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
     {
         var variants = Variants.FromStack(stack);
         if (variants.FindByVariant(HandbookCodeForGroupingByType!, out string result) && result != null)
@@ -877,7 +876,7 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return AssetLocation.Create(stack.Collectible.Code.Path + "-" + string.Join("-", attributes.Values), stack.Collectible.Code.Domain);
     }
 
-    public string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
+    public virtual string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
     {
         var variants = Variants.FromStack(stack);
         if (variants.FindByVariant(HandbookWildcardForGroupingByType!, out string result) && result != null)
