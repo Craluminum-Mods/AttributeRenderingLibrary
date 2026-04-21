@@ -18,6 +18,7 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 #pragma warning disable CS8766
     #region Collectible properties
     public Dictionary<string, TagSet>? TagsByType { get; protected set; }
+    public Dictionary<string, TagSet>? TagsCombineByType { get; protected set; }
     public Dictionary<string, CompositeShape>? shapeByType { get; protected set; }
     public Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType { get; protected set; }
     public Dictionary<string, List<object>>? NameByType { get; protected set; }
@@ -211,16 +212,50 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public virtual void LoadTags(JsonObject properties)
     {
-        Dictionary<string, List<string>>? unresolvedTags = properties["tags"].AsObject<Dictionary<string, List<string>>>();
-        if (unresolvedTags is not { Count: > 0 }) return;
-
-        TagsByType = [];
-
-        foreach ((string type, List<string> tags) in unresolvedTags)
+        if (properties["tags"].AsObject<Dictionary<string, List<string>>>() is { Count: > 0 } unresolvedTags)
         {
-            TagRegistryError tagRegistryError = Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
-            TagsByType.Add(type, resolvedTags);
+            TagsByType = [];
+
+            foreach ((string type, List<string> tags) in unresolvedTags)
+            {
+                Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
+                TagsByType.Add(type, resolvedTags);
+            }
         }
+
+        if (properties["tagsCombine"].AsObject<Dictionary<string, List<string>>>() is { Count: > 0 } unresolvedTagsCombine)
+        {
+            TagsCombineByType = [];
+
+            foreach ((string type, List<string> tags) in unresolvedTagsCombine)
+            {
+                Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
+                TagsCombineByType.Add(type, resolvedTags);
+            }
+        }
+    }
+
+    public virtual TagSet GetTags(ItemStack stack, ref EnumHandling handling)
+    {
+        Variants variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(TagsByType!, out TagSet result))
+        {
+            handling = EnumHandling.PreventSubsequent;
+            return result;
+        }
+        
+        if (variants.FindAllByVariant(TagsCombineByType) is IEnumerable<TagSet> _tags)
+        {
+            TagSet tagSet = new TagSet();
+            foreach (TagSet _tag in _tags)
+            {
+                tagSet = coreApi.CollectibleTagRegistry.CreateMergedTagSet(tagSet, _tag);
+            }
+            handling = EnumHandling.PreventSubsequent;
+            return tagSet;
+        }
+
+        return new TagSet();
     }
 
     public virtual void LoadAndResolveCollisionAndSelectionBoxes(JsonObject properties)
@@ -1132,15 +1167,6 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public virtual int RequiresBehindSlots { get; set; }
     #endregion
     #region IBlockPropertiesSupplier
-    public virtual TagSet GetTags(ItemStack stack, ref EnumHandling handling)
-    {
-        if (stack.FindByVariant(TagsByType!, out TagSet result))
-        {
-            handling = EnumHandling.PreventSubsequent;
-        }
-        return result;
-    }
-
     public virtual byte[] GetLightHsv(IBlockAccessor blockAccessor, BlockPos pos, ItemStack stack, ref EnumHandling handling)
     {
         byte[] result;
