@@ -30,15 +30,11 @@ public static class GuiDialogHandbook_FilterItems_Patch
             {
 
                 #region Handbook search include and exclude logic
-                if (page is GuiHandbookItemStackPage stackPage)
+                if (page is GuiHandbookItemStackPage { Stack: not null } stackPage)
                 {
-                    var handbookARL = stackPage.Stack.Collectible?.GetCollectibleInterface<IHandbookARL>();
-                    if (handbookARL != null)
+                    if (stackPage.Stack.Collectible?.GetCollectibleInterface<IHandbookARL>() is { } handbookARL && handbookARL.ExcludeFromHandbookSearch(stackPage.Stack))
                     {
-                        bool exclude = handbookARL.ExcludeFromHandbookSearch(stackPage.Stack);
-                        bool include = handbookARL.IncludeInHandbookSearch(stackPage.Stack);
-
-                        if (exclude && !include) return;
+                        return;
                     }
                 }
                 #endregion
