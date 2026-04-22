@@ -65,6 +65,8 @@ public class Core : ModSystem
 
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.HeldBagTyped", typeof(AttributeRenderingLibrary.CollectibleBehaviorHeldBag));
         api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.HeldBag", typeof(AttributeRenderingLibrary.CollectibleBehaviorHeldBag));
+
+        api.RegisterCollectibleBehaviorClass("AttributeRenderingLibrary.Handbook", typeof(AttributeRenderingLibrary.CollectibleBehaviorHandbook));
     }
 
     public void RegisterBlockBehaviors(ICoreAPI api)
