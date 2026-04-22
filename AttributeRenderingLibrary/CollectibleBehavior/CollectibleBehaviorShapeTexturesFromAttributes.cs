@@ -215,6 +215,11 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         Variants variants = Variants.FromStack(stack);
         if (variants.FindByVariant(TagsByType!, out TagSet result))
         {
+            if (result.IsEmpty)
+            {
+                return collObj.Tags;
+            }
+
             handling = EnumHandling.PreventSubsequent;
             return result;
         }
@@ -226,11 +231,17 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
             {
                 tagSet = coreApi.CollectibleTagRegistry.CreateMergedTagSet(tagSet, _tag);
             }
+
+            if (tagSet.IsEmpty)
+            {
+                return collObj.Tags;
+            }
+
             handling = EnumHandling.PreventSubsequent;
             return tagSet;
         }
 
-        return new TagSet();
+        return collObj.Tags;
     }
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas) => GetOrCreateMesh(slot, targetAtlas, overrideShape: null!);

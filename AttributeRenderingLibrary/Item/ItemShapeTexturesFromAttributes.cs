@@ -7,6 +7,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
+using Vintagestory.Common;
 using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
@@ -193,7 +194,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         Variants variants = Variants.FromStack(stack);
         if (variants.FindByVariant(TagsByType!, out TagSet result))
         {
-            return result;
+            return result.IsEmpty ? Tags : result;
         }
 
         if (variants.FindAllByVariant(TagsCombineByType) is IEnumerable<TagSet> _tags)
@@ -203,7 +204,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
             {
                 tagSet = api.CollectibleTagRegistry.CreateMergedTagSet(tagSet, _tag);
             }
-            return tagSet;
+            return tagSet.IsEmpty ? Tags : tagSet;
         }
 
         return base.GetTags(stack);
