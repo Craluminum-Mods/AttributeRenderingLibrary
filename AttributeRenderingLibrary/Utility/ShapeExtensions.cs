@@ -149,7 +149,7 @@ public static class ShapeExtensions
                     offsetVec.Set(ovCompShape.offsetX, ovCompShape.offsetY, ovCompShape.offsetZ);
 
                     Shape overlayShape = Shape.TryGet(game.api, ovCompShape.Base.CopyWithPathPrefixAndAppendixOnce("shapes/", ".json"));
-                    if (shape == null)
+                    if (overlayShape == null)
                     {
                         modeldata.AddMeshData(RenderExtensions.GetUnknownItemModelData(game.api));
                         LoggerUtil.Error(game.Api, tesselator, $"Could not find overlay shape {ovCompShape.Base} for {type} {sourceName}");

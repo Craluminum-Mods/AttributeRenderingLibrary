@@ -13,7 +13,7 @@ namespace AttributeRenderingLibrary;
 
 public class CollectibleBehaviorHealingItem(CollectibleObject collObj) : CollectibleBehavior(collObj), ICanHealCreature
 {
-    private static class DefaultValues
+    public static class DefaultValues
     {
         public static float Health => 1;
         public static float ApplicationTimeSec => 2;
@@ -259,7 +259,7 @@ public class CollectibleBehaviorHealingItem(CollectibleObject collObj) : Collect
 
     public virtual bool CanHeal(Entity target) => true;
 
-    protected virtual float GetApplicationTime(ItemSlot slot, Entity byEntity)
+    public virtual float GetApplicationTime(ItemSlot slot, Entity byEntity)
     {
         float healingEffectiveness = 0;
 
@@ -282,7 +282,7 @@ public class CollectibleBehaviorHealingItem(CollectibleObject collObj) : Collect
         return GetApplicationTimeSec(slot);
     }
 
-    protected virtual Entity GetTargetEntity(ItemSlot slot, EntityAgent byEntity, EntitySelection? entitySelection)
+    public virtual Entity GetTargetEntity(ItemSlot slot, EntityAgent byEntity, EntitySelection? entitySelection)
     {
         Entity targetEntity = byEntity;
         Entity? selectedEntity = entitySelection?.Entity;
@@ -310,5 +310,5 @@ public class CollectibleBehaviorHealingItem(CollectibleObject collObj) : Collect
         return targetEntity;
     }
 
-    protected virtual bool CancelApplication(ItemSlot slot, Entity entity) => (!entity.OnGround && !entity.Swimming && CancelInAir(slot)) || (entity.Swimming && CancelWhileSwimming(slot));
+    public virtual bool CancelApplication(ItemSlot slot, Entity entity) => (!entity.OnGround && !entity.Swimming && CancelInAir(slot)) || (entity.Swimming && CancelWhileSwimming(slot));
 }

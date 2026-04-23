@@ -28,7 +28,7 @@ public class CollectibleBehaviorCustomTransform(CollectibleObject collObj) : Col
         ApplyOnBeforeRenderTransform(target, stack, ref renderinfo.Transform);
     }
 
-    public void ApplyOnBeforeRenderTransform(EnumItemRenderTarget target, ItemStack stack, ref ModelTransform transform)
+    public virtual void ApplyOnBeforeRenderTransform(EnumItemRenderTarget target, ItemStack stack, ref ModelTransform transform)
     {
         Dictionary<string, ModelTransform>? transformsByType = target switch
         {
@@ -45,8 +45,8 @@ public class CollectibleBehaviorCustomTransform(CollectibleObject collObj) : Col
             transform = newTransform.EnsureDefaultValues();
         }
     }
-
-    ModelTransform? IContainedTransform.GetTransform(BlockEntityDisplay be, string attributeTransformCode, ItemStack stack)
+    #region IContainedTransform
+    public virtual ModelTransform? GetTransform(BlockEntityDisplay be, string attributeTransformCode, ItemStack stack)
     {
         attributeTransformCode = attributeTransformCode.ToLowerInvariant();
 
@@ -57,4 +57,5 @@ public class CollectibleBehaviorCustomTransform(CollectibleObject collObj) : Col
         }
         return null;
     }
+    #endregion
 }

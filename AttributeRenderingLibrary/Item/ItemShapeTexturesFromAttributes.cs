@@ -7,6 +7,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
+using Vintagestory.Common;
 using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
@@ -16,6 +17,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 #pragma warning disable CS8766
     #region Collectible properties
     public Dictionary<string, TagSet>? TagsByType { get; protected set; }
+    public Dictionary<string, TagSet>? TagsCombineByType { get; protected set; }
     public Dictionary<string, CompositeShape>? shapeByType { get; protected set; }
     public Dictionary<string, Dictionary<string, CompositeTexture>>? texturesByType { get; protected set; }
     public Dictionary<string, List<object>>? NameByType { get; protected set; }
@@ -164,19 +166,49 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
 
     public virtual void LoadTags()
     {
-        Dictionary<string, List<string>>? unresolvedTags = Attributes["tags"].AsObject<Dictionary<string, List<string>>>();
-        if (unresolvedTags is not { Count: > 0 }) return;
-
-        TagsByType = [];
-
-        foreach ((string type, List<string> tags) in unresolvedTags)
+        if (Attributes["tags"].AsObject<Dictionary<string, List<string>>>() is { Count: > 0 } unresolvedTags)
         {
-            Core.Api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
-            TagsByType.Add(type, resolvedTags);
+            TagsByType = [];
+
+            foreach ((string type, List<string> tags) in unresolvedTags)
+            {
+                api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
+                TagsByType.Add(type, resolvedTags);
+            }
+        }
+
+        if (Attributes["tagsCombine"].AsObject<Dictionary<string, List<string>>>() is { Count: > 0 } unresolvedTagsCombine)
+        {
+            TagsCombineByType = [];
+
+            foreach ((string type, List<string> tags) in unresolvedTagsCombine)
+            {
+                api.CollectibleTagRegistry.TryCreateTagSetAndLogIssues(out TagSet resolvedTags, tags);
+                TagsCombineByType.Add(type, resolvedTags);
+            }
         }
     }
 
-    public override TagSet GetTags(ItemStack stack) => stack.GetByVariant(TagsByType, () => base.GetTags(stack));
+    public override TagSet GetTags(ItemStack stack)
+    {
+        Variants variants = Variants.FromStack(stack);
+        if (variants.FindByVariant(TagsByType!, out TagSet result))
+        {
+            return result.IsEmpty ? Tags : result;
+        }
+
+        if (variants.FindAllByVariant(TagsCombineByType) is IEnumerable<TagSet> _tags)
+        {
+            TagSet tagSet = new TagSet();
+            foreach (TagSet _tag in _tags)
+            {
+                tagSet = api.CollectibleTagRegistry.CreateMergedTagSet(tagSet, _tag);
+            }
+            return tagSet.IsEmpty ? Tags : tagSet;
+        }
+
+        return base.GetTags(stack);
+    }
 
     public virtual MeshData GetOrCreateMesh(ItemSlot slot, ITextureAtlasAPI targetAtlas)
     {
@@ -735,7 +767,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return GuiHandbookItemStackPage.PageCodeForStack(stack);
     }
 
-    public AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
+    public virtual AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
     {
         var variants = Variants.FromStack(stack);
         if (variants.FindByVariant(HandbookCodeForGroupingByType!, out string result) && result != null)
@@ -752,7 +784,7 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
         return AssetLocation.Create(stack.Collectible.Code.Path + "-" + string.Join("-", attributes.Values), stack.Collectible.Code.Domain);
     }
 
-    public string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
+    public virtual string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
     {
         var variants = Variants.FromStack(stack);
         if (variants.FindByVariant(HandbookWildcardForGroupingByType!, out string result) && result != null)

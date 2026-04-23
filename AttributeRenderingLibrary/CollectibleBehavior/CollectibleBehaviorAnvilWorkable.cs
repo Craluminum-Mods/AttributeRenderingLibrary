@@ -23,6 +23,8 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
 #nullable disable
     public ICoreAPI coreApi;
 #nullable enable
+    
+    public static readonly Vec3i MaxVoxelSize = new Vec3i(16, 6, 16);
 
     public override void Initialize(JsonObject properties)
     {
@@ -128,8 +130,6 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
     public virtual string? GetMetal(ItemStack stack) => stack.FindByVariant(MetalByType!, out string? metal, out Variants variants) ? variants.ReplacePlaceholders(metal) : null;
 
     public virtual bool IsBlisterSteel(string metal) => metal == "blistersteel";
-
-    private static readonly Vec3i MaxVoxelSize = new Vec3i(16, 6, 16);
 
     public virtual Vec3i GetVoxelSize(ItemStack stack)
     {

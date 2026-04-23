@@ -18,7 +18,7 @@ public class CollectibleBehaviorFoodTags(CollectibleObject collObj) : Collectibl
         FoodTagsByType = properties["foodTags"].AsObject<Dictionary<string, string[]>>();
     }
 
-    public string[] GetFoodTags(ItemStack itemstack) => !itemstack.FindByVariant(FoodTagsByType!, out string[] foodTags, out Variants variants) || foodTags is not { Length: > 0 }
+    public virtual string[] GetFoodTags(ItemStack itemstack) => !itemstack.FindByVariant(FoodTagsByType!, out string[] foodTags, out Variants variants)
             ? []
-            : variants.ReplacePlaceholders(foodTags);
+            : variants.ReplacePlaceholders(foodTags) ?? [];
 }

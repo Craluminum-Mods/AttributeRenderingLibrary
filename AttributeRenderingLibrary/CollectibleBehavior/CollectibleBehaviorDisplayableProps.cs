@@ -18,7 +18,7 @@ public class CollectibleBehaviorDisplayableProps(CollectibleObject collObj) : Co
         DisplayablePropsByCodeByType = properties["displayable"].AsObject<Dictionary<string, Dictionary<string, DisplayableAttributes>>>(null, collObj.Code.Domain);
     }
 
-    public DisplayableAttributes? GetDisplayableProps(ItemSlot inSlot, string displayType)
+    public virtual DisplayableAttributes? GetDisplayableProps(ItemSlot inSlot, string displayType)
     {
         if (!inSlot.Itemstack!.FindByVariant(DisplayablePropsByCodeByType!, out Dictionary<string, DisplayableAttributes> propsByCode, out Variants variants) || propsByCode is not { Count: > 0})
         {

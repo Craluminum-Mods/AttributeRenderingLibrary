@@ -10,7 +10,7 @@ namespace AttributeRenderingLibrary;
 
 public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collObj) : CollectibleBehavior(collObj), IContainedInteractable
 {
-    private static class DefaultValues
+    public static class DefaultValues
     {
         public static float ProcessTime => 0;
         public static BlockDropItemStack[]? ProcessedStacks => [];
@@ -111,7 +111,7 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
         return resolvedStack;
     }
 
-    public bool OnContainedInteractStart(BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel)
+    public virtual bool OnContainedInteractStart(BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel)
     {
         var requiredTool = GetTool(slot);
         if (requiredTool != null && byPlayer.InventoryManager.ActiveTool != requiredTool) return false;
@@ -132,7 +132,7 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
         return false;
     }
 
-    public bool OnContainedInteractStep(float secondsUsed, BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel)
+    public virtual bool OnContainedInteractStep(float secondsUsed, BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel)
     {
         var requiredTool = GetTool(slot);
         if (requiredTool != null && byPlayer.InventoryManager.ActiveTool != requiredTool) return false;
@@ -157,7 +157,7 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
         return secondsUsed < GetProcessTime(slot);
     }
 
-    public void OnContainedInteractStop(float secondsUsed, BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel)
+    public virtual void OnContainedInteractStop(float secondsUsed, BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel)
     {
         byPlayer.Entity.StopAnimation(GetProcessingAnimationCode(slot));
 
@@ -210,13 +210,13 @@ public class CollectibleBehaviorGroundStoredProcessable(CollectibleObject collOb
         }
     }
 
-    public bool OnContainedInteractCancel(float secondsUsed, BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel, EnumItemUseCancelReason cancelReason)
+    public virtual bool OnContainedInteractCancel(float secondsUsed, BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel, EnumItemUseCancelReason cancelReason)
     {
         byPlayer.Entity.StopAnimation(GetProcessingAnimationCode(slot));
         return true;
     }
 
-    public WorldInteraction[] GetContainedInteractionHelp(BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel)
+    public virtual WorldInteraction[] GetContainedInteractionHelp(BlockEntityContainer be, ItemSlot slot, IPlayer byPlayer, BlockSelection blockSel)
     {
         BlockDropItemStack[]? processedStacks = GetProcessedStacks(slot);
         JsonItemStack? remainingItem = GetRemainingItem(slot);
