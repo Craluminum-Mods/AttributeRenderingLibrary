@@ -10,94 +10,98 @@ namespace AttributeRenderingLibrary.HarmonyPatches.Handbook;
 public static class GuiDialogHandbook_FilterItems_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(GuiDialogHandbook __instance, ref List<IFlatListItem> ___shownHandbookPages, ref GuiComposer ___overviewGui, ref bool ___loadingPagesAsync, ref string ___currentSearchText, string ___currentCatgoryCode, ref List<GuiHandbookPage> ___allHandbookPages, double ___listHeight)
+    public static bool Prefix(
+        GuiDialogHandbook __instance,
+        List<IFlatListItem> ___shownHandbookPages,
+        GuiComposer ___overviewGui,
+        bool ___loadingPagesAsync,
+        string ___currentSearchText,
+        string ___currentCatgoryCode,
+        List<GuiHandbookPage> ___allHandbookPages,
+        double ___listHeight)
     {
-        List<IFlatListItem> shownHandbookPages = [];
-        ref var overviewGui = ref ___overviewGui;
-        ref var loadingPagesAsync = ref ___loadingPagesAsync;
-        ref var currentSearchText = ref ___currentSearchText;
-        ref var allHandbookPages = ref ___allHandbookPages;
-        var currentCatgoryCode = ___currentCatgoryCode;
-        var listHeight = ___listHeight;
-        
-        if (!loadingPagesAsync)
-        {
-            string text = currentSearchText ?? "";
-            Regex regex = GuiDialogHandbook.RegexFromSearchText(text);
-            Regex strictRegex = GuiDialogHandbook.RegexFromSearchText(text, strict: true);
-            List<WeightedHandbookPage> weightedPages = new List<WeightedHandbookPage>();
-            allHandbookPages.ForEach(delegate (GuiHandbookPage page)
-            {
+        if (___overviewGui == null) return true;
 
+        ___shownHandbookPages.Clear();
+
+        if (!___loadingPagesAsync)
+        {
+            string searchText = ___currentSearchText ?? "";
+
+            Regex regex = GuiDialogHandbook.RegexFromSearchText(searchText);
+            Regex strictRegex = GuiDialogHandbook.RegexFromSearchText(searchText, true);
+
+            List<WeightedHandbookPage> weightedPages = new List<WeightedHandbookPage>();
+
+            foreach (var page in ___allHandbookPages)
+            {
                 #region Handbook search include and exclude logic
                 if (page is GuiHandbookItemStackPage { Stack: not null } stackPage)
                 {
-                    if (stackPage.Stack.Collectible?.GetCollectibleInterface<IHandbookARL>() is { } handbookARL && handbookARL.ExcludeFromHandbookSearch(stackPage.Stack))
+                    if (stackPage.Stack.Collectible?.GetCollectibleInterface<IHandbookARL>() is { } arl && arl.ExcludeFromHandbookSearch(stackPage.Stack))
                     {
-                        return;
+                        continue;
                     }
                 }
                 #endregion
 
-
-                if ((currentCatgoryCode == null || !(page.CategoryCode != currentCatgoryCode)) && !page.IsDuplicate)
+                if ((___currentCatgoryCode != null && page.CategoryCode != ___currentCatgoryCode) || page.IsDuplicate)
                 {
-                    PageText pageText = page.GetPageText();
-                    int num = CountMatches(__instance, pageText.Title ?? "", regex);
-                    int strictTitleMatches = CountMatches(__instance, pageText.Title ?? "", strictRegex);
-                    int num2 = CountMatches(__instance, pageText.Text ?? "", regex);
-                    if (num > 0 || num2 > 0)
-                    {
-                        weightedPages.Add(new WeightedHandbookPage
-                        {
-                            Page = page,
-                            TitleMatches = num,
-                            StrictTitleMatches = strictTitleMatches,
-                            TitleLength = (pageText.Title?.Length ?? 0),
-                            TextMatches = num2,
-                            SearchWeight = 1f + page.SearchWeightOffset
-                        });
-                    }
+                    continue;
                 }
-            });
-            if (text.Length > 0)
-            {
-                weightedPages.Sort(delegate (WeightedHandbookPage a, WeightedHandbookPage b)
+
+                PageText pageText = page.GetPageText();
+                int titleMatches = CountMatches(__instance, pageText.Title ?? "", regex);
+                int strictTitleMatches = CountMatches(__instance, pageText.Title ?? "", strictRegex);
+                int textMatches = CountMatches(__instance, pageText.Text ?? "", regex);
+
+                if (titleMatches > 0 || textMatches > 0)
                 {
-                    int num = b.StrictTitleMatches - a.StrictTitleMatches;
-                    if (num != 0)
+                    weightedPages.Add(new WeightedHandbookPage
                     {
-                        return num;
-                    }
+                        Page = page,
+                        TitleMatches = titleMatches,
+                        StrictTitleMatches = strictTitleMatches,
+                        TitleLength = pageText.Title?.Length ?? 0,
+                        TextMatches = textMatches,
+                        SearchWeight = 1f + page.SearchWeightOffset
+                    });
+                }
+            }
 
-                    int num2 = b.TitleMatches - a.TitleMatches;
-                    if (num2 != 0)
-                    {
-                        return num2;
-                    }
+            if (searchText.Length > 0)
+            {
+                weightedPages.Sort((a, b) =>
+                {
+                    int strictSort = b.StrictTitleMatches - a.StrictTitleMatches;
+                    if (strictSort != 0) return strictSort;
 
-                    int num3 = b.SearchWeight.CompareTo(a.SearchWeight);
-                    if (num3 != 0)
-                    {
-                        return num3;
-                    }
+                    int titleSort = b.TitleMatches - a.TitleMatches;
+                    if (titleSort != 0) return titleSort;
 
-                    int num4 = a.TitleLength - b.TitleLength;
-                    return (num4 != 0) ? num4 : (b.TextMatches - a.TextMatches);
+                    int weightSort = b.SearchWeight.CompareTo(a.SearchWeight);
+                    if (weightSort != 0) return weightSort;
+
+                    int lengthSort = a.TitleLength - b.TitleLength;
+                    if (lengthSort != 0) return lengthSort;
+
+                    return b.TextMatches - a.TextMatches;
                 });
             }
 
-            weightedPages.ForEach(delegate (WeightedHandbookPage page)
+            foreach (var p in weightedPages)
             {
-                shownHandbookPages.Add(page.Page);
-            });
+                ___shownHandbookPages.Add(p.Page);
+            }
         }
 
-        ___shownHandbookPages = shownHandbookPages;
+        GuiElementFlatList stacklist = ___overviewGui.GetFlatList("stacklist");
+        if (stacklist != null)
+        {
+            stacklist.CalcTotalHeight();
+            ___overviewGui.GetScrollbar("scrollbar")?.SetHeights((float)___listHeight,(float)stacklist.insideBounds.fixedHeight);
+        }
 
-        GuiElementFlatList flatList = overviewGui.GetFlatList("stacklist");
-        flatList.CalcTotalHeight();
-        overviewGui.GetScrollbar("scrollbar").SetHeights((float)listHeight, (float)flatList.insideBounds.fixedHeight);
         return false;
     }
 
