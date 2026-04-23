@@ -75,7 +75,7 @@ public class Core : ModSystem
     {
         api.RegisterBlockBehaviorClass("AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", typeof(BlockBehaviorShapeTexturesFromAttributes));
 
-        // backwards compatibility
+        // backward compatibility
         api.RegisterBlockBehaviorClass("AttributeRenderingLibrary.HorizontalOrientable", typeof(Vintagestory.GameContent.BlockBehaviorHorizontalOrientable));
         api.RegisterBlockBehaviorClass("AttributeRenderingLibrary.HorizontalAttachable", typeof(Vintagestory.GameContent.BlockBehaviorHorizontalAttachable));
         api.RegisterBlockBehaviorClass("AttributeRenderingLibrary.NWOrientable", typeof(Vintagestory.GameContent.BlockBehaviorNWOrientable));
@@ -103,6 +103,7 @@ public class Core : ModSystem
         {
             if (block == null || block.Code == null) continue;
 
+            AddMissingBlockEntityStuff(block);
             TryOrderBlockBehaviors(block);
         }
     }
@@ -113,6 +114,14 @@ public class Core : ModSystem
         loader.CollectCollectibleObjectsToGenerate();
         loader.CollectVariantsFromWorldProperties();
         loader.ComposeVariants();
+    }
+
+    private void AddMissingBlockEntityStuff(Block block)
+    {
+        if (block.HasBehavior<BlockBehaviorShapeTexturesFromAttributes>())
+        {
+            block.EntityClass ??= "Generic";
+        }
     }
 
     private void TryOrderBlockBehaviors(Block block)

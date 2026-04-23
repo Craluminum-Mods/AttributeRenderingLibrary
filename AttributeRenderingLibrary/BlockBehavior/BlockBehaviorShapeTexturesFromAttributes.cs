@@ -131,7 +131,20 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
+        AddMissingBlockEntityBehavior();
         LoadTypes(properties);
+    }
+
+    protected virtual void AddMissingBlockEntityBehavior()
+    {
+        if (!block.BlockEntityBehaviors.Any(x => x.Name == "AttributeRenderingLibrary.ShapeTexturesFromAttributes"))
+        {
+            block.BlockEntityBehaviors = block.BlockEntityBehaviors.Append(new BlockEntityBehaviorType
+            {
+                Name = "AttributeRenderingLibrary.ShapeTexturesFromAttributes",
+                properties = null
+            });
+        }
     }
 
     public virtual void LoadTypes(JsonObject properties)
