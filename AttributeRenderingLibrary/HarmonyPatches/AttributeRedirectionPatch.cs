@@ -2,6 +2,7 @@
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -30,7 +31,11 @@ public static class AttributeRedirectionPatch
             {
                 harmony.Patch(method, transpiler: transpilerMethod);
             }
-            catch(Exception ex)
+            catch (FileNotFoundException)
+            {
+                //Ignore missing method/field exceptions, as these would be caused by mod dependencies not being present (and in the case of optional dependencies this is expected and not an issue)
+            }
+            catch (Exception ex)
             {
                 logger?.Error("Failed to apply attribute redirection to {0}.{1}, exception: {2}", method.DeclaringType?.FullName ?? "unknown", method.Name, ex);
             }
@@ -153,8 +158,12 @@ public static class AttributeRedirectionPatch
         }
         if(loadInstruction is null) return; //Failed to find ItemStack/ItemSlot
 
+        loadInstruction = loadInstruction.Clone();
         matcher.Start().MatchStartForward(new CodeMatch(instruction => instruction == usage));
 
+        loadInstruction.labels = usage.labels;
+
+        usage.labels = [];
         usage.opcode = OpCodes.Call;
         usage.operand = method;
 

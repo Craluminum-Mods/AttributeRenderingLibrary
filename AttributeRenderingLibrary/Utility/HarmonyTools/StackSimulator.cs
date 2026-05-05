@@ -36,13 +36,13 @@ internal class Trace
 
     public CodeInstruction? FindOrCreateLoadInstruction(CodeMatcher matcher)
     {
-        if(LastFoundLoadInstruction is not null) return LastFoundLoadInstruction.Clone();
+        if(LastFoundLoadInstruction is not null) return LastFoundLoadInstruction;
         
         var alreadyStored = GetAlreadyStored(Origin.Instruction);
         if(alreadyStored is not null)
         {
             LastFoundLoadInstruction = alreadyStored;
-            return LastFoundLoadInstruction.Clone();
+            return LastFoundLoadInstruction;
         }
 
         matcher.Start().MatchStartForward(new CodeMatch(instruction => instruction == Origin.Instruction));
@@ -52,7 +52,7 @@ internal class Trace
         if(alreadyStored is not null)
         {
             LastFoundLoadInstruction = alreadyStored;
-            return LastFoundLoadInstruction.Clone();
+            return LastFoundLoadInstruction;
         }
 
         matcher.DeclareLocal(Origin.Type, out var localBuilder);
@@ -62,7 +62,7 @@ internal class Trace
         );
 
         LastFoundLoadInstruction = CodeInstruction.LoadLocal(localBuilder.LocalIndex);
-        return LastFoundLoadInstruction.Clone();
+        return LastFoundLoadInstruction;
     }
 
     private static CodeInstruction? GetAlreadyStored(CodeInstruction instruction)
