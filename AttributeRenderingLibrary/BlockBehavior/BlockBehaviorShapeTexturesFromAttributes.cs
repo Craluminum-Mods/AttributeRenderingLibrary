@@ -13,7 +13,7 @@ using Vintagestory.GameContent;
 
 namespace AttributeRenderingLibrary;
 
-public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IBlockPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity, IHandBookPageCodeProvider, IHandbookGrouping
+public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlockBehavior(block), IBlockShapeTexturesFromAttributes, IBlockPropertiesSupplier, IContainedMeshSource, IContainedCustomName, IAttachableToEntity
 {
 #pragma warning disable CS8766
     #region Collectible properties
@@ -34,9 +34,6 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public Dictionary<string, EnumItemDamageSource[]>? DamagedByByType { get; protected set; }
     public Dictionary<string, EnumTool?>? ToolByType { get; protected set; }
     public Dictionary<string, int>? ToolTierByType { get; protected set; }
-    public Dictionary<string, string>? HandbookPageCodeByType { get; protected set; }
-    public Dictionary<string, string>? HandbookCodeForGroupingByType { get; protected set; }
-    public Dictionary<string, string>? HandbookWildcardForGroupingByType { get; protected set; }
     //public Dictionary<string, string>? ParticlesTextureCodeByType { get; protected set; }
     //public Dictionary<string, string>? TextureCodeForBlockColorByType { get; protected set; }
     #endregion
@@ -131,7 +128,20 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
+        AddMissingBlockEntityBehavior();
         LoadTypes(properties);
+    }
+
+    protected virtual void AddMissingBlockEntityBehavior()
+    {
+        if (!block.BlockEntityBehaviors.Any(x => x.Name == "AttributeRenderingLibrary.ShapeTexturesFromAttributes"))
+        {
+            block.BlockEntityBehaviors = block.BlockEntityBehaviors.Append(new BlockEntityBehaviorType
+            {
+                Name = "AttributeRenderingLibrary.ShapeTexturesFromAttributes",
+                properties = null
+            });
+        }
     }
 
     public virtual void LoadTypes(JsonObject properties)
@@ -161,9 +171,6 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         DamagedByByType = properties["damagedBy"].AsObject<Dictionary<string, EnumItemDamageSource[]>>();
         ToolByType = properties["tool"].AsObject<Dictionary<string, EnumTool?>>();
         ToolTierByType = properties["toolTier"].AsObject<Dictionary<string, int>>();
-        HandbookPageCodeByType = properties["STFA_handbook"]?["pageCode"].AsObject<Dictionary<string, string>>();
-        HandbookCodeForGroupingByType = properties["STFA_handbook"]?["codeForGrouping"].AsObject<Dictionary<string, string>>();
-        HandbookWildcardForGroupingByType = properties["STFA_handbook"]?["wildcardForGrouping"].AsObject<Dictionary<string, string>>();
         //ParticlesTextureCodeByType = properties["particlesTextureCode"].AsObject<Dictionary<string, string>>();
         //TextureCodeForBlockColorByType = properties["textureCodeForBlockColor"].AsObject<Dictionary<string, string>>();
         CombustiblePropsByType = properties["combustibleProps"].AsObject<Dictionary<string, CombustibleProperties>>(null, block.Code.Domain);
@@ -612,54 +619,144 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref float dropQuantityMultiplier, ref EnumHandling handling)
     {
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not { } beBehavior)
         {
-            if (beBehavior.Variants.FindByVariant(DropsByType!, out BlockDropItemStack[] unresolvedDrops)
-                && unresolvedDrops != null
-                && unresolvedDrops.Length > 0)
+            handling = EnumHandling.PassThrough;
+            return null;
+        }
+
+        if (TryOverrideGetDrops(world, pos, byPlayer, ref dropQuantityMultiplier, ref handling, out ItemStack[]? overrideStacks))
+        {
+            return overrideStacks ?? [];
+        }
+
+        if (beBehavior.Variants.FindByVariant(DropsByType!, out BlockDropItemStack[] unresolvedDrops)
+            && unresolvedDrops != null
+            && unresolvedDrops.Length > 0)
+        {
+            List<ItemStack> resolvedDrops = new(unresolvedDrops.Length);
+            for (int i = 0; i < unresolvedDrops.Length; i++)
             {
-                List<ItemStack> resolvedDrops = new(unresolvedDrops.Length);
-                for (int i = 0; i < unresolvedDrops.Length; i++)
+                BlockDropItemStack dstack = beBehavior.Variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
+                if (!dstack.Resolve(world, "AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", dstack.Code!))
                 {
-                    BlockDropItemStack dstack = beBehavior.Variants.ReplacePlaceholders(unresolvedDrops[i].Clone());
-                    if (!dstack.Resolve(world, "AttributeRenderingLibrary.BlockShapeTexturesFromAttributes", dstack.Code!))
+                    break;
+                }
+                ItemStack? stack = dstack.ToRandomItemstackForPlayer(byPlayer, world, dropQuantityMultiplier);
+                if (stack != null)
+                {
+                    resolvedDrops.Add(stack);
+                    if (dstack.LastDrop)
                     {
                         break;
                     }
-                    ItemStack? stack = dstack.ToRandomItemstackForPlayer(byPlayer, world, dropQuantityMultiplier);
-                    if (stack != null)
-                    {
-                        resolvedDrops.Add(stack);
-                        if (dstack.LastDrop)
-                        {
-                            break;
-                        }
-                    }
                 }
-                handling = EnumHandling.PreventSubsequent;
-                return [.. resolvedDrops];
             }
+            handling = EnumHandling.PreventSubsequent;
+            return [.. resolvedDrops];
+        }
 
-            handling = EnumHandling.Handled;
-            return [OnPickBlock(world, pos, ref handling)];
+        handling = EnumHandling.Handled;
+        return [OnPickBlock(world, pos, ref handling)];
+    }
+
+    /// <summary>
+    /// Overrides GetDrops if following behaviors are present: <br/>
+    /// - BlockBehaviorHorizontalAttachable <br/>
+    /// - BlockBehaviorHorizontalOrientable <br/>
+    /// - BlockBehaviorNWOrientable <br/>
+    /// </summary>
+    public virtual bool TryOverrideGetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref float dropQuantityMultiplier, ref EnumHandling handling, out ItemStack[]? overrideStacks)
+    {
+        overrideStacks = null;
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not { } beBehavior)
+        {
+            handling = EnumHandling.PassThrough;
+            return false;
+        }
+
+        if (beBehavior.Block.GetBehavior<Vintagestory.GameContent.BlockBehaviorHorizontalAttachable>() is { } behaviorAttachable)
+        {
+            overrideStacks = behaviorAttachable.GetDrops(world, pos, byPlayer, ref dropQuantityMultiplier, ref handling);
+        }
+        else if (beBehavior.Block.GetBehavior<Vintagestory.GameContent.BlockBehaviorHorizontalOrientable>() is { } behaviorOrientable)
+        {
+            overrideStacks = behaviorOrientable.GetDrops(world, pos, byPlayer, ref dropQuantityMultiplier, ref handling);
+        }
+        else if (beBehavior.Block.GetBehavior<Vintagestory.GameContent.BlockBehaviorNWOrientable>() is { } behaviorNwOrientable)
+        {
+            overrideStacks = behaviorNwOrientable.GetDrops(world, pos, byPlayer, ref dropQuantityMultiplier, ref handling);
+        }
+
+        if (overrideStacks is { Length: > 0})
+        {
+            beBehavior.Variants.ToStack(overrideStacks[0]);
+            handling = EnumHandling.PreventSubsequent;
+            return true;
         }
 
         handling = EnumHandling.PassThrough;
-        return null!;
+        overrideStacks = null;
+        return false;
     }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
     {
-        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is { } beBehavior)
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not { } beBehavior)
         {
+            handling = EnumHandling.PassThrough;
+            return null;
+        }
+
+        if (TryOverrideOnPickBlock(world, pos, ref handling, out ItemStack? overrideStack))
+        {
+            return overrideStack;
+        }
+
+        handling = EnumHandling.PreventSubsequent;
+        ItemStack stack = new(block);
+        beBehavior.Variants.ToStack(stack);
+        return stack;
+    }
+
+    /// <summary>
+    /// Overrides OnPickBlock if following behaviors are present: <br/>
+    /// - BlockBehaviorHorizontalAttachable <br/>
+    /// - BlockBehaviorHorizontalOrientable <br/>
+    /// - BlockBehaviorNWOrientable <br/>
+    /// </summary>
+    public virtual bool TryOverrideOnPickBlock(IWorldAccessor world, BlockPos pos, ref EnumHandling handling, out ItemStack? overrideStack)
+    {
+        overrideStack = null;
+        if (world.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BlockEntityBehaviorShapeTexturesFromAttributes>() is not { } beBehavior)
+        {
+            handling = EnumHandling.PassThrough;
+            return false;
+        }
+
+        if (beBehavior.Block.GetBehavior<Vintagestory.GameContent.BlockBehaviorHorizontalAttachable>() is { } behaviorAttachable)
+        {
+            overrideStack = behaviorAttachable.OnPickBlock(world, pos, ref handling);
+        }
+        else if (beBehavior.Block.GetBehavior<Vintagestory.GameContent.BlockBehaviorHorizontalOrientable>() is { } behaviorOrientable)
+        {
+            overrideStack = behaviorOrientable.OnPickBlock(world, pos, ref handling);
+        }
+        else if (beBehavior.Block.GetBehavior<Vintagestory.GameContent.BlockBehaviorNWOrientable>() is { } behaviorNwOrientable)
+        {
+            overrideStack = behaviorNwOrientable.OnPickBlock(world, pos, ref handling);
+        }
+
+        if (overrideStack != null)
+        {
+            beBehavior.Variants.ToStack(overrideStack);
             handling = EnumHandling.PreventSubsequent;
-            ItemStack stack = new(block);
-            beBehavior.Variants.ToStack(stack);
-            return stack;
+            return true;
         }
 
         handling = EnumHandling.PassThrough;
-        return null!;
+        overrideStack = null;
+        return false;
     }
 
     public override void GetDecal(IWorldAccessor world, BlockPos pos, ITexPositionSource decalTexSource, ref MeshData decalModelData, ref MeshData blockModelData, ref EnumHandling handled)
@@ -1488,42 +1585,4 @@ public class BlockBehaviorShapeTexturesFromAttributes(Block block) : StrongBlock
         return clonedProps;
     }
     #endregion
-
-    public virtual string HandbookPageCodeForStack(IWorldAccessor world, ItemStack stack)
-    {
-        var variants = Variants.FromStack(stack);
-        if (variants.FindByVariant(HandbookPageCodeByType!, out string result) && result != null)
-        {
-            return variants.ReplacePlaceholders(result);
-        }
-        return GuiHandbookItemStackPage.PageCodeForStack(stack);
-    }
-
-    public virtual AssetLocation GetCodeForHandbookGrouping(ItemStack stack)
-    {
-        var variants = Variants.FromStack(stack);
-        if (variants.FindByVariant(HandbookCodeForGroupingByType!, out string result) && result != null)
-        {
-            return variants.ReplacePlaceholders(result);
-        }
-
-        Dictionary<string, string> attributes = Variants.FromStack(stack).GetElements();
-        if (attributes.Count == 0)
-        {
-            return stack.Collectible.Code;
-        }
-
-        return AssetLocation.Create(stack.Collectible.Code.Path + "-" + string.Join("-", attributes.Values), stack.Collectible.Code.Domain);
-    }
-
-    public virtual string GetWildcardForHandbookGrouping(string wildcard, ItemStack stack)
-    {
-        var variants = Variants.FromStack(stack);
-        if (variants.FindByVariant(HandbookWildcardForGroupingByType!, out string result) && result != null)
-        {
-            return variants.ReplacePlaceholders(result);
-        }
-
-        return variants.ReplacePlaceholders(wildcard);
-    }
 }
