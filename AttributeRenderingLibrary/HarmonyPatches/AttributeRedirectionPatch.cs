@@ -158,8 +158,12 @@ public static class AttributeRedirectionPatch
         }
         if(loadInstruction is null) return; //Failed to find ItemStack/ItemSlot
 
+        loadInstruction = loadInstruction.Clone();
         matcher.Start().MatchStartForward(new CodeMatch(instruction => instruction == usage));
 
+        loadInstruction.labels = usage.labels;
+
+        usage.labels = [];
         usage.opcode = OpCodes.Call;
         usage.operand = method;
 
