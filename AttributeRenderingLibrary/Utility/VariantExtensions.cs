@@ -48,6 +48,41 @@ public static class VariantExtensions
     }
 
     /// <summary>
+    /// Alias of FindByVariant for ItemStack, but returns key
+    /// </summary>
+    /// <remarks>
+    /// When using <paramref name="matchedKey"/> for caching, make sure to check if value has "{" or "}" and if it does, then cache by collectible.Code + variants.ToString()
+    /// </remarks>
+    public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result, out string matchedKey)
+    {
+        Core.Api?.World?.FrameProfiler?.Enter("AttributeRenderingLibrary.FindByVariant");
+        result = default!;
+        matchedKey = "";
+
+        if (variants == null || variants.Count == 0 || inDictionary is not { Count: > 0 })
+        {
+            Core.Api?.World?.FrameProfiler?.Leave();
+            return false;
+        }
+
+        List<string> variantAsStringArray = variants.GetAsStringArray();
+        foreach ((string key, T value) in inDictionary)
+        {
+            string[] keys = key.Contains("::") ? key.Split("::") : [key];
+            if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
+            {
+                result = value;
+                matchedKey = key;
+                Core.Api?.World?.FrameProfiler?.Leave();
+                return true;
+            }
+        }
+
+        Core.Api?.World?.FrameProfiler?.Leave();
+        return false;
+    }
+
+    /// <summary>
     /// Alias of FindByVariant for ItemStack, to avoid null check for both dictionary and Variants every time
     /// </summary>
     public static bool FindByVariant<T>(this ItemStack stack, Dictionary<string, T> inDictionary, out T result)

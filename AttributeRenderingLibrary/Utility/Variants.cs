@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -286,12 +285,9 @@ public class Variants
 
     public override string ToString()
     {
-        StringBuilder result = new();
-        if (Elements is { Count: > 0 })
-        {
-            _ = result.Append(string.Join('-', GetAsStringArray()));
-        }
-        return result.ToString();
+        if (Elements == null || Elements.Count == 0) return string.Empty;
+
+        return string.Join("-", GetAsStringArray());
     }
 
     public Variants Clone()
