@@ -141,7 +141,7 @@ public class Core : ModSystem
             int otherBIndex = block.BlockBehaviors.IndexOf(b => b is BlockBehaviorHorizontalAttachable);
             if (mainBIndex > otherBIndex)
             {
-                Swap(block.CollectibleBehaviors, mainBIndex, otherBIndex);
+                Swap(block.BlockBehaviors, mainBIndex, otherBIndex);
             }
         }
 
@@ -158,7 +158,7 @@ public class Core : ModSystem
             int otherBIndex = block.BlockBehaviors.IndexOf(b => b is BlockBehaviorNWOrientable);
             if (mainBIndex > otherBIndex)
             {
-                Swap(block.CollectibleBehaviors, mainBIndex, otherBIndex);
+                Swap(block.BlockBehaviors, mainBIndex, otherBIndex);
             }
         }
 
@@ -175,7 +175,7 @@ public class Core : ModSystem
             int otherBIndex = block.BlockBehaviors.IndexOf(b => b is BlockBehaviorHorizontalOrientable);
             if (mainBIndex > otherBIndex)
             {
-                Swap(block.CollectibleBehaviors, mainBIndex, otherBIndex);
+                Swap(block.BlockBehaviors, mainBIndex, otherBIndex);
             }
         }
     }
