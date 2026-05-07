@@ -25,11 +25,23 @@ public static class CollectibleAttributeExtensions
 
     public static bool GetKeyExists(JsonObject attributes, string attributeKey, IItemStack? stack)
     {
+        if (attributes == null) return false;
+
+        if (stack is not ItemStack || !attributes.KeyExists(ARL_ATTRIBUTES_KEY) || attributeKey == ARL_ATTRIBUTES_KEY)
+        {
+            return attributes.KeyExists(attributeKey);
+        }
         return GetAttribute(attributes, attributeKey, stack) != null;
     }
 
     public static bool GetIsTrue(JsonObject attributes, string attributeKey, IItemStack? stack)
     {
+        if (attributes == null) return false;
+
+        if (stack is not ItemStack || !attributes.KeyExists(ARL_ATTRIBUTES_KEY) || attributeKey == ARL_ATTRIBUTES_KEY)
+        {
+            return attributes.IsTrue(attributeKey);
+        }
         return GetAttribute(attributes, attributeKey, stack)?.AsBool() ?? false;
     }
 
