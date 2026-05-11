@@ -37,7 +37,7 @@ public static class AttributeRedirectionPatch
             }
             catch (Exception ex)
             {
-                logger?.Error("Failed to apply attribute redirection to {0}.{1}, exception: {2}", method.DeclaringType?.FullName ?? "unknown", method.Name, ex);
+                logger?.Warning("Failed to apply attribute redirection to {0}.{1}, failure reason: {2}", method.DeclaringType?.FullName ?? "unknown", method.Name, ex);
             }
         }
         Logger = null;
@@ -74,7 +74,7 @@ public static class AttributeRedirectionPatch
         }
         catch(Exception ex)
         {
-            Logger?.Error("Possibly uncaught attribute due to stack simulation failure for {0}.{1}, exception: {2}", __originalMethod.DeclaringType?.FullName ?? "unknown", __originalMethod.Name, ex);
+            Logger?.Warning("Possibly uncaught attribute due to stack simulation failure for {0}.{1}, failure reason: {2}", __originalMethod.DeclaringType?.FullName ?? "unknown", __originalMethod.Name, ex);
         }
 
         if(simulator.Traces.Count <= 0) return instructions;
