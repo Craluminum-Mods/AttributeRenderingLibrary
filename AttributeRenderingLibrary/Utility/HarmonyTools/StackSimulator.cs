@@ -488,6 +488,13 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
             return;
         }
 
+        else if(instruction.opcode == OpCodes.Mkrefany)
+        {
+            Pop();
+            Push(typeof(TypedReference), instruction);
+            return;
+        }
+
 
         else if(instruction.opcode == OpCodes.Leave || instruction.opcode == OpCodes.Leave_S || instruction.opcode == OpCodes.Endfinally) return; // For try blocks, might need more work
         
