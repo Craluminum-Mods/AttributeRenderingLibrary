@@ -2,7 +2,7 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
-namespace AttributeRenderingLibrary.Utility.Creativestacks;
+namespace AttributeRenderingLibrary.Systems.Creativestacks;
 
 public class CollectibleAndStackGenerationBehavior
 {

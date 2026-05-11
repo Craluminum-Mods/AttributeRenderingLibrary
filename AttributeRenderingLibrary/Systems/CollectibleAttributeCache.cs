@@ -1,15 +1,21 @@
 ﻿using System.Collections.Generic;
+using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 
-namespace AttributeRenderingLibrary;
+namespace AttributeRenderingLibrary.Systems;
 
-public static class ARL_ObjectCacheUtil
+public class CollectibleAttributeCache : ModSystem
 {
-    public static Dictionary<string, object> ARL_ObjectCache { get; } = [];
+    private static readonly Dictionary<string, object> CachedAttributes = [];
+
+    public override void Dispose()
+    {
+        CachedAttributes.Clear();
+    }
 
     public static T? TryGet<T>(string key)
     {
-        if (ARL_ObjectCache.TryGetValue(key, out var value))
+        if (CachedAttributes.TryGetValue(key, out var value))
         {
             return (T)value;
         }
@@ -19,13 +25,13 @@ public static class ARL_ObjectCacheUtil
 
     public static T? GetOrCreate<T>(string key, CreateCachableObjectDelegate<T> onRequireCreate)
     {
-        if (ARL_ObjectCache.TryGetValue(key, out var value))
+        if (CachedAttributes.TryGetValue(key, out var value))
         {
             return (T?)value;
         }
 
         T? val = onRequireCreate();
-        ARL_ObjectCache[key] = val;
+        CachedAttributes[key] = val;
         return val;
     }
 
@@ -33,6 +39,6 @@ public static class ARL_ObjectCacheUtil
     {
         if (key == null) return false;
 
-        return ARL_ObjectCache.Remove(key);
+        return CachedAttributes.Remove(key);
     }
 }

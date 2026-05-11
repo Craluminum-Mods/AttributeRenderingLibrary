@@ -22,12 +22,12 @@ public static class VariantExtensions
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result)
     {
-        Core.Api?.World.FrameProfiler.Enter("AttributeRenderingLibrary.FindByVariant");
+        Core.Api?.World?.FrameProfiler?.Enter("AttributeRenderingLibrary.FindByVariant");
         result = default!;
 
-        if (variants == null || inDictionary is not { Count: > 0 })
+        if (variants == null || variants.Count == 0 || inDictionary is not { Count: > 0 })
         {
-            Core.Api?.World.FrameProfiler.Leave();
+            Core.Api?.World?.FrameProfiler?.Leave();
             return false;
         }
 
@@ -38,12 +38,47 @@ public static class VariantExtensions
             if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
             {
                 result = value;
-                Core.Api?.World.FrameProfiler.Leave();
+                Core.Api?.World?.FrameProfiler?.Leave();
                 return true;
             }
         }
 
-        Core.Api?.World.FrameProfiler.Leave();
+        Core.Api?.World?.FrameProfiler?.Leave();
+        return false;
+    }
+
+    /// <summary>
+    /// Alias of FindByVariant for ItemStack, but returns key
+    /// </summary>
+    /// <remarks>
+    /// When using <paramref name="matchedKey"/> for caching, make sure to check if value has "{" or "}" and if it does, then cache by collectible.Code + variants.ToString()
+    /// </remarks>
+    public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result, out string matchedKey)
+    {
+        Core.Api?.World?.FrameProfiler?.Enter("AttributeRenderingLibrary.FindByVariant");
+        result = default!;
+        matchedKey = "";
+
+        if (variants == null || variants.Count == 0 || inDictionary is not { Count: > 0 })
+        {
+            Core.Api?.World?.FrameProfiler?.Leave();
+            return false;
+        }
+
+        List<string> variantAsStringArray = variants.GetAsStringArray();
+        foreach ((string key, T value) in inDictionary)
+        {
+            string[] keys = key.Contains("::") ? key.Split("::") : [key];
+            if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
+            {
+                result = value;
+                matchedKey = key;
+                Core.Api?.World?.FrameProfiler?.Leave();
+                return true;
+            }
+        }
+
+        Core.Api?.World?.FrameProfiler?.Leave();
         return false;
     }
 
@@ -90,10 +125,10 @@ public static class VariantExtensions
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, IDictionary<string, T> inDictionary)
     {
-        Core.Api?.World.FrameProfiler.Enter("AttributeRenderingLibrary.FindAllByVariant");
+        Core.Api?.World?.FrameProfiler?.Enter("AttributeRenderingLibrary.FindAllByVariant");
         if (variants == null || inDictionary is not { Count: > 0 })
         {
-            Core.Api?.World.FrameProfiler.Leave();
+            Core.Api?.World?.FrameProfiler?.Leave();
             yield break;
         }
 
@@ -107,7 +142,7 @@ public static class VariantExtensions
             }
         }
 
-        Core.Api?.World.FrameProfiler.Leave();
+        Core.Api?.World?.FrameProfiler?.Leave();
     }
 
     /// <summary>
