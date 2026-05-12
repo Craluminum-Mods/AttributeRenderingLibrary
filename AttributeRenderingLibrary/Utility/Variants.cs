@@ -292,6 +292,6 @@ public class Variants
 
     public Variants Clone()
     {
-        return new() { Elements = Elements };
+        return new() { Elements = new SortedDictionary<string, string>(Elements) };
     }
 }
