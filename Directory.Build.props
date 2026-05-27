@@ -1,0 +1,7 @@
+<Project>
+  <Import Condition="Exists('./Directory.Build.props.user')"
+    Project="./Directory.Build.props.user" />
+  <PropertyGroup>
+    <VINTAGE_STORY>$(VINTAGE_STORY.Trim())</VINTAGE_STORY>
+  </PropertyGroup>
+</Project>
