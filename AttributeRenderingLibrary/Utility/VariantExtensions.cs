@@ -22,12 +22,10 @@ public static class VariantExtensions
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result)
     {
-        Core.Api?.World?.FrameProfiler?.Enter("AttributeRenderingLibrary.FindByVariant");
         result = default!;
 
         if (variants == null || variants.Count == 0 || inDictionary is not { Count: > 0 })
         {
-            Core.Api?.World?.FrameProfiler?.Leave();
             return false;
         }
 
@@ -38,12 +36,10 @@ public static class VariantExtensions
             if (keys.All(k => variantAsStringArray.Any(v => WildcardUtil.Match(k, v))))
             {
                 result = value;
-                Core.Api?.World?.FrameProfiler?.Leave();
                 return true;
             }
         }
 
-        Core.Api?.World?.FrameProfiler?.Leave();
         return false;
     }
 
@@ -55,13 +51,11 @@ public static class VariantExtensions
     /// </remarks>
     public static bool FindByVariant<T>(this Variants variants, Dictionary<string, T> inDictionary, out T result, out string matchedKey)
     {
-        Core.Api?.World?.FrameProfiler?.Enter("AttributeRenderingLibrary.FindByVariant");
         result = default!;
         matchedKey = "";
 
         if (variants == null || variants.Count == 0 || inDictionary is not { Count: > 0 })
         {
-            Core.Api?.World?.FrameProfiler?.Leave();
             return false;
         }
 
@@ -73,12 +67,10 @@ public static class VariantExtensions
             {
                 result = value;
                 matchedKey = key;
-                Core.Api?.World?.FrameProfiler?.Leave();
                 return true;
             }
         }
 
-        Core.Api?.World?.FrameProfiler?.Leave();
         return false;
     }
 
@@ -125,10 +117,8 @@ public static class VariantExtensions
     /// <returns>True, if value by key is found, otherwise false</returns>
     public static IEnumerable<T> FindAllByVariant<T>(this Variants variants, IDictionary<string, T> inDictionary)
     {
-        Core.Api?.World?.FrameProfiler?.Enter("AttributeRenderingLibrary.FindAllByVariant");
         if (variants == null || inDictionary is not { Count: > 0 })
         {
-            Core.Api?.World?.FrameProfiler?.Leave();
             yield break;
         }
 
@@ -141,8 +131,6 @@ public static class VariantExtensions
                 yield return value;
             }
         }
-
-        Core.Api?.World?.FrameProfiler?.Leave();
     }
 
     /// <summary>
