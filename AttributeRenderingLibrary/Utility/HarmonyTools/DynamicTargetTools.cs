@@ -64,12 +64,12 @@ public static class DynamicTargetTools
                     
                     //TODO maybe improve matching for overloads
                     var realMethods = AccessTools.GetTypesFromAssembly(assembly)
-                        .First(realType => realType.Name == type.Name)
-                        .GetMethods(AccessTools.allDeclared)
+                        .FirstOrDefault(realType => realType.Name == type.Name)
+                        ?.GetMethods(AccessTools.allDeclared)
                         .Where(realMethod => realMethod.Name == method.Name)
                         .ToList();
 
-                    if (realMethods.Count != 1)
+                    if (realMethods == null || realMethods.Count != 1)
                     {
                         logger?.VerboseDebug("failed to find real method of {0}, {1}", assembly.FullName, method.FullName);
                         break;
