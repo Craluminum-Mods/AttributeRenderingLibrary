@@ -13,9 +13,24 @@ namespace AttributeRenderingLibrary.HarmonyPatches;
 
 public static class AttributeRedirectionPatch
 {
+    internal static void LogHarmonyVersion(ILogger logger)
+    {
+        try
+        {
+            var assembly = typeof(AccessTools).Assembly;
+            logger.Notification("Using Harmony version: {0} loaded from: {1}", assembly.GetName().Version, assembly.Location);
+        }
+        catch { /*ignore*/ }
+    }
+
+
     private static ILogger? Logger;
     public static void ScanAndApply(Harmony harmony, ILogger? logger = null)
     {
+        if(logger is not null)
+        {
+            LogHarmonyVersion(logger);
+        }
         Logger = logger;
         var targetMethods = DynamicTargetTools.GetMethodsUsing(
             methods:    [ AccessTools.PropertyGetter(typeof(ItemStack), nameof(ItemStack.ItemAttributes)) ],
