@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
     public Dictionary<string, StatModifiers> StatModifersByType { get; protected set; }
     public Dictionary<string, ProtectionModifiers> ProtectionModifiersByType { get; protected set; }
     public Dictionary<string, ProtectionModifiers> DefaultModifiersByType { get; protected set; }
-    public Dictionary<string, JsonObject> FootStepSoundsByType { get; protected set; }
+    public Dictionary<string, object> FootStepSoundsByType { get; protected set; }
     public Dictionary<string, EnumCharacterDressType> DressTypeByType { get; protected set; }
     public Dictionary<string, float> MaxWarmthByType { get; protected set; }
 
@@ -52,7 +53,7 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
         StatModifersByType = properties["statModifiers"].AsObject<Dictionary<string, StatModifiers>>();
         ProtectionModifiersByType = properties["protectionModifiers"].AsObject<Dictionary<string, ProtectionModifiers>>();
         DefaultModifiersByType = properties["defaultProtLoss"].AsObject<Dictionary<string, ProtectionModifiers>>();
-        FootStepSoundsByType = properties["footStepSound"].AsObject<Dictionary<string, JsonObject>>();
+        FootStepSoundsByType = properties["footStepSound"].AsObject<Dictionary<string, object>>();
         MaxWarmthByType = properties["warmth"].AsObject<Dictionary<string, float>>();
     }
 
@@ -574,31 +575,51 @@ public class CollectibleBehaviorWearable(CollectibleObject collObj) : AttributeR
             ? null
             : defaultModifiers;
 
-    public virtual AssetLocation[] GetFootStepSounds(ItemSlot slot)
+    public virtual AssetLocation[]? GetFootStepSounds(ItemSlot slot)
     {
-        if (!slot.Itemstack.FindByVariant(FootStepSoundsByType, out JsonObject unresolvedFootStepSound) || unresolvedFootStepSound == null)
+        if (slot.Itemstack == null || !slot.Itemstack.FindByVariant(FootStepSoundsByType, out object? unresolvedFootStepSound) || unresolvedFootStepSound == null)
         {
             return null;
         }
 
-        AssetLocation[] FootStepSounds = null;
+        Variants variants = Variants.FromStack(slot.Itemstack);
+        List<AssetLocation> resolvedSounds = [];
 
-        string soundloc = unresolvedFootStepSound.AsString(null);
-        if (soundloc != null)
+        switch (unresolvedFootStepSound)
         {
-            AssetLocation loc = AssetLocation.Create(soundloc, collObj.Code.Domain).WithPathPrefixOnce("sounds/");
+            case string str:
+                ProcessSoundString(str);
+                break;
 
-            if (soundloc.EndsWith('*'))
+            case JArray array:
+                foreach (var token in array)
+                {
+                    string? elementStr = token.ToString();
+                    if (!string.IsNullOrEmpty(elementStr))
+                    {
+                        ProcessSoundString(elementStr);
+                    }
+                }
+                break;
+        }
+
+        return resolvedSounds.Count > 0 ? [.. resolvedSounds] : null;
+
+        void ProcessSoundString(string pathStr)
+        {
+            string resolvedPath = variants.ReplacePlaceholders(pathStr);
+            AssetLocation loc = AssetLocation.Create(resolvedPath, collObj.Code.Domain).WithPathPrefixOnce("sounds/");
+
+            if (resolvedPath.EndsWith('*'))
             {
                 loc.Path = loc.Path.TrimEnd('*');
-                FootStepSounds = [.. coreApi.Assets.GetLocations(loc.Path, loc.Domain)];
+                resolvedSounds.AddRange(coreApi.Assets.GetLocations(loc.Path, loc.Domain));
             }
             else
             {
-                FootStepSounds = [loc];
+                resolvedSounds.Add(loc);
             }
         }
-        return FootStepSounds;
     }
 
     public virtual float GetMaxWarmth(ItemSlot inslot) => !inslot.Itemstack.FindByVariant(MaxWarmthByType, out float maxWarmth)
