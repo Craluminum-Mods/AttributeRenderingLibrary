@@ -1,11 +1,12 @@
 {
     "type": "code",
-    "modid": "attributerenderinglibraryfork",
+    "modid": "attributerenderinglibrary",
     "name": "Attribute Rendering Library",
     "authors": ["Craluminum2413 (Dana)", "Nanotect", "BowlSoldier"],
     "contributors": ["TheInsanityGod", "Muppers"],
     "description": "Attribute-based variant system for rendering things and much more.",
     "version": "3.1.7",
+    "moddb": "https://mods.vintagestory.at/attributerenderinglibraryfork",
     "dependencies": {
         "game": "1.22.0"
     }
