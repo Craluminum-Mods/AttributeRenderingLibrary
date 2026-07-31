@@ -130,7 +130,8 @@ internal class StackSimulator(CodeMatcher matcher, MethodBase originalMethod, Tr
     internal static readonly HashSet<OpCode> StindCodes = [
         OpCodes.Stind_I, OpCodes.Stind_I1, OpCodes.Stind_I2, OpCodes.Stind_I4, OpCodes.Stind_I8,
         OpCodes.Stind_R4, OpCodes.Stind_R8,
-        OpCodes.Stind_Ref
+        OpCodes.Stind_Ref,
+        OpCodes.Stobj // stores a value of a specific type at an address — same stack shape as stind (pops addr + value)
     ];
 
     internal static readonly HashSet<OpCode> LdelemCodes = [
