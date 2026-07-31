@@ -63,19 +63,33 @@ public static class DynamicTargetTools
                     if (!method.HasBody || method.HasGenericParameters || !method.Uses(methods, fields)) continue;
                     
                     //TODO maybe improve matching for overloads
-                    var realMethods = AccessTools.GetTypesFromAssembly(assembly)
-                        .FirstOrDefault(realType => realType.Name == type.Name)
-                        ?.GetMethods(AccessTools.allDeclared)
+                    var candidates = AccessTools.GetTypesFromAssembly(assembly)
+                        .Where(realType => realType.Name == type.Name)
+                        .SelectMany(realType =>
+                            realType.GetMethods(AccessTools.allDeclared)
+                                .Cast<MethodBase>()
+                                .Concat(realType.GetConstructors(AccessTools.allDeclared).Cast<MethodBase>())
+                        )
                         .Where(realMethod => realMethod.Name == method.Name)
                         .ToList();
 
-                    if (realMethods == null || realMethods.Count != 1)
+                    if (candidates.Count == 0)
                     {
                         logger?.VerboseDebug("failed to find real method of {0}, {1}", assembly.FullName, method.FullName);
                         break;
                     }
 
-                    yield return realMethods[0];
+                    // Prefer an exact signature match; fall back to the only candidate if signature info is unavailable
+                    MethodBase? realMethod = candidates.FirstOrDefault(candidate => ParametersMatch(method, candidate))
+                        ?? (candidates.Count == 1 ? candidates[0] : null);
+
+                    if (realMethod is null)
+                    {
+                        logger?.VerboseDebug("failed to find real method of {0}, {1}", assembly.FullName, method.FullName);
+                        break;
+                    }
+
+                    yield return realMethod;
                 }
             }
         }

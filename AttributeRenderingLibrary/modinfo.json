@@ -3,9 +3,9 @@
     "modid": "attributerenderinglibrary",
     "name": "Attribute Rendering Library",
     "authors": ["Craluminum2413 (Dana)", "Nanotect", "BowlSoldier"],
-    "contributors": ["TheInsanityGod"],
+    "contributors": ["TheInsanityGod", "Muppers"],
     "description": "Attribute-based variant system for rendering things and much more.",
-    "version": "3.1.5",
+    "version": "3.1.6",
     "dependencies": {
         "game": "1.22.0"
     }
