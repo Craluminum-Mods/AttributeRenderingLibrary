@@ -482,9 +482,9 @@ public class VariantLoader : ModSystem
             // resolve seems to only perform read operations on WorldAccessor,
             // so this should be fine to do off the main thread I think
 #if DEBUG
-            result[i].Resolve(serverApi.World, "attributerenderinglibrary");
+            result[i].Resolve(serverApi.World, "attributerenderinglibraryfork");
 #else
-            result[i].Resolve(serverApi.World, "attributerenderinglibrary", false);
+            result[i].Resolve(serverApi.World, "attributerenderinglibraryfork", false);
 #endif
         }
 
