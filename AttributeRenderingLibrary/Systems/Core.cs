@@ -8,6 +8,8 @@ public class Core : ModSystem
 {
     private Harmony HarmonyInstance => new(Mod.Info.ModID);
 
+    private Harmony HarmonyAttributeRedirectionInstance => new("ARL (Ignore this, look at stacktrace instead! in 99.9% cases the crash is not related to ARL)");
+
     public static ICoreAPI Api;
 
     public override void StartPre(ICoreAPI api)
@@ -17,7 +19,11 @@ public class Core : ModSystem
         if (!Harmony.HasAnyPatches(HarmonyInstance.Id))
         {
             HarmonyInstance.PatchAllUncategorized();
-            AttributeRedirectionPatch.ScanAndApply(HarmonyInstance, Mod.Logger);
+        }
+        
+        if (!Harmony.HasAnyPatches(HarmonyAttributeRedirectionInstance.Id))
+        {
+            AttributeRedirectionPatch.ScanAndApply(HarmonyAttributeRedirectionInstance, Mod.Logger);
         }
 
         if (api.Side.IsServer())
@@ -85,5 +91,6 @@ public class Core : ModSystem
     public override void Dispose()
     {
         HarmonyInstance.UnpatchAll(HarmonyInstance.Id);
+        HarmonyAttributeRedirectionInstance.UnpatchAll(HarmonyAttributeRedirectionInstance.Id);
     }
 }
