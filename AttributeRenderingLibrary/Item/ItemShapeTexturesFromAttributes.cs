@@ -489,6 +489,12 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
                 continue;
             }
 
+            Variants newTypes = Variants.FromStack(clonedProps.TransitionedStack.ResolvedItemstack);
+            Variants oldTypes = Variants.FromStack(stack);
+            string[] ignoredKeys = newTypes.GetElements().Keys.ToArray();
+            newTypes.MergeVariants(oldTypes, ignoredKeys);
+            newTypes.ToStack(clonedProps.TransitionedStack.ResolvedItemstack);
+
             allResolvedProps.Add(clonedProps);
         }
 
@@ -515,6 +521,23 @@ public class ItemShapeTexturesFromAttributes : Item, IShapeTexturesFromAttribute
     public override string? GetHeldTpHitAnimation(ItemSlot slot, Entity byEntity)
     {
         return slot.Itemstack.GetByVariant(HeldTpHitAnimationByType, defaultValue: () => base.GetHeldTpHitAnimation(slot, byEntity));
+    }
+
+    public override ItemStack OnTransitionNow(ItemSlot slot, TransitionableProperties props)
+    {
+        ItemStack? newStack = props.TransitionedStack.ResolvedItemstack?.Clone();
+        if (newStack == null || slot.Itemstack == null)
+        {
+            return base.OnTransitionNow(slot, props);
+        }
+
+        Variants newTypes = Variants.FromStack(newStack);
+        Variants oldTypes = Variants.FromStack(slot.Itemstack);
+        string[] ignoredKeys = newTypes.GetElements().Keys.ToArray();
+        newTypes.MergeVariants(oldTypes, ignoredKeys);
+        newTypes.ToStack(newStack);
+        newStack.StackSize = GameMath.RoundRandom(api.World.Rand, (float)slot.Itemstack.StackSize * props.TransitionRatio);
+        return newStack;
     }
 
     /*

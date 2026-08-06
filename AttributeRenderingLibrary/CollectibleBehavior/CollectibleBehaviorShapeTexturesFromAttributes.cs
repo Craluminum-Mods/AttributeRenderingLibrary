@@ -481,6 +481,24 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
         return animCode;
     }
 
+    public override ItemStack? OnTransitionNow(ItemSlot slot, TransitionableProperties props, ref EnumHandling handling)
+    {
+        ItemStack? newStack = props.TransitionedStack.ResolvedItemstack?.Clone();
+        if (newStack == null || slot.Itemstack == null)
+        {
+            return base.OnTransitionNow(slot, props, ref handling);
+        }
+
+        handling = EnumHandling.PreventSubsequent;
+        Variants newTypes = Variants.FromStack(newStack);
+        Variants oldTypes = Variants.FromStack(slot.Itemstack);
+        string[] ignoredKeys = newTypes.GetElements().Keys.ToArray();
+        newTypes.MergeVariants(oldTypes, ignoredKeys);
+        newTypes.ToStack(newStack);
+        newStack.StackSize = GameMath.RoundRandom(coreApi.World.Rand, (float)slot.Itemstack.StackSize * props.TransitionRatio);
+        return newStack;
+    }
+
     /*
      * April 2 2026
      * 
@@ -793,6 +811,12 @@ public class CollectibleBehaviorShapeTexturesFromAttributes(CollectibleObject co
                 LoggerUtil.Warn(world.Api, this, $"Transitioned stack with code '{resultStack.Code}' cannot be resolved for '{stack.Collectible.Code}'. Will skip it.");
                 continue;
             }
+
+            Variants newTypes = Variants.FromStack(clonedProps.TransitionedStack.ResolvedItemstack);
+            Variants oldTypes = Variants.FromStack(stack);
+            string[] ignoredKeys = newTypes.GetElements().Keys.ToArray();
+            newTypes.MergeVariants(oldTypes, ignoredKeys);
+            newTypes.ToStack(clonedProps.TransitionedStack.ResolvedItemstack);
 
             allResolvedProps.Add(clonedProps);
         }
