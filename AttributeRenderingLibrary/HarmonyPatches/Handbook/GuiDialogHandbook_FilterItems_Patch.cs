@@ -33,44 +33,50 @@ public static class GuiDialogHandbook_FilterItems_Patch
 
             List<WeightedHandbookPage> weightedPages = new List<WeightedHandbookPage>();
 
-            foreach (var page in ___allHandbookPages)
+            if (searchText.Length == 0)
             {
-                #region Handbook search include and exclude logic
-                if (page is GuiHandbookItemStackPage { Stack: not null } stackPage)
+                ___shownHandbookPages.AddRange(___allHandbookPages);
+            }
+            else
+            {
+                // TODO: use only one loop for selecting, sorting, and adding;
+                // TODO: if more than N items, break list into chunk and operate on each chunk with Parallel.ForEach to separate Lists; Aggregate results to single list. Or iterate through each them to add their items to ___shownHandbookPages
+                foreach (var page in ___allHandbookPages)
                 {
-                    if (stackPage.Stack.Collectible?.GetCollectibleInterface<IHandbookARL>() is { } arl && arl.ExcludeFromHandbookSearch(stackPage.Stack))
+                    #region Handbook search include and exclude logic
+                    if (page is GuiHandbookItemStackPage { Stack: not null } stackPage)
+                    {
+                        if (stackPage.Stack.Collectible?.GetCollectibleInterface<IHandbookARL>() is { } arl && arl.ExcludeFromHandbookSearch(stackPage.Stack))
+                        {
+                            continue;
+                        }
+                    }
+                    #endregion
+
+                    if ((___currentCatgoryCode != null && page.CategoryCode != ___currentCatgoryCode) || page.IsDuplicate)
                     {
                         continue;
                     }
-                }
-                #endregion
 
-                if ((___currentCatgoryCode != null && page.CategoryCode != ___currentCatgoryCode) || page.IsDuplicate)
-                {
-                    continue;
-                }
+                    PageText pageText = page.GetPageText();
+                    int titleMatches = CountMatches(__instance, pageText.Title ?? "", regex);
+                    int strictTitleMatches = CountMatches(__instance, pageText.Title ?? "", strictRegex);
+                    int textMatches = CountMatches(__instance, pageText.Text ?? "", regex);
 
-                PageText pageText = page.GetPageText();
-                int titleMatches = CountMatches(__instance, pageText.Title ?? "", regex);
-                int strictTitleMatches = CountMatches(__instance, pageText.Title ?? "", strictRegex);
-                int textMatches = CountMatches(__instance, pageText.Text ?? "", regex);
-
-                if (titleMatches > 0 || textMatches > 0)
-                {
-                    weightedPages.Add(new WeightedHandbookPage
+                    if (titleMatches > 0 || textMatches > 0)
                     {
-                        Page = page,
-                        TitleMatches = titleMatches,
-                        StrictTitleMatches = strictTitleMatches,
-                        TitleLength = pageText.Title?.Length ?? 0,
-                        TextMatches = textMatches,
-                        SearchWeight = 1f + page.SearchWeightOffset
-                    });
+                        weightedPages.Add(new WeightedHandbookPage
+                        {
+                            Page = page,
+                            TitleMatches = titleMatches,
+                            StrictTitleMatches = strictTitleMatches,
+                            TitleLength = pageText.Title?.Length ?? 0,
+                            TextMatches = textMatches,
+                            SearchWeight = 1f + page.SearchWeightOffset
+                        });
+                    }
                 }
-            }
 
-            if (searchText.Length > 0)
-            {
                 weightedPages.Sort((a, b) =>
                 {
                     int strictSort = b.StrictTitleMatches - a.StrictTitleMatches;
@@ -87,11 +93,11 @@ public static class GuiDialogHandbook_FilterItems_Patch
 
                     return b.TextMatches - a.TextMatches;
                 });
-            }
 
-            foreach (var p in weightedPages)
-            {
-                ___shownHandbookPages.Add(p.Page);
+                foreach (var p in weightedPages)
+                {
+                    ___shownHandbookPages.Add(p.Page);
+                }
             }
         }
 
