@@ -125,6 +125,11 @@ public class Variants
 
     public static Variants FromStack(ItemStack stack)
     {
+        if (stack?.Attributes == null)
+        {
+            return new Variants();
+        }
+    
         return FromTreeAttribute(stack.Attributes);
     }
 
